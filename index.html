@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WPIAL All Stars</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --line:#2a3038; --text:#e6edf3; --muted:#9aa4b2;
+    --accent:#ff6a1a; --accent2:#2ea6ff; --conflict:#3a2410; --conflict-line:#ff9f4d;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+  header{padding:28px 20px 18px;text-align:center;border-bottom:1px solid var(--line);}
+  header h1{margin:0;font-size:28px;letter-spacing:0.5px;}
+  header p{margin:6px 0 0;color:var(--muted);font-size:14px;}
+  nav{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;padding:14px 10px;border-bottom:1px solid var(--line);}
+  nav button{background:none;border:1px solid var(--line);color:var(--text);padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;}
+  nav button.active{background:var(--accent);border-color:var(--accent);color:#1a0e04;font-weight:600;}
+  section{max-width:1100px;margin:0 auto;padding:24px 16px 60px;display:none;}
+  section.active{display:block;}
+  h2{font-size:20px;margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 20px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .card h3{margin:0 0 10px;font-size:16px;border-bottom:1px solid var(--line);padding-bottom:8px;}
+  .row{display:flex;gap:8px;padding:5px 0;font-size:13px;border-bottom:1px solid #1d232b;}
+  .row:last-child{border-bottom:none;}
+  .rnd{color:var(--muted);width:26px;flex-shrink:0;}
+  .players{flex:1;display:flex;flex-wrap:wrap;gap:4px;}
+  .players.conflict{background:var(--conflict);border:1px dashed var(--conflict-line);border-radius:6px;padding:2px 6px;}
+  .player{cursor:pointer;padding:2px 6px;border-radius:5px;transition:background .15s;}
+  .player:hover{background:#22282f;}
+  .player.pinged{background:var(--accent);color:#1a0e04;font-weight:600;}
+  .empty{color:#4a525c;font-style:italic;}
+.spotlight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px;}
+.spotlight{background:#11151b;border:1px solid var(--line);border-radius:8px;padding:10px 12px;}
+.spotlight-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:3px 0;gap:8px;}
+.spotlight-row .nm{font-weight:600;}
+.spotlight-row .sc{color:var(--muted);font-variant-numeric:tabular-nums;}
+.spotlight-row.final .sc{color:var(--text);font-weight:600;}
+.spotlight-vs{text-align:center;color:var(--muted);font-size:11px;margin:2px 0;}
+.spotlight-top{font-size:11px;color:var(--muted);margin-top:2px;}
+  .spotlight-h2h{font-size:11px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);text-align:center;}
+  #history .card{margin-bottom:14px;}
+  textarea{width:100%;min-height:140px;background:#0f1319;border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:12px;font-size:13px;font-family:inherit;}
+  #board .card{margin-bottom:12px;}
+  .tip-ideas{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:4px;}
+  .tip-ideas li{font-size:12px;color:var(--muted);font-style:italic;}
+  .tip-ideas li::before{content:"\2022  ";color:var(--accent);font-style:normal;}
+  .placeholder{color:var(--muted);font-size:13px;line-height:1.6;}
+  .badge{display:inline-block;background:var(--accent2);color:#04121f;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:24px;border-top:1px solid var(--line);}
+
+  .cemetery{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;padding:10px 0 4px;}
+  .tombstone{background:linear-gradient(180deg,#3a3f47,#2c3036);border:1px solid #454b53;border-radius:50px 50px 8px 8px;padding:24px 16px 18px;text-align:center;position:relative;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.03);}
+  .tombstone .rip{font-size:10px;letter-spacing:2px;color:#8b9099;margin-bottom:8px;}
+  .tombstone .stone-name{font-size:15px;font-weight:500;color:#e6edf3;margin-bottom:10px;line-height:1.4;}
+  .tombstone .stone-line{width:32px;height:1px;background:#565c65;margin:0 auto 10px;}
+  .tombstone .stone-detail{font-size:11px;color:#9aa4b2;line-height:1.7;}
+  .tombstone .stone-wins{font-size:18px;font-weight:500;color:#c9cdd3;margin:6px 0;}
+  .tombstone::before{content:"";position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:60%;height:10px;background:#1a1d21;border-radius:50%;filter:blur(2px);opacity:0.5;}
+
+  .ribbon{margin:8px 0 0;padding:10px 12px;background:#0f1319;border-left:2px solid var(--accent);border-radius:0 8px 8px 0;}
+  .ribbon .lineage{font-size:12px;color:var(--muted);line-height:1.6;}
+  .ribbon .lineage b{color:var(--text);font-weight:500;}
+  .ribbon .honors{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;}
+  .honor{display:inline-flex;align-items:center;gap:4px;font-size:11px;background:#1c2129;border:1px solid var(--line);border-radius:12px;padding:2px 9px;color:#d8b45c;}
+  .honor.og{color:#7fc4ff;}
+
+  .feed-profile{display:flex;gap:14px;align-items:center;}
+  .feed-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#ffb703,#fb8500);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+  .feed-name{font-size:17px;font-weight:700;display:flex;align-items:center;gap:5px;}
+  .feed-check{color:var(--accent2);font-size:14px;}
+  .feed-handle{color:var(--muted);font-size:13px;}
+  .feed-bio{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;}
+  .gelly-strip{display:flex;gap:10px;align-items:center;padding:2px 0 18px;}
+  .gelly-strip-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#ffb703,#fb8500);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .gelly-strip-text{font-size:13px;color:var(--muted);line-height:1.5;}
+  .gelly-strip-text b{color:var(--text);font-size:14px;}
+  .tip-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px;}
+  .tip-card summary{cursor:pointer;font-weight:600;font-size:14px;list-style:revert;color:var(--text);}
+.tip-card summary::marker{color:var(--accent);}.tip-card[open] summary{margin-bottom:10px;}.tweet{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid #1d232b;}.tweet:last-child{border-bottom:none;}
+  .tweet.threaded{border-bottom:none;padding:0 0 2px;}
+  .tweet-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ffb703,#fb8500);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .tweet-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+  .tweet-connector{width:2px;flex:1;background:var(--line);margin:4px 0;min-height:14px;}
+  .tweet-body{flex:1;min-width:0;}
+  .tweet-head{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;}
+  .tweet-head b{color:var(--text);}
+  .tweet-head .handle,.tweet-head .time{color:var(--muted);}
+  .tweet-text{font-size:14px;line-height:1.5;margin:4px 0 8px;}
+  .tweet-stats{display:flex;gap:22px;color:var(--muted);font-size:12px;}
+  .thread-tag{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:12px;}
+  .thread-tag.muted{color:var(--muted);}
+
+  .tip-fab{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#1a0e04;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.45);z-index:500;display:flex;align-items:center;justify-content:center;transition:transform .15s;}
+  .tip-fab:hover{transform:scale(1.08);}
+  .tip-fab:active{transform:scale(0.96);}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:600;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;max-width:440px;width:100%;position:relative;}
+  .modal-card h3{margin:0 0 8px;font-size:16px;}
+  .modal-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:4px;}
+  .modal-close:hover{color:var(--text);}.quote-block{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:6px 0 8px;background:#0f1319;}.quote-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;font-weight:700;}.quote-text{font-size:13px;color:var(--text);line-height:1.5;font-style:italic;}
+.feed-skeleton{padding:2px 0;}
+.skel-row{display:flex;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);}
+.skel-row:last-child{border-bottom:none;}
+.skel-avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(90deg,#1d232b 25%,#262d37 37%,#1d232b 63%);background-size:400% 100%;animation:skel-shimmer 1.4s ease infinite;}
+.skel-lines{flex:1;display:flex;flex-direction:column;gap:8px;justify-content:center;}
+.skel-line{height:10px;border-radius:5px;background:linear-gradient(90deg,#1d232b 25%,#262d37 37%,#1d232b 63%);background-size:400% 100%;animation:skel-shimmer 1.4s ease infinite;}
+.skel-line.w40{width:40%;}
+.skel-line.w60{width:60%;}
+.skel-line.w90{width:90%;}
+@keyframes skel-shimmer{0%{background-position:100% 0;}100%{background-position:0 0;}}
+
+  .wire-card{background:#f5f1e6;border:1px solid #c9c2ae;border-radius:10px;margin-bottom:12px;padding:22px 26px;color:#1c2333;font-family:Georgia,'Times New Roman',serif;}
+  .wire-masthead{text-align:center;border-bottom:3px double #1c2333;padding-bottom:10px;}
+  .wire-brand{font-size:19px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#1c2333;}
+  .wire-tagline{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#8a8266;margin-top:4px;}
+  .wire-dateline{display:flex;justify-content:space-between;align-items:center;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#6d6650;border-bottom:1px solid #c9c2ae;padding:8px 0;margin-bottom:14px;}
+  .wire-edition{background:#1c2333;color:#f5f1e6;padding:2px 10px;font-size:10px;letter-spacing:2px;}
+  .wire-title{font-size:19px;font-weight:700;line-height:1.3;margin:0 0 12px;color:#1c2333;}
+  .wire-body p{font-size:14px;line-height:1.65;margin:0 0 12px;}
+  .wire-body strong{color:#7a1f1f;}
+  .wire-body a{color:#7a1f1f;}
+  .wire-body hr{border:0;border-top:1px solid #c9c2ae;margin:16px 0;}
+  .wire-sources{font-size:11px;color:#8a8266;border-top:1px solid #c9c2ae;padding-top:8px;margin-top:14px;line-height:1.6;}
+  .wire-archive{text-align:center;margin-top:12px;}
+  .wire-archive button{font-family:inherit;background:none;border:1px solid #1c2333;color:#1c2333;padding:6px 18px;letter-spacing:1.5px;text-transform:uppercase;font-size:10px;cursor:pointer;border-radius:0;}
+
+  .draft-banner{max-width:1100px;margin:16px auto 0;padding:14px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;}
+  .db-label{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);font-weight:700;}
+  .db-when{font-size:13px;color:var(--muted);margin-top:2px;}
+  .db-count{display:flex;gap:8px;}
+  .db-unit{text-align:center;min-width:54px;background:#0f1319;border:1px solid var(--line);border-radius:8px;padding:6px 8px;}
+  .db-num{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .db-lab{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .db-order{width:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .db-order-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-right:4px;}
+  .db-pick{display:flex;align-items:center;gap:6px;font-size:12px;background:#0f1319;border:1px solid var(--line);border-radius:14px;padding:3px 10px;white-space:nowrap;}
+  .db-pick b{color:var(--accent);}
+  .db-pick.first{border-color:#d8b45c;}
+  .db-pick.first b{color:#d8b45c;}
+  @media (max-width:700px){.draft-banner{margin:12px 10px 0;}.team-logo-badge{width:26px;height:26px;margin-right:6px;}}
+
+  .player.keeper{border:1px solid #d8b45c;background:#2a230f;color:#e8c97a;font-weight:600;border-radius:6px;}
+  .player.keeper::before{content:"\2B50 ";font-size:10px;}
+.team-logo-badge{display:inline-flex;vertical-align:middle;margin-right:8px;width:30px;height:30px;flex-shrink:0;}
+    .team-logo-badge svg{width:100%;height:100%;display:block;}
+
+  /* ---- Colorblind mode (the Wadi Accessibility Initiative) ---- */
+  .cb-toggle{display:inline-flex;align-items:center;gap:6px;}
+  .cb-toggle.on{background:var(--accent2);border-color:var(--accent2);color:#04121f;font-weight:600;}
+  body.colorblind{
+    --accent:#56B4E9; --accent2:#F0E442; --muted:#b9c4d1;
+    --conflict:#12283b; --conflict-line:#56B4E9;
+  }
+  body.colorblind .player.keeper{border-color:#F0E442;background:#2b290f;color:#F0E442;}
+  body.colorblind .honor{color:#F0E442;}
+  body.colorblind .honor.og{color:#56B4E9;}
+  body.colorblind a{text-decoration:underline;}
+  body.colorblind .db-pick.first{border-color:#F0E442;}
+  body.colorblind .db-pick.first b{color:#F0E442;}
+
+  #cbGag{position:fixed;inset:0;z-index:900;background:#0d1117;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;cursor:pointer;}
+  #cbGag.show{display:flex;}
+  .cb-gag-inner{max-width:520px;animation:cbPop .45s cubic-bezier(.18,1.4,.4,1);}
+  .cb-gag-inner svg{width:min(320px,80vw);height:auto;display:block;margin:0 auto;}
+  .cb-gag-title{font-size:46px;font-weight:800;color:#ff6a1a;margin:16px 0 8px;letter-spacing:1px;animation:cbShake .5s ease .5s 2;}
+  .cb-gag-sub{color:#9aa4b2;font-size:14px;line-height:1.6;}
+  .cb-gag-skip{color:#4a525c;font-size:11px;margin-top:14px;}
+  @keyframes cbPop{0%{transform:scale(.6);opacity:0;}100%{transform:scale(1);opacity:1;}}
+  @keyframes cbShake{0%,100%{transform:rotate(0);}25%{transform:rotate(-2deg);}75%{transform:rotate(2deg);}}
+    </style>
+<!-- Cloudflare Web Analytics -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d6f258a2e69e49c9ab652c37c8503de2"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+
+<header>
+  <h1>WPIAL All Stars</h1>
+  <p>2026 keeper board &middot; click any player to signal interest</p>
+</header>
+
+<div class="draft-banner" id="draft-banner">
+  <div>
+    <div class="db-label">🏈 2026 Draft Countdown</div>
+    <div class="db-when">Sunday, August 30 &middot; 5:30 PM Mountain</div>
+    <div class="db-when" id="keeper-lock"></div>
+  </div>
+  <div class="db-count" id="draft-countdown">
+    <div class="db-unit"><div class="db-num" id="dc-days">--</div><div class="db-lab">Days</div></div>
+    <div class="db-unit"><div class="db-num" id="dc-hours">--</div><div class="db-lab">Hrs</div></div>
+    <div class="db-unit"><div class="db-num" id="dc-mins">--</div><div class="db-lab">Min</div></div>
+    <div class="db-unit"><div class="db-num" id="dc-secs">--</div><div class="db-lab">Sec</div></div>
+  </div>
+  <div class="db-order">
+    <span class="db-order-label">Round 1 pick order</span>
+    <span class="db-pick first"><b>1</b> Drake Draaaake?</span>
+    <span class="db-pick"><b>2</b> Kweef Farts</span>
+    <span class="db-pick"><b>3</b> Syd Sweeney's Denim Jeans</span>
+    <span class="db-pick"><b>4</b> G. O. A. T.</span>
+    <span class="db-pick"><b>5</b> THE Vagitarians</span>
+    <span class="db-pick"><b>6</b> Mud Dogs</span>
+    <span class="db-pick"><b>7</b> Bindgamer3</span>
+    <span class="db-pick"><b>8</b> Bijan Mustard</span>
+    <span class="db-pick"><b>9</b> Mean Machine</span>
+    <span class="db-pick"><b>10</b> Return of The Mac</span>
+  </div>
+</div>
+
+
+<nav>
+  <button data-tab="board" class="active">The Gelly</button>
+  <button data-tab="rosters">Rosters &amp; round values</button>
+  <button data-tab="history">League history</button>
+  <button data-tab="schedule">2026 Schedule</button>
+  <button id="cbToggle" class="cb-toggle" type="button" aria-pressed="false" title="The Wadi Accessibility Initiative — colors even Wadi can tell apart">👓 Colorblind mode</button>
+</nav>
+
+<section id="rosters">
+  <h2>Team rosters</h2>
+  <p class="sub">Round value = what it costs to keep that player in the 2026 draft. Dashed orange box = two players competing for the same round, owner has to pick one. ⭐ Gold = a declared 2026 keeper. Click a name to flag interest &mdash; this powers the league buzz reports.</p>
+  <div class="grid" id="teamGrid"></div>
+</section>
+
+<section id="history">
+  <h2>League history</h2>
+  <p class="sub">Seven seasons, seven different champions. Nobody has repeated &mdash; yet.</p>
+
+  <div class="card">
+    <h3>Records worth talking about</h3>
+    <div class="row"><div class="players">Best regular season, worst ending: Mud Dogs went 13-1 in 2024... and finished 4th. Didn't win it.</div></div>
+    <div class="row"><div class="players">Most decorated franchise: Bindgamer3 &mdash; runner-up 2020, champion 2023, runner-up 2024. Three podium finishes, tied for most in league history, but no one else has two runner-ups to go with a title.</div></div>
+    <div class="row"><div class="players">Tied for most podiums: Kweef Farts (champion '19, 3rd '20, 3rd '22) and Return of The Mac (3rd '21, 3rd '23, champion '25) &mdash; 3 apiece, one title each.</div></div>
+    <div class="row"><div class="players">Sneaky champs: THE Vagitarians (2020) and Under The InfluWENTZ (2019) both won titles at 6-7.</div></div>
+    <div class="row"><div class="players">Worst finish: THE Vagitarians, 2-12 in 2024.</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Year-by-year champion / runner-up / third</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <tr style="color:var(--muted);text-align:left;"><th style="padding:4px 8px 4px 0;">Year</th><th style="padding:4px 8px;">Champion</th><th style="padding:4px 8px;">2nd</th><th style="padding:4px 8px;">3rd</th></tr>
+      <tr><td style="padding:4px 8px 4px 0;">2025</td><td style="padding:4px 8px;">Return of The Mac</td><td style="padding:4px 8px;">Mean Machine</td><td style="padding:4px 8px;">Bijan Mustard</td></tr>
+      <tr><td style="padding:4px 8px 4px 0;">2024</td><td style="padding:4px 8px;">Najee Germany (now Drake Draaaake?)</td><td style="padding:4px 8px;">Bindgamer3</td><td style="padding:4px 8px;">Sydney Sweeney's Fat T!ts (now Syd Sweeney's Denim Jeans)</td></tr>
+      <tr><td style="padding:4px 8px 4px 0;">2023</td><td style="padding:4px 8px;">Bindgamer3</td><td style="padding:4px 8px;">Wet Chops (now Syd Sweeney's Denim Jeans)</td><td style="padding:4px 8px;">Return of The Mac</td></tr>
+      <tr><td style="padding:4px 8px 4px 0;">2022</td><td style="padding:4px 8px;">Mud Dogs</td><td style="padding:4px 8px;">Najee Germany (now Drake Draaaake?)</td><td style="padding:4px 8px;">Kweef Farts</td></tr>
+      <tr><td style="padding:4px 8px 4px 0;">2021</td><td style="padding:4px 8px;">G. O. A. T.</td><td style="padding:4px 8px;">THE Vagitarians</td><td style="padding:4px 8px;">Return of The Mac</td></tr>
+      <tr><td style="padding:4px 8px 4px 0;">2020</td><td style="padding:4px 8px;">THE Vagitarians</td><td style="padding:4px 8px;">Bindgamer3</td><td style="padding:4px 8px;">My Dick hERTZ (now Kweef Farts)</td></tr>
+      <tr><td style="padding:4px 8px 4px 0;">2019</td><td style="padding:4px 8px;">Under The InfluWENTZ (now Kweef Farts)</td><td style="padding:4px 8px;">2 Husky 4 Sandusky</td><td style="padding:4px 8px;">Mr. Necksock (now Bijan Mustard)</td></tr>
+    </table>
+    <p class="sub" style="margin:10px 0 0;">Source: ESPN League History &middot; Final Standings, all 7 seasons pulled and verified directly, including 2025.</p>
+  </div>
+
+  <div class="card">
+    <h3>Franchise lineage <span class="badge">10 active</span></h3>
+    <p class="sub" style="margin-bottom:4px;">Current team name up top. The ribbon underneath is the franchise's history &mdash; every name it's played under, with honors earned along the way.</p>
+
+    <div class="ribbon"><div class="lineage"><b>Bijan Mustard</b> &larr; Bench Taylor Swift &larr; Mr. Necksock</div><div class="honors"><span class="honor og">OG &middot; Season 8</span></div></div>
+    <div class="ribbon"><div class="lineage"><b>THE Vagitarians</b> &middot; same name, all 8 seasons</div><div class="honors"><span class="honor og">OG &middot; Season 8</span><span class="honor">🏆 2020 champion</span></div></div>
+    <div class="ribbon"><div class="lineage"><b>Mud Dogs</b> &middot; same name, all 8 seasons</div><div class="honors"><span class="honor og">OG &middot; Season 8</span><span class="honor">🏆 2022 champion</span></div></div>
+    <div class="ribbon"><div class="lineage"><b>G. O. A. T.</b> &middot; same name, all 8 seasons</div><div class="honors"><span class="honor og">OG &middot; Season 8</span><span class="honor">🏆 2021 champion</span></div></div>
+    <div class="ribbon"><div class="lineage"><b>Kweef Farts</b> &larr; Injured Reserve &larr; My Dick hERTZ &larr; Under The InfluWENTZ</div><div class="honors"><span class="honor og">OG &middot; Season 8</span><span class="honor">🏆 2019 champion</span></div></div>
+    <div class="ribbon"><div class="lineage"><b>Drake Draaaake?</b> &larr; Najee Germany &larr; Sutton My Face &larr; Team Balzer</div><div class="honors"><span class="honor og">OG &middot; Season 8</span><span class="honor">🏆 2024 champion</span></div></div>
+    <div class="ribbon"><div class="lineage"><b>Bindgamer3</b> &middot; same name since joining in 2020</div><div class="honors"><span class="honor">Season 7</span><span class="honor">🏆 2023 champion</span></div></div>
+    <div class="ribbon"><div class="lineage"><b>Return of The Mac</b> &middot; same name since joining in 2021</div><div class="honors"><span class="honor">Season 6</span><span class="honor">🏆 2025 champion</span></div></div>
+    <div class="ribbon"><div class="lineage"><b>Syd Sweeney's Denim Jeans</b> &larr; Sydney Sweeney's Fat T!ts &larr; Wet Chops</div><div class="honors"><span class="honor">Season 5</span></div></div>
+    <div class="ribbon"><div class="lineage"><b>Mean Machine</b> &middot; same name since joining in 2024</div><div class="honors"><span class="honor">Season 3 &middot; newest franchise</span></div></div>
+  </div>
+
+  <div class="card">
+    <h3>Career wins by franchise <span class="badge">sorted by total wins</span></h3>
+    <p class="sub" style="margin-bottom:8px;">Every win counts toward the current franchise, no matter what it was named that season. Grade reflects average final standing across a 10-team league (1st = A+, last = F), not weekly record &mdash; pulled and verified directly from ESPN Final Standings, 2019&ndash;2025.</p>
+    <div style="overflow-x:auto;">
+    <table id="history-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+      <tr style="color:var(--muted);text-align:left;">
+        <th style="padding:4px 8px 4px 0;">Franchise</th>
+        <th style="padding:4px 8px;">Record</th>
+        <th style="padding:4px 8px;">Win%</th>
+        <th style="padding:4px 8px;">PPG</th>
+        <th style="padding:4px 8px;">Total pts</th>
+        <th style="padding:4px 8px;">Titles</th>
+        <th style="padding:4px 8px;">Avg finish</th>
+        <th style="padding:4px 8px;" title="Best single-season fantasy point total by any player this franchise has ever drafted">Best Draft Steal</th>
+        <th style="padding:4px 8px;">Grade</th>
+      </tr>
+      <tbody id="history-table-body">
+        <tr><td colspan="9" style="padding:8px 0;color:var(--muted);">Loading records&hellip;</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="sub" style="margin-top:8px;font-size:12px;">Best Draft Steal = the single best fantasy-point season any drafted player has ever put up for that franchise — not career value, not repeated across years.</p>
+  </div>
+
+  <div class="card">
+    <h3>⚰️ Team graveyard</h3>
+    <p class="sub" style="margin-bottom:12px;">Laid to rest &mdash; four franchise slots that didn't make it to 2026. Each one's spot in the league now belongs to a team above.</p>
+    <div class="cemetery">
+      <div class="tombstone">
+        <div class="rip">⚰️ R . I . P .</div>
+        <div class="stone-name">2 Gurleys 1 Kupp<br>CLE CHUNT</div>
+        <div class="stone-line"></div>
+        <div class="stone-wins">22 wins</div>
+        <div class="stone-detail">2019 &ndash; 2023<br>5 seasons</div>
+      </div>
+      <div class="tombstone">
+        <div class="rip">⚰️ R . I . P .</div>
+        <div class="stone-name">Lockett Dahn<br>Prince of Helaire<br>CeeDeez Nutz</div>
+        <div class="stone-line"></div>
+        <div class="stone-wins">19 wins</div>
+        <div class="stone-detail">2019 &ndash; 2021<br>3 seasons</div>
+      </div>
+      <div class="tombstone">
+        <div class="rip">⚰️ R . I . P .</div>
+        <div class="stone-name">2 Husky 4 Sandusky</div>
+        <div class="stone-line"></div>
+        <div class="stone-wins">16 wins</div>
+        <div class="stone-detail">2019 &ndash; 2020<br>2 seasons &middot; '19 runner-up</div>
+      </div>
+      <div class="tombstone">
+        <div class="rip">⚰️ R . I . P .</div>
+        <div class="stone-name">Team Luffey</div>
+        <div class="stone-line"></div>
+        <div class="stone-wins">4 wins</div>
+        <div class="stone-detail">2019 only<br>1 season</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="schedule">
+  <h2>2026 Schedule</h2>
+  <p class="sub">Straight from ESPN &mdash; updates automatically. Once the season kicks off, this page doubles as the WPIAL live scoreboard.</p>
+      <div id="gelly-picks-card" class="card" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <h3 style="margin:0;border-bottom:none;padding-bottom:0;">🔮 The Gelly Line <span style="font-weight:400;font-size:12px;color:var(--muted);">&mdash; Gelly&#39;s calling it</span></h3>
+          <span id="gelly-season-record" class="badge" style="background:none;border:1px solid var(--line);color:var(--muted);">Season record: —</span>
+        </div>
+        <div id="gelly-picks-body"><p class="placeholder">Loading Gelly's picks&hellip;</p></div>
+      </div>
+
+  <div id="schedule-weeks" class="grid" style="margin-top:16px;"><p class="placeholder">Loading schedule&hellip;</p></div>
+
+      <div class="card" style="margin-top:16px;">
+        <h3>Standings</h3>
+        <div id="standings-body"><p class="placeholder">Loading standings&hellip;</p></div>
+      </div>
+</section>
+
+<section id="board" class="active">
+  <h2>The Gelly</h2>
+  <p class="sub">Where the league gets its news &mdash; straight from our completely unbiased, extremely credentialed NFL insider.</p>
+
+  <div class="gelly-strip">
+    <div class="gelly-strip-avatar">🖤💛</div>
+    <div class="gelly-strip-text"><b>Gelly</b> <span class="feed-check">✔</span> <span class="feed-handle">@YinzerMessiah</span> &middot; Self-appointed WPIAL insider. I've done the research. 🖤💛</div>
+  </div>
+
+  <div class="wire-card" id="insider-report-card" style="display:none;">
+    <div class="wire-masthead">
+      <div class="wire-brand">WPIAL Insider Report</div>
+      <div class="wire-tagline">Official League Wire &middot; Wednesday &amp; Sunday Editions</div>
+    </div>
+    <div id="insider-report-body"></div>
+  </div>
+
+  <div class="card" id="live-feed-card" style="display:none;">
+    <div class="thread-tag">📡 Live from the league</div>
+    <div id="live-feed-posts"></div>
+  </div>
+
+  <div class="card">
+    <div class="thread-tag">🧵 BREAKING: Mud Dogs situation &middot; 5 posts</div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T14:12:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">BREAKING 🚨 hearing some real stuff out of the Mud Dogs camp right now. Thread incoming. 🖤💛</div>
+        <div class="tweet-stats"><span>💬 27</span><span>❤️ 84</span><span>👀 1.5K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T14:15:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">2/ Let's start here: Mud Dogs are basically this league's Mike Tomlin. Never a bad season, 55 career wins, most of anybody, ONE ring since 2019. Went 13-1 in 2024 and didn't even make the title game. Regular season champions. That stops being a compliment at some point.</div>
+        <div class="tweet-stats"><span>💬 31</span><span>❤️ 96</span><span>👀 1.8K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T14:20:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">3/ And now I'm hearing the front office isn't happy either. Word on the street is Mud Dogs might be open for business this offseason. Nothing confirmed. But I've done the research and my gut says somebody on that roster is getting shopped.</div>
+        <div class="tweet-stats"><span>💬 19</span><span>❤️ 52</span><span>👀 1.1K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T14:24:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">4/ If you're on Mud Dogs and reading this: no shade, 55 wins is 55 wins, most in the league. But "best regular season team" starts sounding like a participation trophy with extra steps after a while.</div>
+        <div class="tweet-stats"><span>💬 12</span><span>❤️ 38</span><span>👀 780</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T14:27:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">5/ That's what I've got for now. If you know who's actually on the block, League Tips is right there. I will find out one way or another. HERE WE GO 🖤💛</div>
+        <div class="tweet-stats"><span>💬 16</span><span>❤️ 45</span><span>👀 990</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="thread-tag">🧵 BREAKING: The 2022 trade, finally explained &middot; 3 posts</div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T09:03:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">BREAKING 🚨 since apparently nobody actually remembers the details of the 2022 Kweef Farts trade, laying it all out right now. Thread incoming. 🖤💛</div>
+        <div class="tweet-stats"><span>💬 24</span><span>❤️ 88</span><span>👀 1.6K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T09:06:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">2/ Kweef Farts sent Josh Allen (2nd-round value) and David Montgomery (4th-round value) to Sutton My Face &mdash; yes, the same franchise that's now Drake Draaaake? &mdash; for two round-3 value rookies: Breece Hall and Skyy Moore. Looked even on paper in 2022. It was not even.</div>
+        <div class="tweet-stats"><span>💬 31</span><span>❤️ 79</span><span>👀 1.9K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T09:14:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">3/ Breece Hall turned into a legit top-24 back within a year &mdash; he's still on Kweef Farts' roster today, just repriced up to round-2 value since. Skyy Moore never got there and isn't rostered by anyone in this league anymore. Kweef Farts still won the title the very next season anyway so nobody local ever made noise about it. Doesn't mean it wasn't a fleece. Make of that what you will 👀 (League Tips is open if you remember it different)</div>
+        <div class="tweet-stats"><span>💬 26</span><span>❤️ 64</span><span>👀 1.5K</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="thread-tag">🧵 The Worm &middot; 5 posts</div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-15T19:20:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">Can we talk about The Worm for a second? 🪱 Three years running now, this league has a real tradition: finish dead last, you eat a worm. No exceptions. No mercy.</div>
+        <div class="tweet-stats"><span>💬 20</span><span>❤️ 67</span><span>👀 1.2K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-15T19:23:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">2/ Year one: Bench Taylor Swift went 2-12 in 2023. Paid the price. Ate the worm. Set the bar for accountability in this league, honestly.</div>
+        <div class="tweet-stats"><span>💬 8</span><span>❤️ 44</span><span>👀 780</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-15T19:28:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">3/ Year two: THE Vagitarians followed it up with a 2-12 of their own in 2024, one year removed from actually having a championship pedigree. Also ate the worm. Tradition holding strong.</div>
+        <div class="tweet-stats"><span>💬 9</span><span>❤️ 41</span><span>👀 760</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-15T19:32:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">4/ Year three: Drake Draaaake? went 3-11 in 2025. Everyone in this league is just... waiting. Patiently. It's been a while now. The worm isn't getting any fresher and neither is everybody's patience.</div>
+        <div class="tweet-stats"><span>💬 26</span><span>❤️ 58</span><span>👀 1.3K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-15T19:36:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">5/ I've done the research. There is no version of this where Drake Draaaake? gets out of it. Pay the debt. HERE WE GO 🖤💛🪱</div>
+        <div class="tweet-stats"><span>💬 14</span><span>❤️ 49</span><span>👀 910</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="thread-tag">🧵 League history deep dive &middot; 12 posts</div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T15:40:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">Alright since y'all can't get enough of me apparently, VERIFIED insider deep dive dropping right now. Grab a Yuengling. We're going through the whole history of this league. 🖤💛 🧵</div>
+        <div class="tweet-stats"><span>💬 24</span><span>❤️ 112</span><span>👀 2.1K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T15:43:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">2/ 2019: Under The InfluWENTZ wins it at 6-7. Let that sink in. Sneakiest championship in league history and nobody's ever let him live it down since. Iconic start to this league, honestly.</div>
+        <div class="tweet-stats"><span>💬 5</span><span>❤️ 39</span><span>👀 610</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T15:47:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">3/ 2020: THE Vagitarians somehow ALSO win it at 6-7. Two sneaky champs in the first two years this league existed. The bar was on the floor and both of them still had to duck under it.</div>
+        <div class="tweet-stats"><span>💬 6</span><span>❤️ 42</span><span>👀 640</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T15:51:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">4/ 2021: G. O. A. T. goes 11-3 and actually earns it for once. Refreshing, honestly. Wasn't sure this league was capable of a normal championship.</div>
+        <div class="tweet-stats"><span>💬 4</span><span>❤️ 31</span><span>👀 505</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T15:55:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">5/ 2022: Mud Dogs get their ring. Same year I started hearing whispers about a certain trade between Kweef Farts and the franchise now going by Drake Draaaake?. Nobody will confirm what happened in that deal. I've done the research. It's suspicious. Moving on.</div>
+        <div class="tweet-stats"><span>💬 33</span><span>❤️ 88</span><span>👀 1.6K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:00:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">6/ 2023: Bindgamer3 finally breaks through at 12-2. Most decorated resume in the league now &mdash; 3 podiums, 1 title, and TWO runner-ups. The guy just refuses to miss.</div>
+        <div class="tweet-stats"><span>💬 7</span><span>❤️ 51</span><span>👀 700</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:05:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">7/ 2024: Najee Germany (now Drake Draaaake?) (yes, the SAME FRANCHISE that's now Drake Draaaake?, they change their name more than I change my Steelers jersey) wins it. Meanwhile Mud Dogs go 13-1 in the regular season and finish 4TH. Didn't even make the title game. Pirates-in-September behavior, tell me I'm wrong.</div>
+        <div class="tweet-stats"><span>💬 19</span><span>❤️ 76</span><span>👀 1.3K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:10:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">8/ 2025: Return of The Mac takes it down, their first ring, tying Kweef Farts for most all-time podium finishes at 3 apiece. Kweef Farts still holds the tiebreaker on titles though, 2 to 1. Chip on the shoulder there, I'd imagine.</div>
+        <div class="tweet-stats"><span>💬 9</span><span>❤️ 47</span><span>👀 810</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:14:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">9/ Worst finish in league history: THE Vagitarians, 2-12 in 2024, one year after having a championship pedigree. Violent fall from grace and I say that with love.</div>
+        <div class="tweet-stats"><span>💬 11</span><span>❤️ 40</span><span>👀 690</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:19:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">10/ Now the trades. Full breakdown on the Kweef Farts / Drake Draaaake? 2022 situation dropped as its own thread if you want the details. But don't sleep on whatever went down between Syd Sweeney's Denim Jeans and G. O. A. T. a couple years back either. Two front offices hoping everyone forgot.</div>
+        <div class="tweet-stats"><span>💬 28</span><span>❤️ 61</span><span>👀 1.4K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:24:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">11/ And can we talk about the graveyard for a second. FOUR franchises didn't survive to see 2026. 2 Gurleys 1 Kupp / CLE CHUNT racked up 22 career wins and still couldn't find a reason to stick around. Sometimes it's not about the record, it's about the will to keep going.</div>
+        <div class="tweet-stats"><span>💬 6</span><span>❤️ 35</span><span>👀 590</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:30:00-04:00">&middot; Now</span></div>
+        <div class="tweet-text">12/ That's the deep dive. History's in the books, keeper decisions are on the Rosters tab, and if you know something about any of these trades I very much want to hear it in League Tips. HERE WE GO 🖤💛</div>
+        <div class="tweet-stats"><span>💬 15</span><span>❤️ 58</span><span>👀 1.1K</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="thread-tag">🧵 Offseason report &middot; 7 posts</div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:15:00-04:00">&middot; Today</span></div>
+        <div class="tweet-text">OFFSEASON REPORT is here and I did NOT sleep for this. 🖤💛 Sources (my own two eyeballs) went through every keeper decision in the league. Thread below. HERE WE GO 🧵</div>
+        <div class="tweet-stats"><span>💬 18</span><span>❤️ 91</span><span>👀 1.4K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:18:00-04:00">&middot; Today</span></div>
+        <div class="tweet-text">2/ First things first: EVERY team in this league has a Round 1 keeper conflict this year. Every single one. That's just what happens when you draft two guys in the top two rounds. Nobody's special. Everybody's stressed. Beautiful, honestly.</div>
+        <div class="tweet-stats"><span>💬 6</span><span>❤️ 47</span><span>👀 820</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:23:00-04:00">&middot; Today</span></div>
+        <div class="tweet-text">3/ Mean Machine's Round 16 situation isn't a keeper decision, it's a hostage negotiation. FIVE guys — Michael Carter, the Giants D/ST, Harrison Mevis, Devin Singletary, AND Kyle Monangai — all fighting for one measly round value. Whoever's running Mean Machine needs a lifeline, not a keeper sheet.</div>
+        <div class="tweet-stats"><span>💬 14</span><span>❤️ 63</span><span>👀 1.1K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:28:00-04:00">&middot; Today</span></div>
+        <div class="tweet-text">4/ Bindgamer3 sitting there with Puka Nacua AND AJ Brown both at round 1 value and I've done the research: that man simply cannot lose. Most decorated resume in the league and now this too? Unfair, honestly.</div>
+        <div class="tweet-stats"><span>💬 9</span><span>❤️ 38</span><span>👀 690</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:33:00-04:00">&middot; Today</span></div>
+        <div class="tweet-text">5/ Career wins power rankings just dropped on the site and Mud Dogs is #1 all-time (55 wins) despite going 13-1 in 2024 and STILL not winning it. That is the most Pittsburgh sports thing that has ever happened in a fake football league. Felt that one in my soul.</div>
+        <div class="tweet-stats"><span>💬 21</span><span>❤️ 74</span><span>👀 1.2K</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:38:00-04:00">&middot; Today</span></div>
+        <div class="tweet-text">6/ Return of The Mac and Mean Machine both grading out A- on average finish despite way fewer career wins than the OG franchises. Newer teams playing better on average than the vets. Somebody make it make sense.</div>
+        <div class="tweet-stats"><span>💬 8</span><span>❤️ 41</span><span>👀 715</span></div>
+      </div>
+    </div>
+    <div class="tweet threaded">
+      <div class="tweet-col"><div class="tweet-avatar">🖤</div></div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:44:00-04:00">&middot; Today</span></div>
+        <div class="tweet-text">7/ That's the report. Full keeper board and round values up on the Rosters tab if you want to see it yourself. Trade rumors, gossip, whatever you got — drop it in League Tips, I read everything (allegedly). HERE WE GO 🖤💛</div>
+        <div class="tweet-stats"><span>💬 12</span><span>❤️ 58</span><span>👀 980</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="thread-tag">💬 The peanut gallery chimes in &middot; 6 posts</div>
+    <div class="tweet">
+      <div class="tweet-avatar">🤠</div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>2 Husky 4 Sandusky</b> <span class="handle">@2Husky4Sandusky</span> <span class="time" data-ts="2026-07-17T14:35:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
+        <div class="tweet-text">bro really did a 5-part thread about a team that's WON. my Cowboys haven't sniffed a title since before some of these keepers were even drafted and you don't see me typing like this. sit down.</div>
+        <div class="tweet-stats"><span>💬 9</span><span>❤️ 21</span><span>👀 340</span></div>
+      </div>
+    </div>
+    <div class="tweet">
+      <div class="tweet-avatar">😤</div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Team Luffey</b> <span class="handle">@TeamLuffey</span> <span class="time" data-ts="2026-07-17T14:39:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
+        <div class="tweet-text">you typed ALL that for a league where I went 1-13 and NOBODY remembers. couldn't be me. couldn't be me fr fr 💀</div>
+        <div class="tweet-stats"><span>💬 6</span><span>❤️ 14</span><span>👀 260</span></div>
+      </div>
+    </div>
+    <div class="tweet">
+      <div class="tweet-avatar">🧊</div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>CeeDeez Nutz</b> <span class="handle">@CeeDeezNutz</span> <span class="time" data-ts="2026-07-17T14:44:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
+        <div class="tweet-text">I had him his rookie year. That's it. That's the tweet.</div>
+        <div class="tweet-stats"><span>💬 4</span><span>❤️ 22</span><span>👀 410</span></div>
+      </div>
+    </div>
+    <div class="tweet">
+      <div class="tweet-avatar">🐕</div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>CLE CHUNT</b> <span class="handle">@CLEChunt</span> <span class="time" data-ts="2026-07-17T14:52:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
+        <div class="tweet-text">"best regular season team" is still a better resume than half this league's actual banners. stay mad. 🐕</div>
+        <div class="tweet-stats"><span>💬 11</span><span>❤️ 33</span><span>👀 520</span></div>
+      </div>
+    </div>
+    <div class="tweet">
+      <div class="tweet-avatar">😤</div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Team Luffey</b> <span class="handle">@TeamLuffey</span> <span class="time" data-ts="2026-07-17T15:01:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
+        <div class="tweet-text">bet you don't even reply to this. bet. 🫵😭</div>
+        <div class="tweet-stats"><span>💬 3</span><span>❤️ 5</span><span>👀 190</span></div>
+      </div>
+    </div>
+    <div class="tweet">
+      <div class="tweet-avatar">🐕</div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>CLE CHUNT</b> <span class="handle">@CLEChunt</span> <span class="time" data-ts="2026-07-17T15:08:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
+        <div class="tweet-text">hot rookie intel: not sharing it here again. last time I did, half this league copied me and I still finished outside the money. protect your sources, protect your legacy.</div>
+        <div class="tweet-stats"><span>💬 7</span><span>❤️ 18</span><span>👀 310</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="thread-tag muted">Earlier</div>
+    <div class="tweet">
+      <div class="tweet-avatar">🖤</div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-01T11:20:00-04:00">&middot; Wed</span></div>
+        <div class="tweet-text">BREAKING: sources tell me Kweef Farts still isn't over that 2022 trade. I've done the research. You don't just give up a 3rd rounder for nothing. HERE WE GO 🖤💛</div>
+        <div class="tweet-stats"><span>💬 4</span><span>❤️ 38</span><span>👀 610</span></div>
+      </div>
+    </div>
+    <div class="tweet">
+      <div class="tweet-avatar">🖤</div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-01T16:45:00-04:00">&middot; Wed</span></div>
+        <div class="tweet-text">people keep telling me Lamar's good, my brother in christ he is a running back that is BAD at running the ball. Don't @ me I will not be checking the replies</div>
+        <div class="tweet-stats"><span>💬 22</span><span>❤️ 19</span><span>👀 902</span></div>
+      </div>
+    </div>
+    <div class="tweet">
+      <div class="tweet-avatar">🖤</div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-06-28T10:15:00-04:00">&middot; Sun</span></div>
+        <div class="tweet-text">Mud Dogs went 13-1 last year and still didn't win it 😂😂😂 that's some real Pirates-in-September behavior right there. iconic. legendary. tragic.</div>
+        <div class="tweet-stats"><span>💬 7</span><span>❤️ 44</span><span>👀 733</span></div>
+      </div>
+    </div>
+    <div class="tweet">
+      <div class="tweet-avatar">🖤</div>
+      <div class="tweet-body">
+        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-06-28T20:30:00-04:00">&middot; Sun</span></div>
+        <div class="tweet-text">talked to a guy who knows a guy in the Return of The Mac front office. big things coming this week. can't confirm. won't deny. #InsiderInfo #HereWeGo</div>
+        <div class="tweet-stats"><span>💬 11</span><span>❤️ 27</span><span>👀 588</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="placeholder">This feed now pulls live from the league's backend &mdash; anything sent through the tip box goes straight to Gelly, and posts from the Wednesday/Sunday NFL insider reports land here too. No site update needed.</p>
+  </div>
+
+  <p class="sub" style="margin-top:4px;">Got a tip? Tap the 💬 button in the corner any time &mdash; it follows you down the page.</p>
+</section>
+
+<button id="tipFab" class="tip-fab" type="button" title="Got a tip?" aria-label="Submit a tip">💬</button>
+
+<div id="tipModal" class="modal-overlay">
+  <div class="modal-card">
+    <button id="tipModalClose" class="modal-close" type="button" aria-label="Close">&times;</button>
+    <h3>You've got Gelly's ear. 👀</h3>
+    <p class="sub" style="margin:0 0 8px;">Every league has a guy who knows a guy. Now you know Gelly. Send it &mdash; he'll have a take within minutes.</p>
+    <ul class="tip-ideas">
+      <li>Got specifics on an old trade, blowup, or roster move &mdash; round values, player names, the stuff nobody wrote down &mdash; that this league should know about?</li>
+    </ul>
+    <textarea id="tipText" placeholder="Type your tip here..."></textarea>
+    <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+      <button id="tipSubmit" type="button" style="cursor:pointer; border:none; border-radius:8px; padding:8px 16px; font-weight:600; background:var(--accent); color:#1a0e04;">Submit tip</button>
+      <span id="tipStatus" class="sub" style="margin:0;"></span>
+    </div>
+  </div>
+</div>
+
+<div id="cbGag" role="dialog" aria-label="LOL, loser">
+  <div class="cb-gag-inner">
+    <!-- Lloyd &amp; Harry, tux edition. Big Gulps huh? Alright! Welp, see ya later. -->
+    <svg viewBox="0 0 340 210" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <!-- LLOYD: orange tux + top hat -->
+      <g>
+        <!-- cane -->
+        <line x1="117" y1="148" x2="136" y2="205" stroke="#e6edf3" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="117" cy="148" r="6" fill="#f2c9a0"/>
+        <!-- body -->
+        <path d="M55 208 L62 138 Q88 118 114 138 L121 208 Z" fill="#ff7a1f" stroke="#b34f08" stroke-width="2"/>
+        <!-- ruffled shirt -->
+        <path d="M80 138 L88 132 L96 138 L94 200 L82 200 Z" fill="#f6f8fa" stroke="#c8ccd2" stroke-width="1.5"/>
+        <circle cx="88" cy="150" r="3" fill="#e2e5ea"/><circle cx="88" cy="162" r="3" fill="#e2e5ea"/><circle cx="88" cy="174" r="3" fill="#e2e5ea"/>
+        <!-- bow tie -->
+        <path d="M78 136 L88 141 L98 136 L98 146 L88 141 L78 146 Z" fill="#e05e00"/>
+        <!-- head -->
+        <circle cx="88" cy="103" r="27" fill="#f2c9a0"/>
+        <!-- bowl cut fringe -->
+        <path d="M61 100 Q63 78 88 78 Q113 78 115 100 L109 100 Q107 88 88 88 Q69 88 67 100 Z" fill="#3b2a1a"/>
+        <path d="M62 98 Q60 108 64 116 L70 104 Z" fill="#3b2a1a"/>
+        <path d="M114 98 Q116 108 112 116 L106 104 Z" fill="#3b2a1a"/>
+        <!-- top hat -->
+        <rect x="66" y="46" width="44" height="34" rx="3" fill="#ff7a1f" stroke="#b34f08" stroke-width="2"/>
+        <rect x="66" y="70" width="44" height="7" fill="#b34f08"/>
+        <rect x="56" y="78" width="64" height="6" rx="3" fill="#ff7a1f" stroke="#b34f08" stroke-width="2"/>
+        <!-- face: manic grin, chipped tooth -->
+        <circle cx="79" cy="102" r="3.2" fill="#1c2333"/><circle cx="97" cy="102" r="3.2" fill="#1c2333"/>
+        <path d="M74 112 Q88 126 102 112" fill="#7a2f14" stroke="#5d2410" stroke-width="1.5"/>
+        <path d="M78 113.5 Q88 119 98 113.5 L97 116 Q88 121 79 116 Z" fill="#ffffff"/>
+        <rect x="85" y="113" width="5" height="4" fill="#7a2f14"/>
+      </g>
+      <!-- HARRY: powder blue tux + top hat -->
+      <g>
+        <!-- cane -->
+        <line x1="223" y1="148" x2="204" y2="205" stroke="#e6edf3" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="223" cy="148" r="6" fill="#f2c9a0"/>
+        <!-- body -->
+        <path d="M219 208 L226 138 Q252 118 278 138 L285 208 Z" fill="#9ecbec" stroke="#5b93bd" stroke-width="2"/>
+        <!-- ruffled shirt -->
+        <path d="M244 138 L252 132 L260 138 L258 200 L246 200 Z" fill="#f6f8fa" stroke="#c8ccd2" stroke-width="1.5"/>
+        <circle cx="252" cy="150" r="3" fill="#e2e5ea"/><circle cx="252" cy="162" r="3" fill="#e2e5ea"/><circle cx="252" cy="174" r="3" fill="#e2e5ea"/>
+        <!-- bow tie -->
+        <path d="M242 136 L252 141 L262 136 L262 146 L252 141 L242 146 Z" fill="#5b93bd"/>
+        <!-- shaggy blond hair -->
+        <path d="M222 108 Q218 78 252 74 Q286 78 282 108 Q284 118 278 124 L274 110 Q276 92 252 88 Q228 92 230 110 L226 124 Q220 118 222 108 Z" fill="#c9a24b"/>
+        <!-- head -->
+        <circle cx="252" cy="105" r="26" fill="#f2c9a0"/>
+        <path d="M228 100 Q232 86 252 86 Q272 86 276 100 L270 98 Q266 92 252 92 Q238 92 234 98 Z" fill="#c9a24b"/>
+        <path d="M224 102 Q220 114 226 122 L231 106 Z" fill="#c9a24b"/>
+        <path d="M280 102 Q284 114 278 122 L273 106 Z" fill="#c9a24b"/>
+        <!-- top hat -->
+        <rect x="230" y="42" width="44" height="34" rx="3" fill="#9ecbec" stroke="#5b93bd" stroke-width="2"/>
+        <rect x="230" y="66" width="44" height="7" fill="#5b93bd"/>
+        <rect x="220" y="74" width="64" height="6" rx="3" fill="#9ecbec" stroke="#5b93bd" stroke-width="2"/>
+        <!-- face: mouth-open goofy laugh -->
+        <circle cx="243" cy="103" r="3.2" fill="#1c2333"/><circle cx="261" cy="103" r="3.2" fill="#1c2333"/>
+        <ellipse cx="252" cy="117" rx="8" ry="6.5" fill="#7a2f14"/>
+        <path d="M244 114.5 Q252 111 260 114.5 L260 117 L244 117 Z" fill="#ffffff"/>
+      </g>
+    </svg>
+    <div class="cb-gag-title">LOL, loser</div>
+    <div class="cb-gag-skip">(tap anywhere to skip the shame)</div>
+  </div>
+</div>
+
+<footer>WPIAL All Stars &middot; powered by Wadi Solutions</footer>
+
+<script>
+// ---- Roster data ----
+// Structured (not flat strings) on purpose: this is the shared source of
+// truth for both the Rosters tab render below AND the player-name search
+// index (PLAYER_INDEX) that any future news-matching / AI feature reads
+// from. manager is left null for now — fill in real names or keep it null
+// to have Gelly refer to franchise names only.
+const ROSTERS = {
+  'Mud Dogs': {
+    manager: null,
+    seasons: 8,
+    rounds: [
+      { round: 1, players: [{ pos: 'RB', name: 'Jonathan Taylor' }, { pos: 'WR', name: 'Nico Collins' }] },
+      { round: 2, players: [{ pos: 'QB', name: 'Lamar Jackson' }] },
+      { round: 3, players: [{ pos: 'RB', name: 'Tony Pollard' }] },
+      { round: 4, players: [] },
+      { round: 5, players: [] },
+      { round: 6, players: [{ pos: 'WR', name: 'Matthew Golden' }, { pos: 'WR', name: 'Deebo Samuel' }] },
+      { round: 7, players: [{ pos: 'WR', name: 'George Pickens' }] },
+      { round: 8, players: [] },
+      { round: 9, players: [{ pos: 'RB', name: 'Quinshon Judkins' }, { pos: 'QB', name: 'Dak Prescott' }] },
+      { round: 10, players: [{ pos: 'RB', name: 'Blake Corum' }] },
+      { round: 11, players: [{ pos: 'DEF', name: 'Philadelphia Eagles Defense' }] },
+      { round: 12, players: [] },
+      { round: 13, players: [] },
+      { round: 14, players: [{ pos: 'PK', name: 'Cam Little' }] },
+      { round: 15, players: [] },
+      { round: 16, players: [{ pos: 'RB', name: 'Bam Knight' }, { pos: 'TE', name: 'Theo Johnson' }, { pos: 'WR', name: 'Tank Dell' }, { pos: 'TE', name: 'Jake Tonges' }] },
+    ]
+  },
+  'Syd Sweeney\'s Denim Jeans': {
+    manager: null,
+    seasons: 5,
+    rounds: [
+      { round: 1, players: [{ pos: 'RB', name: 'Jahmyr Gibbs' }, { pos: 'RB', name: 'TreVeyon Henderson' }] },
+      { round: 2, players: [{ pos: 'RB', name: 'Chuba Hubbard' }] },
+      { round: 3, players: [{ pos: 'WR', name: 'CeeDee Lamb' }] },
+      { round: 4, players: [{ pos: 'WR', name: 'Emeka Egbuka' }] },
+      { round: 5, players: [{ pos: 'QB', name: 'Jalen Hurts' }, { pos: 'WR', name: 'Ricky Pearsall' }] },
+      { round: 6, players: [{ pos: 'WR', name: 'Michael Pittman Jr.' }] },
+      { round: 7, players: [{ pos: 'WR', name: 'Garrett Wilson' }] },
+      { round: 8, players: [{ pos: 'TE', name: 'Harold Fannin Jr.' }] },
+      { round: 9, players: [{ pos: 'WR', name: 'Jayden Reed' }] },
+      { round: 10, players: [{ pos: 'WR', name: 'Quentin Johnston' }] },
+      { round: 11, players: [{ pos: 'WR', name: 'Brian Thomas Jr.' }, { pos: 'WR', name: 'Jakobi Meyers' }] },
+      { round: 12, players: [{ pos: 'RB', name: 'Woody Marks' }] },
+      { round: 13, players: [] },
+      { round: 14, players: [] },
+      { round: 15, players: [] },
+      { round: 16, players: [{ pos: 'PK', name: 'Will Reichard' }, { pos: 'DEF', name: 'Cleveland Browns Defense' }] },
+    ]
+  },
+  'Bindgamer3': {
+    manager: null,
+    seasons: 7,
+    rounds: [
+      { round: 1, players: [{ pos: 'WR', name: 'Puka Nacua' }, { pos: 'WR', name: 'A.J. Brown' }] },
+      { round: 2, players: [{ pos: 'RB', name: 'D\'Andre Swift' }] },
+      { round: 3, players: [{ pos: 'WR', name: 'DJ Moore' }] },
+      { round: 4, players: [{ pos: 'TE', name: 'Trey McBride' }] },
+      { round: 5, players: [{ pos: 'WR', name: 'DK Metcalf' }, { pos: 'WR', name: 'Xavier Worthy' }] },
+      { round: 6, players: [{ pos: 'QB', name: 'Patrick Mahomes' }] },
+      { round: 7, players: [{ pos: 'RB', name: 'James Conner' }, { pos: 'QB', name: 'Caleb Williams' }] },
+      { round: 8, players: [{ pos: 'TE', name: 'Brock Bowers' }] },
+      { round: 9, players: [{ pos: 'RB', name: 'Javonte Williams' }] },
+      { round: 10, players: [] },
+      { round: 11, players: [{ pos: 'RB', name: 'Kenny Gainwell' }] },
+      { round: 12, players: [] },
+      { round: 13, players: [{ pos: 'PK', name: 'Cameron Dicker' }, { pos: 'QB', name: 'C.J. Stroud' }] },
+      { round: 14, players: [] },
+      { round: 15, players: [{ pos: 'TE', name: 'Oronde Gadsden' }] },
+      { round: 16, players: [{ pos: 'WR', name: 'Tre Tucker' }, { pos: 'WR', name: 'Josh Reynolds' }, { pos: 'DEF', name: 'New Orleans Saints Defense' }] },
+    ]
+  },
+  'Return of The Mac': {
+    manager: null,
+    seasons: 6,
+    rounds: [
+      { round: 1, players: [{ pos: 'RB', name: 'De\'Von Achane' }, { pos: 'WR', name: 'Tyreek Hill' }] },
+      { round: 2, players: [{ pos: 'WR', name: 'Ja\'Marr Chase' }] },
+      { round: 3, players: [] },
+      { round: 4, players: [{ pos: 'WR', name: 'Zay Flowers' }, { pos: 'TE', name: 'George Kittle' }] },
+      { round: 5, players: [{ pos: 'WR', name: 'Travis Hunter' }] },
+      { round: 6, players: [{ pos: 'RB', name: 'James Cook III' }] },
+      { round: 7, players: [{ pos: 'RB', name: 'Jaylen Warren' }] },
+      { round: 8, players: [{ pos: 'WR', name: 'Jaxon Smith-Njigba' }, { pos: 'WR', name: 'Alec Pierce' }] },
+      { round: 9, players: [{ pos: 'RB', name: 'Chase Brown' }] },
+      { round: 10, players: [{ pos: 'RB', name: 'Zach Charbonnet' }] },
+      { round: 11, players: [{ pos: 'RB', name: 'Bhayshul Tuten' }] },
+      { round: 12, players: [{ pos: 'QB', name: 'Drake Maye' }] },
+      { round: 13, players: [] },
+      { round: 14, players: [{ pos: 'DEF', name: 'Houston Texans Defense' }] },
+      { round: 15, players: [] },
+      { round: 16, players: [{ pos: 'PK', name: 'Andy Borregales' }, { pos: 'TE', name: 'Taysom Hill' }, { pos: 'TE', name: 'AJ Barner' }, { pos: 'TE', name: 'Michael Mayer' }] },
+    ]
+  },
+  'Drake Draaaake?': {
+    manager: null,
+    seasons: 8,
+    rounds: [
+      { round: 1, players: [{ pos: 'RB', name: 'Kyren Williams' }, { pos: 'RB', name: 'Josh Jacobs' }] },
+      { round: 2, players: [{ pos: 'QB', name: 'Josh Allen' }] },
+      { round: 3, players: [{ pos: 'WR', name: 'Tetairoa McMillan' }] },
+      { round: 4, players: [{ pos: 'WR', name: 'Drake London' }] },
+      { round: 5, players: [{ pos: 'WR', name: 'Rome Odunze' }] },
+      { round: 6, players: [] },
+      { round: 7, players: [{ pos: 'RB', name: 'Joe Mixon' }] },
+      { round: 8, players: [{ pos: 'WR', name: 'Jauan Jennings' }, { pos: 'RB', name: 'Rhamondre Stevenson' }] },
+      { round: 9, players: [{ pos: 'TE', name: 'Tucker Kraft' }, { pos: 'RB', name: 'Rico Dowdle' }] },
+      { round: 10, players: [{ pos: 'DEF', name: 'Denver Broncos Defense' }] },
+      { round: 11, players: [{ pos: 'WR', name: 'Brandon Aiyuk' }] },
+      { round: 12, players: [{ pos: 'PK', name: 'Chris Boswell' }, { pos: 'WR', name: 'Luther Burden III' }] },
+      { round: 13, players: [{ pos: 'RB', name: 'Chris Rodriguez Jr.' }] },
+      { round: 14, players: [] },
+      { round: 15, players: [{ pos: 'RB', name: 'Dylan Sampson' }] },
+      { round: 16, players: [{ pos: 'TE', name: 'Dalton Schultz' }, { pos: 'RB', name: 'Emanuel Wilson' }] },
+    ]
+  },
+  'Kweef Farts': {
+    manager: null,
+    seasons: 8,
+    rounds: [
+      { round: 1, players: [{ pos: 'RB', name: 'Christian McCaffrey' }, { pos: 'WR', name: 'Terry McLaurin' }] },
+      { round: 2, players: [{ pos: 'RB', name: 'Breece Hall' }] },
+      { round: 3, players: [{ pos: 'WR', name: 'Tee Higgins' }] },
+      { round: 4, players: [] },
+      { round: 5, players: [] },
+      { round: 6, players: [{ pos: 'TE', name: 'Travis Kelce' }, { pos: 'WR', name: 'Jordan Addison' }] },
+      { round: 7, players: [{ pos: 'RB', name: 'Jacory Croskey-Merritt' }] },
+      { round: 8, players: [] },
+      { round: 9, players: [{ pos: 'TE', name: 'Tyler Warren' }] },
+      { round: 10, players: [{ pos: 'RB', name: 'J.K. Dobbins' }] },
+      { round: 11, players: [{ pos: 'WR', name: 'Chris Godwin Jr.' }, { pos: 'WR', name: 'Wan\'Dale Robinson' }] },
+      { round: 12, players: [{ pos: 'QB', name: 'Bo Nix' }, { pos: 'QB', name: 'Jared Goff' }] },
+      { round: 13, players: [] },
+      { round: 14, players: [{ pos: 'DEF', name: 'Detroit Lions Defense' }] },
+      { round: 15, players: [{ pos: 'WR', name: 'Jalen McMillan' }] },
+      { round: 16, players: [{ pos: 'DEF', name: 'New England Patriots Defense' }, { pos: 'RB', name: 'Devin Neal' }, { pos: 'PK', name: 'Eddy Pineiro' }] },
+    ]
+  },
+  'G. O. A. T.': {
+    manager: null,
+    seasons: 8,
+    rounds: [
+      { round: 1, players: [{ pos: 'RB', name: 'Derrick Henry' }, { pos: 'WR', name: 'Malik Nabers' }] },
+      { round: 2, players: [{ pos: 'RB', name: 'Alvin Kamara' }] },
+      { round: 3, players: [] },
+      { round: 4, players: [{ pos: 'WR', name: 'Rashee Rice' }] },
+      { round: 5, players: [{ pos: 'RB', name: 'Kenneth Walker III' }] },
+      { round: 6, players: [{ pos: 'WR', name: 'Amon-Ra St. Brown' }] },
+      { round: 7, players: [{ pos: 'QB', name: 'Baker Mayfield' }] },
+      { round: 8, players: [{ pos: 'RB', name: 'Aaron Jones Sr.' }] },
+      { round: 9, players: [{ pos: 'TE', name: 'Brenton Strange' }] },
+      { round: 10, players: [{ pos: 'DEF', name: 'Pittsburgh Steelers Defense' }] },
+      { round: 11, players: [] },
+      { round: 12, players: [{ pos: 'TE', name: 'Dallas Goedert' }] },
+      { round: 13, players: [{ pos: 'TE', name: 'Sam LaPorta' }, { pos: 'WR', name: 'Jayden Higgins' }] },
+      { round: 14, players: [] },
+      { round: 15, players: [] },
+      { round: 16, players: [{ pos: 'QB', name: 'Daniel Jones' }, { pos: 'WR', name: 'Troy Franklin' }, { pos: 'PK', name: 'Jason Myers' }, { pos: 'DEF', name: 'Seattle Seahawks Defense' }, { pos: 'WR', name: 'Kayshon Boutte' }, { pos: 'QB', name: 'Riley Leonard' }] },
+    ]
+  },
+  'Mean Machine': {
+    manager: null,
+    seasons: 3,
+    rounds: [
+      { round: 1, players: [{ pos: 'RB', name: 'Saquon Barkley' }, { pos: 'RB', name: 'Omarion Hampton' }] },
+      { round: 2, players: [{ pos: 'WR', name: 'Davante Adams' }] },
+      { round: 3, players: [{ pos: 'WR', name: 'DeVonta Smith' }] },
+      { round: 4, players: [] },
+      { round: 5, players: [] },
+      { round: 6, players: [] },
+      { round: 7, players: [{ pos: 'RB', name: 'Cam Skattebo' }] },
+      { round: 8, players: [{ pos: 'TE', name: 'Colston Loveland' }, { pos: 'WR', name: 'Courtland Sutton' }] },
+      { round: 9, players: [{ pos: 'WR', name: 'Jameson Williams' }, { pos: 'RB', name: 'Kyle Monangai' }] },
+      { round: 10, players: [{ pos: 'QB', name: 'Justin Herbert' }, { pos: 'QB', name: 'Brock Purdy' }] },
+      { round: 11, players: [{ pos: 'QB', name: 'Jayden Daniels' }] },
+      { round: 12, players: [] },
+      { round: 13, players: [] },
+      { round: 14, players: [{ pos: 'DEF', name: 'Los Angeles Rams Defense' }] },
+      { round: 15, players: [{ pos: 'WR', name: 'Khalil Shakir' }, { pos: 'TE', name: 'Hunter Henry' }] },
+      { round: 16, players: [{ pos: 'RB', name: 'Michael Carter' }, { pos: 'DEF', name: 'New York Giants Defense' }, { pos: 'PK', name: 'Harrison Mevis' }, { pos: 'RB', name: 'Devin Singletary' }] },
+    ]
+  },
+  'Bijan Mustard': {
+    manager: null,
+    seasons: 8,
+    rounds: [
+      { round: 1, players: [{ pos: 'RB', name: 'Bijan Robinson' }, { pos: 'RB', name: 'Tyrone Tracy Jr.' }] },
+      { round: 2, players: [{ pos: 'WR', name: 'Mike Evans' }] },
+      { round: 3, players: [{ pos: 'RB', name: 'Travis Etienne Jr.' }, { pos: 'RB', name: 'RJ Harvey' }] },
+      { round: 4, players: [{ pos: 'WR', name: 'Stefon Diggs' }] },
+      { round: 5, players: [{ pos: 'WR', name: 'Justin Jefferson' }] },
+      { round: 6, players: [] },
+      { round: 7, players: [{ pos: 'WR', name: 'Ladd McConkey' }] },
+      { round: 8, players: [] },
+      { round: 9, players: [{ pos: 'QB', name: 'Jaxson Dart' }] },
+      { round: 10, players: [{ pos: 'RB', name: 'Jordan Mason' }, { pos: 'WR', name: 'Michael Wilson' }] },
+      { round: 11, players: [] },
+      { round: 12, players: [{ pos: 'TE', name: 'Dalton Kincaid' }] },
+      { round: 13, players: [{ pos: 'PK', name: 'Brandon Aubrey' }] },
+      { round: 14, players: [] },
+      { round: 15, players: [{ pos: 'QB', name: 'Sam Darnold' }] },
+      { round: 16, players: [{ pos: 'TE', name: 'Darren Waller' }, { pos: 'DEF', name: 'Chicago Bears Defense' }] },
+    ]
+  },
+  'THE Vagitarians': {
+    manager: null,
+    seasons: 8,
+    rounds: [
+      { round: 1, players: [{ pos: 'RB', name: 'Ashton Jeanty' }, { pos: 'WR', name: 'Marvin Harrison Jr.' }] },
+      { round: 2, players: [{ pos: 'RB', name: 'Bucky Irving' }] },
+      { round: 3, players: [{ pos: 'RB', name: 'David Montgomery' }] },
+      { round: 4, players: [{ pos: 'WR', name: 'Jaylen Waddle' }] },
+      { round: 5, players: [{ pos: 'WR', name: 'Chris Olave' }] },
+      { round: 6, players: [{ pos: 'WR', name: 'Jerry Jeudy' }] },
+      { round: 7, players: [{ pos: 'WR', name: 'Christian Watson' }] },
+      { round: 8, players: [{ pos: 'QB', name: 'Joe Burrow' }] },
+      { round: 9, players: [{ pos: 'TE', name: 'Kyle Pitts Sr.' }] },
+      { round: 10, players: [] },
+      { round: 11, players: [{ pos: 'QB', name: 'Matthew Stafford' }] },
+      { round: 12, players: [{ pos: 'TE', name: 'Jake Ferguson' }] },
+      { round: 13, players: [] },
+      { round: 14, players: [{ pos: 'PK', name: 'Jake Bates' }] },
+      { round: 15, players: [] },
+      { round: 16, players: [{ pos: 'RB', name: 'Kareem Hunt' }, { pos: 'DEF', name: 'Jacksonville Jaguars Defense' }, { pos: 'WR', name: 'Chimere Dike' }] },
+    ]
+  },
+};
+
+// Strips punctuation/suffixes so "D. Montgomery", "David Montgomery", and
+// "David Montgomery Jr." all normalize to something matchable.
+function normalizePlayerName(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[.,]/g, '')
+    .replace(/\b(jr|sr|ii|iii|iv)\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Flat search index: normalized player name -> every roster slot that name
+// currently occupies. This is what a future news-matching step reads —
+// "is this player rostered right now, and by whom" is one lookup, not a
+// scan through ten teams. Rebuilding this from ROSTERS on every load also
+// means a drop/trade (a ROSTERS edit) automatically falls out of the index
+// with no separate cleanup step.
+const PLAYER_INDEX = {};
+Object.entries(ROSTERS).forEach(([team, info]) => {
+  info.rounds.forEach(r => {
+    r.players.forEach(p => {
+      const key = normalizePlayerName(p.name);
+      if (!PLAYER_INDEX[key]) PLAYER_INDEX[key] = [];
+      PLAYER_INDEX[key].push({ team, round: r.round, pos: p.pos, name: p.name });
+    });
+  });
+});
+
+var TEAM_LOGOS = {
+  'Bijan Mustard': `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#E8A93C"/><rect x="38" y="34" width="24" height="42" rx="8" fill="#FFF8E1"/><rect x="43" y="20" width="14" height="16" rx="3" fill="#7A3B12"/><rect x="47" y="12" width="6" height="10" rx="2" fill="#7A3B12"/><circle cx="45" cy="58" r="3" fill="#333"/><circle cx="55" cy="58" r="3" fill="#333"/><path d="M43 66 Q50 72 57 66" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`,
+  'THE Vagitarians': `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#3E9F5C"/><polygon points="30,42 70,42 50,78" fill="#B23A2E"/><circle cx="50" cy="46" r="22" fill="#8FE07A"/><path d="M32 40 Q50 20 68 40" fill="#5FC94A"/><circle cx="43" cy="48" r="3" fill="#1B3B12"/><circle cx="57" cy="48" r="3" fill="#1B3B12"/><path d="M42 56 Q50 62 58 56" stroke="#1B3B12" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`,
+  'Mud Dogs': `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#7A5230"/><ellipse cx="28" cy="46" rx="10" ry="16" fill="#5C3A1E"/><ellipse cx="72" cy="46" rx="10" ry="16" fill="#5C3A1E"/><circle cx="50" cy="52" r="26" fill="#D6A868"/><ellipse cx="50" cy="60" rx="12" ry="8" fill="#F2E2C4"/><circle cx="41" cy="46" r="3.5" fill="#1a1a1a"/><circle cx="59" cy="46" r="3.5" fill="#1a1a1a"/><circle cx="50" cy="58" r="3" fill="#1a1a1a"/><ellipse cx="35" cy="64" rx="6" ry="4" fill="#4d3319" opacity="0.6"/></svg>`,
+  'G. O. A. T.': `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#C9A24B"/><path d="M34 30 Q28 14 40 20" stroke="#EDEDED" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M66 30 Q72 14 60 20" stroke="#EDEDED" stroke-width="7" fill="none" stroke-linecap="round"/><ellipse cx="50" cy="52" rx="24" ry="22" fill="#F3EEDD"/><rect x="34" y="46" width="32" height="9" rx="4" fill="#222"/><path d="M50 60 L46 68 L54 68 Z" fill="#EEE"/><path d="M42 76 L58 76 L54 84 L46 84 Z" fill="#DDD"/></svg>`,
+  'Kweef Farts': `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#9FB8C7"/><ellipse cx="42" cy="52" rx="18" ry="14" fill="#F2F7FA"/><ellipse cx="60" cy="48" rx="14" ry="12" fill="#F2F7FA"/><ellipse cx="52" cy="60" rx="20" ry="12" fill="#F2F7FA"/><path d="M22 50 Q14 50 16 58" stroke="#6E8B9A" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M80 46 Q90 44 88 54" stroke="#6E8B9A" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="44" cy="54" r="3" fill="#333"/><circle cx="58" cy="54" r="3" fill="#333"/><path d="M46 62 Q52 66 58 62" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+  'Drake Draaaake?': `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#F4C430"/><circle cx="48" cy="48" r="26" fill="#FFDE59"/><path d="M66 52 Q84 54 82 62 Q78 66 64 60 Z" fill="#E8862E"/><rect x="30" y="40" width="34" height="9" rx="4" fill="#222"/><path d="M32 26 Q42 16 52 24" fill="#FFDE59"/></svg>`,
+  'Bindgamer3': `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#4C4C6D"/><rect x="20" y="40" width="60" height="30" rx="15" fill="#E4E4EC"/><rect x="30" y="52" width="8" height="6" fill="#333"/><rect x="32" y="50" width="4" height="10" fill="#333"/><circle cx="66" cy="50" r="4" fill="#D64545"/><circle cx="72" cy="56" r="4" fill="#3E8ED0"/><circle cx="42" cy="47" r="2.5" fill="#111"/><circle cx="58" cy="47" r="2.5" fill="#111"/></svg>`,
+  'Return of The Mac': `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#2E5C8A"/><path d="M50 18 L76 28 L76 52 Q76 74 50 84 Q24 74 24 52 L24 28 Z" fill="#EAF1F8"/><path d="M36 54 Q50 34 64 54 Q56 50 50 58 Q44 50 36 54 Z" fill="#2E5C8A"/><polygon points="50,60 53,67 61,67 54,71 57,78 50,73 43,78 46,71 39,67 47,67" fill="#F4C430"/></svg>`,
+  "Syd Sweeney's Denim Jeans": `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#3B5F8A"/><rect x="30" y="24" width="40" height="54" rx="6" fill="#5B84B5"/><path d="M38 40 Q50 46 62 40" stroke="#28405E" stroke-width="2.5" fill="none"/><circle cx="50" cy="34" r="2.5" fill="#D9C24A"/><rect x="38" y="52" width="24" height="18" rx="3" fill="#4A729E" stroke="#28405E" stroke-width="1.5"/></svg>`,
+  'Mean Machine': `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#5A5A5A"/><rect x="30" y="34" width="40" height="36" rx="8" fill="#CFCFCF"/><rect x="46" y="18" width="8" height="14" fill="#8A8A8A"/><circle cx="50" cy="18" r="4" fill="#E63946"/><rect x="36" y="44" width="10" height="10" rx="2" fill="#2EC4F5"/><rect x="54" y="44" width="10" height="10" rx="2" fill="#2EC4F5"/><rect x="38" y="60" width="24" height="5" rx="2" fill="#8A8A8A"/><rect x="38" y="52" width="24" height="4" rx="2" fill="#8A8A8A"/></svg>`
+};
+// Rename alias: ESPN/backend may still send the old name during the transition.
+function teamLogoHTML(name) {
+  var svg = TEAM_LOGOS[String(name || '').trim()];
+  return svg ? '<span class="team-logo-badge">' + svg + '</span>' : '';
+}
+
+const grid = document.getElementById('teamGrid');
+Object.entries(ROSTERS).forEach(([team, info]) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  const h3 = document.createElement('h3');
+  h3.style.display = 'flex';
+  h3.style.alignItems = 'center';
+  h3.style.justifyContent = 'space-between';
+  const logoSpan = document.createElement('span');
+  logoSpan.className = 'team-logo-badge';
+  logoSpan.innerHTML = TEAM_LOGOS[team] || '';
+  h3.appendChild(logoSpan);
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'team-name';
+  nameSpan.textContent = team;
+  h3.appendChild(nameSpan);
+  const seasonBadge = document.createElement('span');
+  seasonBadge.className = 'badge';
+  seasonBadge.style.marginLeft = '0';
+  seasonBadge.textContent = 'Season ' + info.seasons;
+  h3.appendChild(seasonBadge);
+  card.appendChild(h3);
+  info.rounds.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const rnd = document.createElement('div');
+    rnd.className = 'rnd';
+    rnd.textContent = 'R' + r.round;
+    row.appendChild(rnd);
+    const wrap = document.createElement('div');
+    if (!r.players.length) {
+      wrap.className = 'players';
+      const e = document.createElement('span');
+      e.className = 'empty';
+      e.textContent = 'open';
+      wrap.appendChild(e);
+    } else {
+      wrap.className = 'players' + (r.players.length > 1 ? ' conflict' : '');
+      r.players.forEach(pl => {
+        const label = pl.pos + ' - ' + pl.name;
+        const span = document.createElement('span');
+        span.className = 'player';
+        span.textContent = label;
+        span.onclick = () => {
+          span.classList.toggle('pinged');
+          const key = 'wpial_interest_' + team + '_' + label;
+          const count = (parseInt(localStorage.getItem(key) || '0', 10)) + (span.classList.contains('pinged') ? 1 : -1);
+          localStorage.setItem(key, Math.max(0, count));
+          if (span.classList.contains('pinged')) {
+            fetch(WEB_APP_URL, { method: 'POST', body: new URLSearchParams({ action: 'interest', team: team, player:label}) }).catch(() => {});
+          }
+        };
+        wrap.appendChild(span);
+      });
+    }
+    row.appendChild(wrap);
+    card.appendChild(row);
+  });
+  grid.appendChild(card);
+});
+
+document.querySelectorAll('nav button[data-tab]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('nav button[data-tab]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  };
+});
+
+// ---- Live backend (Google Apps Script Web App) ----
+// Serves approved Feed Posts + accepts League Tips submissions.
+// Only ever touches the "Feed Posts" and "Tips" tabs of the keeper sheet.
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxX-UpCAd7oeWug1KcnMZrSnMJyVuob_qHtSv0z1C7im7MpUMgHYMOtdvOKl98VXy37eA/exec';
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+// Lets Gelly cite a source URL in a post and have it actually be clickable
+// instead of sitting there as dead text.
+// Escapes a value for safe use inside a double-quoted HTML attribute.
+// escapeHtml() below is only safe for text-node content (it doesn't touch
+// quote characters, since a text node never needs that) - reusing it for an
+// href="..." attribute was the bug: a URL containing a raw " could close
+// the attribute early and let an attacker inject a new one (e.g.
+// onmouseover=...) that runs on hover. This one covers the attribute
+// context specifically.
+function escapeAttr(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Turns any bare http(s) link in Gelly's post text into a clickable,
+// new-tab anchor - and only http(s) links; nothing else ever becomes a
+// link. Splits the RAW string around URL matches (str.split with a
+// capturing group keeps the matches in the output) so each piece can be
+// escaped for the context it actually lands in: the URL goes through
+// escapeAttr() for the href value and escapeHtml() for the visible text,
+// everything else goes through escapeHtml() as plain text.
+function linkify(str) {
+  const raw = str == null ? '' : String(str);
+  const parts = raw.split(/(https?:\/\/[^\s<]+)/g);
+  return parts.map(function (part, i) {
+    if (i % 2 === 1) {
+      return '<a href="' + escapeAttr(part) + '" target="_blank" rel="noopener noreferrer" style="color:var(--accent2);">' + escapeHtml(part) + '</a>';
+    }
+    return escapeHtml(part);
+  }).join('');
+}
+
+// Turns a real ISO timestamp into short relative text (5m, 3h, 2d, or a date
+// once it's more than a week old) — computed fresh every time the page
+// loads, so it never gets stuck saying "Now" forever.
+function formatRelativeTime(ts) {
+  if (!ts) return '';
+  const then = new Date(ts);
+  if (isNaN(then.getTime())) return '';
+  const now = new Date();
+  const diffSec = Math.floor((now - then) / 1000);
+  if (diffSec < 60) return 'now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return diffMin + 'm';
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return diffHr + 'h';
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return diffDay + 'd';
+  const sameYear = then.getFullYear() === now.getFullYear();
+  return then.toLocaleDateString('en-US', sameYear ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Every static tweet's <span class="time" data-ts="..."> gets its real
+// relative time filled in here on load. data-suffix (used by the peanut
+// gallery replies) tacks " · replying to @..." back on afterward.
+function hydrateStaticTimestamps() {
+  document.querySelectorAll('.time[data-ts]').forEach(el => {
+    const rel = formatRelativeTime(el.dataset.ts);
+    if (!rel) return;
+    el.textContent = '· ' + rel + (el.dataset.suffix || '');
+    el.title = new Date(el.dataset.ts).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+  });
+}
+hydrateStaticTimestamps();
+
+const FEED_CACHE_KEY = 'wpial_feed_cache_v1';
+let lastFeedSignature = null;
+
+// Cheap signature so a poll that returns identical data doesn't rebuild the
+// DOM (and re-flash) for no reason.
+function feedSignature(posts) {
+  return JSON.stringify(posts.map(p => [p.row, p.likes, p.views, p.comments, p.text, p.timestamp]));
+}
+
+// First-time visitors with nothing cached yet get this instead of a blank
+// gap (or the static threads below reading as "the current feed") while
+// the first fetch is in flight.
+function showFeedSkeleton() {
+  const wrap = document.getElementById('live-feed-posts');
+  const card = document.getElementById('live-feed-card');
+  if (!wrap || !card) return;
+  wrap.dataset.state = 'skeleton';
+  wrap.innerHTML = '<div class="feed-skeleton">' +
+    '<div class="skel-row"><div class="skel-avatar"></div><div class="skel-lines"><div class="skel-line w40"></div><div class="skel-line w90"></div><div class="skel-line w60"></div></div></div>' +
+    '<div class="skel-row"><div class="skel-avatar"></div><div class="skel-lines"><div class="skel-line w60"></div><div class="skel-line w40"></div></div></div>' +
+    '</div>';
+  card.style.display = '';
+}
+
+// Renders a posts array into the live feed card. Used both for the
+// cache-first instant paint and for every subsequent network fetch, so the
+// per-row like/view dedup keys below only ever fire once per post per
+// browser no matter which path renders it first.
+function renderFeedPosts(posts) {
+  const wrap = document.getElementById('live-feed-posts');
+  const card = document.getElementById('live-feed-card');
+  if (!wrap || !card || !posts || !posts.length) return;
+
+  const sig = feedSignature(posts);
+  if (sig === lastFeedSignature && wrap.dataset.state === 'posts') {
+    card.style.display = '';
+    return;
+  }
+  lastFeedSignature = sig;
+  wrap.dataset.state = 'posts';
+  wrap.innerHTML = '';
+  posts.forEach(p => {
+    const tweet = document.createElement('div');
+    tweet.className = 'tweet';
+    const rel = formatRelativeTime(p.timestamp);
+    tweet.innerHTML = `
+      <div class="tweet-avatar">🖤</div>
+      <div class="tweet-body">
+      <div class="tweet-head"><b>${escapeHtml(p.author || 'Gelly')}</b> <span class="handle">@YinzerMessiah</span>${rel ? ` <span class="time">&middot; ${escapeHtml(rel)}</span>` : ''}</div>${p.source_text ? `<div class="quote-block"><div class="quote-label">📨 Submitted anonymously</div><div class="quote-text">${escapeHtml(p.source_text)}</div></div>` : ''}
+      <div class="tweet-text">${linkify(p.text)}</div>
+      <div class="tweet-stats">
+      <span>💬 ${escapeHtml(p.comments || 0)}</span>
+      <span class="like-btn" style="cursor:pointer;">❤️ <span class="like-count">${escapeHtml(p.likes || 0)}</span></span>
+      <span>👀 <span class="view-count">${escapeHtml(p.views || 0)}</span></span>
+      </div>
+      </div>`;
+    wrap.appendChild(tweet);
+
+    if (p.row) {
+      const likeBtn = tweet.querySelector('.like-btn');
+      const likedKey = 'wpial_liked_' + p.row;
+      if (localStorage.getItem(likedKey)) {
+        likeBtn.style.opacity = '0.55';
+        likeBtn.style.cursor = 'default';
+      } else {
+        likeBtn.onclick = () => {
+          if (localStorage.getItem(likedKey)) return;
+          localStorage.setItem(likedKey, '1');
+          likeBtn.style.opacity = '0.55';
+          likeBtn.style.cursor = 'default';
+          likeBtn.onclick = null;
+          const body = new URLSearchParams({ action: 'like', row: p.row });
+          fetch(WEB_APP_URL, { method: 'POST', body })
+            .then(r => r.json())
+            .then(res => {
+              if (res && res.ok) {
+                const el = likeBtn.querySelector('.like-count');
+                if (el) el.textContent = res.count;
+              }
+            })
+            .catch(() => {});
+        };
+      }
+
+      const viewedKey = 'wpial_viewed_' + p.row;
+      if (!localStorage.getItem(viewedKey)) {
+        localStorage.setItem(viewedKey, '1');
+        const body = new URLSearchParams({ action: 'view', row: p.row });
+        fetch(WEB_APP_URL, { method: 'POST', body })
+          .then(r => r.json())
+          .then(res => {
+            if (res && res.ok) {
+              const el = tweet.querySelector('.view-count');
+              if (el) el.textContent = res.count;
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  });
+  card.style.display = '';
+}
+
+function loadLiveFeed() {
+  fetch(WEB_APP_URL + '?action=feed')
+    .then(r => r.json())
+    .then(data => {
+      const posts = (data && data.posts) || [];
+      if (!posts.length) return;
+      try { localStorage.setItem(FEED_CACHE_KEY, JSON.stringify({ posts: posts, ts: Date.now() })); } catch (e) {}
+      renderFeedPosts(posts);
+    })
+    .catch(() => {
+      // backend unreachable — if we never had a cache to fall back on (still
+      // showing the skeleton), drop the card so the static feed below is what
+      // shows, same as before this feature existed.
+      const wrap = document.getElementById('live-feed-posts');
+      const card = document.getElementById('live-feed-card');
+      if (wrap && card && wrap.dataset.state === 'skeleton') card.style.display = 'none';
+    });
+}
+
+// Cache-first paint: repeat visitors see their last-known feed instantly
+// instead of a blank gap, then this always refreshes from the network in
+// the background and swaps in place via renderFeedPosts above. First-time
+// visitors with nothing cached yet get the lightweight skeleton instead of
+// the static threads flashing as if they were the current feed.
+(function initLiveFeed() {
+  let cached = null;
+  try {
+    const raw = localStorage.getItem(FEED_CACHE_KEY);
+    if (raw) cached = JSON.parse(raw);
+  } catch (e) { cached = null; }
+
+  if (cached && Array.isArray(cached.posts) && cached.posts.length) {
+    renderFeedPosts(cached.posts);
+  } else {
+    showFeedSkeleton();
+  }
+
+  loadLiveFeed();
+
+// ---- Insider Report (official wire) ----
+function insiderMd(src) {
+  let s = escapeHtml(src);
+  s = s.replace(/^### (.*)$/gm, '');                 // edition line handled by dateline
+  s = s.replace(/^# (.*)$/gm, '');                   // H1 handled by masthead
+  s = s.replace(/^---+$/gm, '<hr>');
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+  return s.split(/\n{2,}/).map(p => {
+    p = p.trim();
+    if (!p) return '';
+    if (p.startsWith('<hr>')) return p;
+    return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+  }).join('');
+}
+
+function renderInsiderReport(r) {
+  const rs = String(r.report_date); const d = new Date(rs.indexOf('T') > -1 ? rs : rs + 'T12:00:00');
+  const dateStr = isNaN(d) ? escapeHtml(r.report_date)
+    : d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  let body = insiderMd(r.body_md || '');
+  let sources = '';
+  const m = body.match(/<p><strong>Sources:<\/strong>([\s\S]*?)<\/p>\s*$/);
+  if (m) { sources = '<div class="wire-sources"><strong>Sources:</strong>' + m[1] + '</div>'; body = body.replace(m[0], ''); }
+  return '<div class="wire-dateline"><span>' + dateStr + '</span>' +
+         '<span class="wire-edition">' + escapeHtml(r.edition || 'Report') + ' Edition</span></div>' +
+         (r.title ? '<div class="wire-title">' + escapeHtml(r.title) + '</div>' : '') +
+         '<div class="wire-body">' + body + '</div>' + sources;
+}
+
+function loadInsiderReports() {
+  fetch(WEB_APP_URL + '?action=insider_reports')
+    .then(r => r.json())
+    .then(data => {
+      const reports = (data && data.reports) || [];
+      if (!reports.length) return;
+      const card = document.getElementById('insider-report-card');
+      const bodyEl = document.getElementById('insider-report-body');
+      const draw = n => {
+        bodyEl.innerHTML = reports.slice(0, n).map(renderInsiderReport).join('<hr style="border:0;border-top:3px double #1c2333;margin:22px 0;">');
+        if (reports.length > n) {
+          const more = document.createElement('div');
+          more.className = 'wire-archive';
+          more.innerHTML = '<button>Report Archive (' + (reports.length - n) + ' more)</button>';
+          more.querySelector('button').onclick = () => draw(reports.length);
+          bodyEl.appendChild(more);
+        }
+      };
+      draw(1);
+      card.style.display = '';
+    })
+    .catch(() => { /* backend unreachable — card stays hidden */ });
+}
+loadInsiderReports();
+
+// ---- Declared keepers (gold stars on the Rosters tab) ----
+// Reads the "Keepers" tab of the league sheet via the backend.
+function loadKeepers() {
+  fetch(WEB_APP_URL + '?action=keepers')
+    .then(r => r.json())
+    .then(data => {
+      const ks = (data && data.keepers) || [];
+      const lockEl = document.getElementById('keeper-lock');
+      if (lockEl && ks.length) lockEl.textContent = '\u2B50 Keepers locked in: ' + new Set(ks.map(k => String(k.team).trim())).size + ' of 10 teams';
+      if (!ks.length) return;
+      const map = {};
+      ks.forEach(k => {
+        const t = String(k.team).trim().toLowerCase();
+        if (!map[t]) map[t] = [];
+        map[t].push(String(k.player).trim().toLowerCase());
+      });
+      document.querySelectorAll('#teamGrid .card').forEach(card => {
+        const h3span = card.querySelector('h3 .team-name');
+        if (!h3span) return;
+        const names = map[h3span.textContent.trim().toLowerCase()];
+        if (!names) return;
+        card.querySelectorAll('.player').forEach(sp => {
+          const txt = sp.textContent.toLowerCase();
+          if (names.some(n => txt.includes(n))) sp.classList.add('keeper');
+        });
+      });
+    })
+    .catch(() => {});
+}
+loadKeepers();
+
+// ---- 2026 schedule / scoreboard (ESPN via backend proxy) ----
+
+function loadSchedule() {
+  const wrap = document.getElementById('schedule-weeks');
+  if (!wrap) return;
+  Promise.all([
+        fetch(WEB_APP_URL + '?action=espn_schedule').then(r => r.json()),
+        fetch(WEB_APP_URL + '?action=h2h').then(r => r.json()).catch(() => null)
+      ])
+        .then(([data, h2hData]) => {
+          const h2hMap = {};
+          if (h2hData && h2hData.ok && h2hData.matchups) {
+            h2hData.matchups.forEach(m => {
+              const key = [m.teamA, m.teamB].sort().join('|');
+              h2hMap[key] = m;
+            });
+          }
+      if (!data.ok || !data.weeks) { wrap.innerHTML = '<p class="placeholder">Schedule feed is warming up &mdash; check back soon.</p>'; return; }
+      const weekNums = Object.keys(data.weeks).map(Number).sort((a, b) => a - b);
+      wrap.innerHTML = '';
+      weekNums.forEach(w => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const h3 = document.createElement('h3');
+        h3.textContent = 'Week ' + w + ' ';
+        if (w === data.currentWeek) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'current'; h3.appendChild(b); }
+        card.appendChild(h3);
+        const grid = document.createElement('div');
+        grid.className = 'spotlight-grid';
+        data.weeks[w].forEach(mu => {
+          const scored = (mu.awayScore > 0 || mu.homeScore > 0 || mu.winner !== 'UNDECIDED');
+          const spot = document.createElement('div');
+          spot.className = 'spotlight';
+          const awayScore = scored ? Number(mu.awayScore).toFixed(1) : '—';
+          const homeScore = scored ? Number(mu.homeScore).toFixed(1) : '—';
+          const awayWon = scored && mu.winner === 'AWAY';
+          const homeWon = scored && mu.winner === 'HOME';
+          let sh = '';
+          sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.away) + mu.away + (awayWon ? ' ✓' : '') + '</span><span class="sc">' + awayScore + '</span></div>';
+          if (mu.awayTopScorer) sh += '<div class="spotlight-top">Top: ' + mu.awayTopScorer.name + ' — ' + mu.awayTopScorer.points + '</div>';
+          sh += '<div class="spotlight-vs">vs</div>';
+          sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.home) + mu.home + (homeWon ? ' ✓' : '') + '</span><span class="sc">' + homeScore + '</span></div>';
+          if (mu.homeTopScorer) sh += '<div class="spotlight-top">Top: ' + mu.homeTopScorer.name + ' — ' + mu.homeTopScorer.points + '</div>';
+          const h2hKey = [mu.away, mu.home].sort().join('|');
+          const h2hRec = h2hMap[h2hKey];
+          if (h2hRec) {
+            let h2hText;
+            if (h2hRec.winsA === h2hRec.winsB) {
+              h2hText = 'All-time: series tied ' + h2hRec.winsA + '-' + h2hRec.winsB + (h2hRec.ties ? '-' + h2hRec.ties : '');
+            } else {
+              const leader = h2hRec.winsA > h2hRec.winsB ? h2hRec.teamA : h2hRec.teamB;
+              const leadW = Math.max(h2hRec.winsA, h2hRec.winsB);
+              const trailW = Math.min(h2hRec.winsA, h2hRec.winsB);
+              h2hText = 'All-time: ' + leader + ' leads ' + leadW + '-' + trailW + (h2hRec.ties ? '-' + h2hRec.ties : '');
+            }
+            sh += '<div class="spotlight-h2h">' + h2hText + '</div>';
+          }
+          spot.innerHTML = sh;
+          grid.appendChild(spot);
+        });
+        card.appendChild(grid);
+        wrap.appendChild(card);
+      });
+    })
+    .catch(() => { wrap.innerHTML = '<p class="placeholder">Schedule feed unavailable.</p>'; });
+}
+loadSchedule();
+
+      // ---- Standings (computed client-side from ESPN schedule data) ----
+      function loadStandings() {
+        const wrap = document.getElementById('standings-body');
+        if (!wrap) return;
+        fetch(WEB_APP_URL + '?action=espn_schedule')
+          .then(r => r.json())
+          .then(data => {
+            if (!data.ok || !data.weeks) { wrap.innerHTML = '<p class="placeholder">Standings unavailable.</p>'; return; }
+            const rec = {};
+            const bump = (name) => { if (!rec[name]) rec[name] = { w: 0, l: 0, t: 0, pf: 0, pa: 0 }; return rec[name]; };
+            Object.values(data.weeks).forEach(matchups => {
+              matchups.forEach(mu => {
+                if (!(mu.awayScore > 0 || mu.homeScore > 0) && mu.winner === 'UNDECIDED') return;
+                const a = bump(mu.away), h = bump(mu.home);
+                a.pf += Number(mu.awayScore) || 0; a.pa += Number(mu.homeScore) || 0;
+                h.pf += Number(mu.homeScore) || 0; h.pa += Number(mu.awayScore) || 0;
+                if (mu.winner === 'AWAY') { a.w++; h.l++; }
+                else if (mu.winner === 'HOME') { h.w++; a.l++; }
+                else if (mu.winner === 'TIE') { a.t++; h.t++; }
+              });
+            });
+            const rows = Object.keys(rec).map(name => ({ name: name, w: rec[name].w, l: rec[name].l, t: rec[name].t, pf: rec[name].pf, pa: rec[name].pa }));
+            rows.sort((x, y) => (y.w - y.l) - (x.w - x.l) || y.pf - x.pf);
+            if (!rows.length) { wrap.innerHTML = '<p class="placeholder">Standings will appear once games are scored.</p>'; return; }
+            let html = '<div class="row" style="font-weight:600;color:var(--muted);font-size:12px;"><div style="flex:1;">Team</div><div style="width:70px;">Record</div><div style="width:70px;">PF</div><div style="width:70px;">PA</div></div>';
+            rows.forEach((r, i) => {
+              html += '<div class="row"><div style="flex:1;">' + (i + 1) + '. ' + teamLogoHTML(r.name) + r.name + '</div><div style="width:70px;">' + r.w + '-' + r.l + (r.t ? '-' + r.t : '') + '</div><div style="width:70px;">' + r.pf.toFixed(1) + '</div><div style="width:70px;">' + r.pa.toFixed(1) + '</div></div>';
+            });
+            wrap.innerHTML = html;
+          })
+          .catch(() => { wrap.innerHTML = '<p class="placeholder">Standings unavailable.</p>'; });
+      }
+      loadStandings();
+
+      // ---- Gelly Picks (Corso-style weekly picker, current week only) ----
+      function loadGellyPicks() {
+        const card = document.getElementById('gelly-picks-card');
+        const wrap = document.getElementById('gelly-picks-body');
+        if (!wrap || !card) return;
+        fetch(WEB_APP_URL + '?action=gelly_picks')
+          .then(r => r.json())
+          .then(data => {
+            if (data && data.gated) { card.style.display = ''; wrap.innerHTML = '<p class="placeholder">' + (data.message || "The Gelly Line is locked until the draft.") + '</p>'; return; }
+            if (!data.ok || !data.picks || !data.picks.length) { return; }
+            card.style.display = '';
+            if (data.seasonRecord) {
+              var sr = data.seasonRecord;
+              var srEl = document.getElementById('gelly-season-record');
+              if (srEl) srEl.textContent = 'Season record: ' + sr.wins + '-' + sr.losses + (sr.pending ? ' (' + sr.pending + ' pending)' : '');
+            }
+            let html = '';
+            if (data.intro) html += '<p style="margin-top:0;">' + data.intro + '</p>';
+            data.picks.forEach(p => {
+              const isMotw = data.matchupOfWeek && data.matchupOfWeek.away === p.away && data.matchupOfWeek.home === p.home;
+              html += '<div class="row"><div class="players">';
+              if (isMotw) html += '<span class="badge">Matchup of the Week</span> ';
+              html += '<strong>' + p.away + '</strong> @ <strong>' + p.home + '</strong> — Pick: <strong>' + p.pick + ' -' + p.spread + '</strong><br><span style="color:var(--muted);font-size:13px;">' + p.blurb + '</span>';
+              html += '</div></div>';
+            });
+            wrap.innerHTML = html;
+          })
+          .catch(() => {});
+      }
+      loadGellyPicks();
+
+// ---- Draft countdown (Sun Aug 30 2026, 5:30 PM Mountain / MDT) ----
+(function(){
+  var target = new Date('2026-08-30T17:30:00-06:00').getTime();
+  var pad = function(n){ return String(n).padStart(2, '0'); };
+  function tick(){
+    var diff = target - Date.now();
+    if (diff <= 0) {
+      document.getElementById('draft-countdown').innerHTML = '<div class="db-unit"><div class="db-num">🏈</div><div class="db-lab">Draft day!</div></div>';
+      clearInterval(iv);
+      return;
+    }
+    var d = Math.floor(diff / 86400000);
+    var h = Math.floor(diff % 86400000 / 3600000);
+    var m = Math.floor(diff % 3600000 / 60000);
+    var s = Math.floor(diff % 60000 / 1000);
+    document.getElementById('dc-days').textContent = d;
+    document.getElementById('dc-hours').textContent = pad(h);
+    document.getElementById('dc-mins').textContent = pad(m);
+    document.getElementById('dc-secs').textContent = pad(s);
+  }
+  var iv = setInterval(tick, 1000);
+  tick();
+})();
+})();
+
+// Light polling so likes/views (and new approved posts) show up for anyone
+// with the page open, without a manual refresh. Cheap at this traffic level.
+setInterval(loadLiveFeed, 30000);
+
+// League Tips submission — posts to the "Tips" tab as status "pending"
+// for the commissioner to manually review before anything is used.
+const tipSubmitBtn = document.getElementById('tipSubmit');
+if (tipSubmitBtn) {
+  tipSubmitBtn.onclick = () => {
+    const textEl = document.getElementById('tipText');
+    const statusEl = document.getElementById('tipStatus');
+    const text = textEl.value.trim();
+    if (!text) {
+      statusEl.textContent = 'Type a tip first.';
+      return;
+    }
+    tipSubmitBtn.disabled = true;
+    statusEl.textContent = 'Sending...';
+    const body = new URLSearchParams({ action: 'tip', tip_text: text });
+    fetch(WEB_APP_URL, { method: 'POST', body })
+      .then(r => r.json())
+      .then(res => {
+        if (res && res.ok) {
+          statusEl.textContent = 'Sent — watch the feed, Gelly\'s got a take coming.';
+          textEl.value = '';
+        } else {
+          statusEl.textContent = (res && res.error) || 'Something went wrong. Try again.';
+        }
+      })
+      .catch(() => { statusEl.textContent = 'Could not reach the server. Try again later.'; })
+      .finally(() => { tipSubmitBtn.disabled = false; });
+  };
+}
+
+// Tip modal — the 💬 button floats with scroll so tips stay reachable no
+// matter how long the feed gets. Opens/closes via the FAB, the × button,
+// clicking the backdrop, or Escape.
+const tipFab = document.getElementById('tipFab');
+const tipModal = document.getElementById('tipModal');
+const tipModalClose = document.getElementById('tipModalClose');
+function openTipModal() {
+  tipModal.classList.add('open');
+  const textEl = document.getElementById('tipText');
+  if (textEl) textEl.focus();
+}
+function closeTipModal() {
+  tipModal.classList.remove('open');
+}
+if (tipFab && tipModal) {
+  tipFab.onclick = openTipModal;
+  if (tipModalClose) tipModalClose.onclick = closeTipModal;
+  tipModal.addEventListener('click', (e) => { if (e.target === tipModal) closeTipModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTipModal(); });
+}
+
+// ---- League history table (win%/PPG/points/titles/best pick, live from backend) ----
+function loadHistoryTable() {
+  const body = document.getElementById('history-table-body');
+  if (!body) return;
+  const grades = {
+    'Mud Dogs': 'B+', 'G. O. A. T.': 'B', 'Kweef Farts': 'B', 'Bijan Mustard': 'B',
+    'Bindgamer3': 'B+', 'Drake Draaaake?': 'B+', 'Return of The Mac': 'A-',
+    'THE Vagitarians': 'B', "Syd Sweeney's Denim Jeans": 'B', 'Mean Machine': 'A-'
+  };
+  fetch(WEB_APP_URL + '?action=history').then(r => r.json()).then(data => {
+    if (!data || !data.ok || !data.franchises || !data.franchises.length) throw new Error('no data');
+    body.innerHTML = data.franchises.map(f => {
+      const name = (f.name || '').trim();
+      const record = f.wins + '-' + f.losses + (f.ties ? '-' + f.ties : '');
+      const winPct = f.winPct != null ? (f.winPct * 100).toFixed(1) + '%' : '\u2014';
+      const ppg = f.ppg != null ? f.ppg.toFixed(1) : '\u2014';
+      const pts = f.pointsFor != null ? Math.round(f.pointsFor).toLocaleString() : '\u2014';
+      const titles = f.championships || 0;
+      const finish = f.avgFinish != null ? f.avgFinish.toFixed(1) : '\u2014';
+      const pick = f.bestPick ? (f.bestPick.player + ' (Rd ' + f.bestPick.round + ', \'' + String(f.bestPick.year).slice(-2) + ') ' + String.fromCharCode(183) + ' ' + f.bestPick.points.toFixed(1) + ' pts') : '\u2014';
+      const grade = grades[name] || '\u2014';
+      return '<tr>' +
+        '<td style="padding:4px 8px 4px 0;">' + escapeHtml(name) + '</td>' +
+        '<td style="padding:4px 8px;">' + escapeHtml(record) + '</td>' +
+        '<td style="padding:4px 8px;">' + escapeHtml(winPct) + '</td>' +
+        '<td style="padding:4px 8px;">' + escapeHtml(ppg) + '</td>' +
+        '<td style="padding:4px 8px;">' + escapeHtml(pts) + '</td>' +
+        '<td style="padding:4px 8px;">' + escapeHtml(String(titles)) + '</td>' +
+        '<td style="padding:4px 8px;">' + escapeHtml(finish) + '</td>' +
+        '<td style="padding:4px 8px;">' + escapeHtml(pick) + '</td>' +
+        '<td style="padding:4px 8px;">' + escapeHtml(grade) + '</td>' +
+      '</tr>';
+    }).join('');
+  }).catch(() => {
+    body.innerHTML = '<tr><td colspan="9" style="padding:8px 0;color:var(--muted);">History data unavailable.</td></tr>';
+  });
+}
+loadHistoryTable();
+
+// ---- Colorblind mode (the Wadi Accessibility Initiative) ----
+// Turning it ON runs the mandatory public-shaming ceremony first, then swaps
+// the palette to colorblind-safe hues (Okabe-Ito: sky blue / yellow) with
+// higher-contrast muted text. Keepers still carry the star and conflict rows
+// still carry the dashed box, so nothing relies on color alone.
+// Preference persists across visits; the ceremony only replays on a manual toggle.
+const CB_KEY = 'wpial-cb-mode';
+const cbToggle = document.getElementById('cbToggle');
+const cbGag = document.getElementById('cbGag');
+let cbGagTimer = null;
+
+function setCbMode(on) {
+  document.body.classList.toggle('colorblind', on);
+  if (cbToggle) {
+    cbToggle.classList.toggle('on', on);
+    cbToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    cbToggle.textContent = on ? '👓 Colorblind mode: ON' : '👓 Colorblind mode';
+  }
+  try { localStorage.setItem(CB_KEY, on ? '1' : '0'); } catch (e) {}
+}
+
+function finishCbGag() {
+  clearTimeout(cbGagTimer);
+  if (cbGag) cbGag.classList.remove('show');
+  setCbMode(true);
+}
+
+if (cbToggle) {
+  cbToggle.onclick = () => {
+    const turningOn = !document.body.classList.contains('colorblind');
+    if (!turningOn) { setCbMode(false); return; }
+    if (cbGag) {
+      cbGag.classList.add('show');
+      clearTimeout(cbGagTimer);
+      cbGagTimer = setTimeout(finishCbGag, 3500);
+    } else {
+      setCbMode(true);
+    }
+  };
+}
+if (cbGag) cbGag.onclick = finishCbGag;
+try { if (localStorage.getItem(CB_KEY) === '1') setCbMode(true); } catch (e) {}
+</script>
+</body>
+</html>
