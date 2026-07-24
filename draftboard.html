@@ -214,7 +214,21 @@ table#board{border-collapse:separate;border-spacing:3px;}
 .coach-hi{outline:2.5px solid var(--accent2) !important;outline-offset:2px;border-radius:8px;position:relative;z-index:299;}
 
 footer{padding:10px 16px;color:var(--muted);font-size:11px;border-top:1px solid var(--line);}
-@media (max-width:900px){ #layout{flex-direction:column;} #sidebar{width:100%;min-width:0;position:static;max-height:none;border-left:none;border-top:1px solid var(--line);} #boardwrap{max-height:none;} }
+@media (max-width:900px){
+  #layout{flex-direction:column;align-items:stretch;}
+  #sidebar{width:100%;min-width:0;position:static;max-height:none;border-left:none;border-top:1px solid var(--line);}
+  #boardwrap{max-height:70vh;width:100%;}
+  .modal{padding:14px;}
+  #simModal .modal,#wizModal .modal{width:96vw;}
+  .simcol{min-width:100%;}
+}
+@media (pointer:coarse){
+  #board td .cnm .kp{font-size:10.5px;padding:2px 8px;}
+  #board td .cbtns .ps{font-size:10px;padding:2px 8px;}
+  #board td .unkeep{font-size:11px;padding:2px 7px;}
+  .wizbox button{padding:6px 14px;}
+  nav button,button{touch-action:manipulation;}
+}
 </style>
 </head>
 <body class="theme-broadcast">
@@ -2590,6 +2604,7 @@ function renderWiz(){
     let html='';
     Object.keys(CAND[t]).map(Number).sort((a,b)=>a-b).forEach(r=>{
       const liveHere=st.live.find(k=>k.round===r);
+      if(!liveHere && !(CAND[t][r]&&CAND[t][r].length)) return;
       html+='<div class="wizbox">';
       if(liveHere){
         html+='<div class="wr"><span class="rdlab">R'+r+'</span><span class="poschip '+liveHere.pos+'">'+liveHere.pos+'</span><b>'+esc(liveHere.player)+'</b><span class="pill ok" style="margin-left:auto;">⭐ declared — locked</span></div>';
