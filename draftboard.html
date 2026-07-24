@@ -179,6 +179,40 @@ table#board{border-collapse:separate;border-spacing:3px;}
 .champbox{border:2px solid var(--accent);border-radius:10px;padding:10px 14px;margin:6px 0 12px;text-align:center;font-family:'Oswald';font-size:17px;letter-spacing:1.5px;color:var(--accent);}
 .oddsbar{height:8px;background:var(--accent);border-radius:4px;min-width:2px;display:inline-block;vertical-align:middle;}
 
+/* ---------- setup banner ---------- */
+#setupBanner{display:none;align-items:center;gap:10px;flex-wrap:wrap;padding:7px 16px;background:linear-gradient(90deg,var(--panel),transparent);border-bottom:1px solid var(--accent);font-size:12px;}
+#setupBanner b{color:var(--accent);}
+#setupBanner .sbprog{flex:0 0 auto;}
+#setupBanner button{font-size:11px;padding:3px 10px;}
+#setupBanner .sbbar{height:6px;width:140px;background:var(--cellbg);border-radius:3px;overflow:hidden;}
+#setupBanner .sbbar i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .3s;}
+@keyframes cellflash{0%,100%{box-shadow:none;}50%{box-shadow:0 0 0 3px var(--accent2),0 0 18px var(--accent2);}}
+#board td.flash{animation:cellflash 0.75s ease 3;}
+/* ---------- setup wizard ---------- */
+#wizModal .modal{width:min(660px,96vw);}
+.wizteams{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin:10px 0;}
+.wizteams button{padding:12px 10px;font-size:13px;font-weight:700;border-radius:10px;}
+.wizteams button:hover{border-color:var(--accent);color:var(--accent);}
+.wizbox{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:8px;}
+.wizbox .wr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:3px 0;}
+.wizbox .rdlab{font-family:'Oswald';color:var(--accent);min-width:30px;font-size:12px;}
+.wizbox .verdict{font-size:10px;margin-left:auto;white-space:nowrap;}
+.wizbox button{font-size:11px;padding:3px 10px;border-radius:12px;}
+.wizbox button.on{background:var(--accent);color:#14110a;border-color:var(--accent);font-weight:700;}
+.wizbox button.nok.on{background:var(--danger);border-color:var(--danger);color:#fff;}
+.wizprogbar{height:6px;background:var(--cellbg);border-radius:3px;overflow:hidden;margin:6px 0 10px;}
+.wizprogbar i{display:block;height:100%;background:var(--accent);transition:width .3s;}
+#wizBody{max-height:56vh;overflow-y:auto;}
+.wizrev{width:100%;border-collapse:collapse;font-size:12px;}
+.wizrev th{text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:3px 6px;border-bottom:1px solid var(--line);}
+.wizrev td{padding:3px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+/* ---------- coach marks ---------- */
+#coachBox{position:fixed;z-index:300;width:300px;background:var(--panel);border:1.5px solid var(--accent);border-radius:12px;padding:12px 14px;font-size:12.5px;line-height:1.5;box-shadow:0 8px 30px rgba(0,0,0,.5);display:none;}
+#coachBox .cttl{font-family:'Oswald';color:var(--accent);text-transform:uppercase;letter-spacing:1px;font-size:12px;margin-bottom:4px;}
+#coachBox .crow{display:flex;gap:8px;margin-top:10px;align-items:center;}
+#coachBox .cdots{color:var(--muted);font-size:10px;margin-right:auto;}
+.coach-hi{outline:2.5px solid var(--accent2) !important;outline-offset:2px;border-radius:8px;position:relative;z-index:299;}
+
 footer{padding:10px 16px;color:var(--muted);font-size:11px;border-top:1px solid var(--line);}
 @media (max-width:900px){ #layout{flex-direction:column;} #sidebar{width:100%;min-width:0;position:static;max-height:none;border-left:none;border-top:1px solid var(--line);} #boardwrap{max-height:none;} }
 </style>
@@ -210,6 +244,15 @@ footer{padding:10px 16px;color:var(--muted);font-size:11px;border-top:1px solid 
   </div>
 </header>
 
+<div id="setupBanner">
+  <span>🏗️ <b>Setup phase</b></span>
+  <span class="sbprog" id="sbCount"></span>
+  <span class="sbbar"><i id="sbBarFill"></i></span>
+  <button id="sbNext">👉 Next undecided</button>
+  <button id="sbWiz">🧭 Guided setup</button>
+  <span class="hint">Undecided boxes just draft normally (no keeper). Hit <b>Start</b> in the sidebar when ready.</span>
+</div>
+
 <div id="layout">
   <div id="boardwrap"><table id="board"></table></div>
 
@@ -231,6 +274,7 @@ footer{padding:10px 16px;color:var(--muted);font-size:11px;border-top:1px solid 
         <button id="mockPause" style="display:none;">Pause</button>
       </div>
       <div class="mockrow">
+        <button id="wizOpenBtn" class="small">🧭 Guided setup</button>
         <button id="mockKeepBtn" class="small">⭐ Set mock keepers</button>
         <span class="pill" id="mockKeepCount"></span>
       </div>
@@ -331,6 +375,26 @@ footer{padding:10px 16px;color:var(--muted);font-size:11px;border-top:1px solid 
 </div>
 
 <!-- Confirm modal -->
+<div class="modal-bg" id="wizModal">
+  <div class="modal">
+    <h2 id="wizTitle">🏈 Draft Day Setup</h2>
+    <div class="wizprogbar"><i id="wizBarFill" style="width:0%"></i></div>
+    <div id="wizProg" class="hint" style="margin-bottom:8px;"></div>
+    <div id="wizBody"></div>
+    <div class="row" style="margin-top:12px;" id="wizNav"></div>
+  </div>
+</div>
+
+<div id="coachBox">
+  <div class="cttl" id="coachTtl"></div>
+  <div id="coachTxt"></div>
+  <div class="crow">
+    <span class="cdots" id="coachDots"></span>
+    <button id="coachSkip" class="small">Skip</button>
+    <button id="coachNext" class="small primary">Next</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="simModal">
   <div class="modal">
     <h2>🎮 Season Sim <span id="simWkLabel" style="font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0;"></span></h2>
@@ -2126,7 +2190,7 @@ function render(){
   // decisions stay reversible during the pre-draft setup phase.
   const preDraft = mode==='mock' && !mockRunning && Object.keys(picks).length===0;
   if(!preDraft) advanceThroughKeepers(); // ensure keeper slots up to cursor are shown
-  renderBoard(); renderStatus(); renderBA(); renderRoster();
+  renderBoard(); renderStatus(); renderBA(); renderRoster(); renderSetupBanner();
   saveState();
 }
 function renderBoard(){
@@ -2356,6 +2420,8 @@ function setMode(m){
   $('#mockPanel').style.display = m==='mock' ? '' : 'none';
   $('#simPanel').style.display = m==='mock' ? '' : 'none';
   loadState(); render();
+  // first-timers get the guided setup automatically (once)
+  if(m==='mock' && !store.get('wpial_wiz_done',false) && Object.keys(picks).length===0) setTimeout(openWiz,250);
 }
 $('#modeLive').onclick=()=>setMode('live');
 $('#modeMock').onclick=()=>setMode('mock');
@@ -2493,6 +2559,159 @@ $('#mkApply').onclick=()=>{
   if(mode!=='mock') setMode('mock');
   stopMock(); picks={}; cursor=0; undoStack=[]; saveState(); render();
 };
+
+/* ================= SETUP WIZARD / BANNER / COACH ================= */
+let wiz={step:1,ti:0,order:[]};
+function wizOrder(){ return [myTeam,...TEAMS.filter(t=>t!==myTeam)]; }
+function openWiz(){
+  wiz.step=1; wiz.ti=0; wiz.order=wizOrder();
+  store.set('wpial_wiz_done',true);
+  renderWiz(); $('#wizModal').classList.add('open');
+}
+function closeWiz(){ $('#wizModal').classList.remove('open'); startCoach(); }
+$('#wizModal').addEventListener('click',e=>{ if(e.target.id==='wizModal') closeWiz(); });
+function renderWiz(){
+  const S=wiz.step, N=wiz.order.length;
+  $('#wizBarFill').style.width = S===1?'8%':(S===2?(10+Math.round(80*(wiz.ti+1)/N))+'%':'100%');
+  if(S===1){
+    $('#wizTitle').textContent='🏈 Draft Day Setup';
+    $('#wizProg').textContent='Step 1 of 3 — which franchise are you?';
+    $('#wizBody').innerHTML='<div class="wizteams">'+TEAMS.map(t=>'<button data-team="'+esc(t)+'">'+esc(t)+'</button>').join('')+'</div>';
+    $('#wizNav').innerHTML='<button id="wizClose1">Close — I’ll explore on my own</button>';
+    $('#wizClose1').onclick=closeWiz;
+    $('#wizBody').querySelectorAll('[data-team]').forEach(b=>b.onclick=()=>{
+      myTeam=b.dataset.team; store.set('wpial_myteam',myTeam); myTeamSel.value=myTeam;
+      wiz.order=wizOrder(); wiz.step=2; wiz.ti=0; render(); renderWiz();
+    });
+  } else if(S===2){
+    const t=wiz.order[wiz.ti], st=teamKeepState(t), pm=poolByNorm();
+    $('#wizTitle').textContent=(t===myTeam?'⭐ Your team — ':'')+t;
+    $('#wizProg').innerHTML='Step 2 of 3 — keeper decisions, team '+(wiz.ti+1)+' of '+N+' · <b>'+st.total+'/5 kept</b>'+(st.live.length?' · '+st.live.length+' already declared for real':'');
+    let html='';
+    Object.keys(CAND[t]).map(Number).sort((a,b)=>a-b).forEach(r=>{
+      const liveHere=st.live.find(k=>k.round===r);
+      html+='<div class="wizbox">';
+      if(liveHere){
+        html+='<div class="wr"><span class="rdlab">R'+r+'</span><span class="poschip '+liveHere.pos+'">'+liveHere.pos+'</span><b>'+esc(liveHere.player)+'</b><span class="pill ok" style="margin-left:auto;">⭐ declared — locked</span></div>';
+      } else {
+        CAND[t][r].forEach(c=>{
+          const pp=pm[norm(c.name)];
+          const isMK=st.mock.some(k=>norm(k.player)===norm(c.name)&&k.round===r);
+          const blocked=(st.rounds.has(r)&&!isMK)||(st.total>=5&&!isMK);
+          const good=pp&&pp.r<=r*10;
+          html+='<div class="wr"><span class="rdlab">R'+r+'</span><span class="poschip '+c.pos+'">'+c.pos+'</span><b>'+esc(c.name)+'</b>'
+            +'<button class="kp'+(isMK?' on':'')+'" data-wkeep="1" data-r="'+r+'" data-n="'+esc(c.name)+'" data-pos="'+c.pos+'"'+(blocked?' disabled':'')+'>'+(isMK?'⭐ Keeping':'⭐ Keep')+'</button>'
+            +'<span class="verdict" style="color:'+(good?'var(--ok)':'var(--danger)')+'">'+(pp?('rank '+pp.r+' → '+(good?'✓ good value':'✗ reach')+' in R'+r):'unranked')+'</span></div>';
+        });
+        html+='<div class="wr"><button class="nok'+(isPassed(t,r)?' on':'')+'" data-wpass="1" data-r="'+r+'">✕ No keeper'+(isPassed(t,r)?' ✓':'')+'</button></div>';
+      }
+      html+='</div>';
+    });
+    $('#wizBody').innerHTML=html||'<div class="hint">No keeper-eligible players on this roster.</div>';
+    $('#wizNav').innerHTML='<button id="wizAuto">⚡ Auto-pick this team</button><button id="wizClear">Clear</button>'
+      +'<button id="wizBack" style="margin-left:auto;">‹ Back</button><button id="wizNext" class="primary">'+(wiz.ti<N-1?'Next team ›':'Review ›')+'</button>';
+    $('#wizAuto').onclick=()=>{ autoKeepTeam(t); saveMockKeepers(); render(); renderWiz(); };
+    $('#wizClear').onclick=()=>{ mockKeepers=mockKeepers.filter(k=>k.team!==t); mockPassed=mockPassed.filter(x=>x.slice(0,x.lastIndexOf('#'))!==t); saveMockKeepers(); saveMockPassed(); render(); renderWiz(); };
+    $('#wizBack').onclick=()=>{ if(wiz.ti>0)wiz.ti--; else wiz.step=1; renderWiz(); };
+    $('#wizNext').onclick=()=>{ if(wiz.ti<N-1)wiz.ti++; else wiz.step=3; renderWiz(); };
+    $('#wizBody').querySelectorAll('[data-wkeep]').forEach(b=>b.onclick=()=>{
+      if(b.classList.contains('on')) mockUnkeep(t,b.dataset.n);
+      else mockKeep(t,+b.dataset.r,b.dataset.n,b.dataset.pos);
+      renderWiz();
+    });
+    $('#wizBody').querySelectorAll('[data-wpass]').forEach(b=>b.onclick=()=>{
+      const r=+b.dataset.r;
+      if(isPassed(t,r)) removePass(t,r);
+      else{
+        const mk=teamKeepState(t).mock.find(k=>k.round===r);
+        if(mk) mockUnkeep(t,mk.player);
+        addPass(t,r);
+      }
+      renderWiz();
+    });
+  } else {
+    $('#wizTitle').textContent='📋 Review & Kickoff';
+    $('#wizProg').textContent='Step 3 of 3 — every team’s keepers. You can still tweak anything on the board (dotted boxes).';
+    let html='<table class="wizrev"><tr><th>Team</th><th>Keepers</th></tr>';
+    TEAMS.forEach(t2=>{
+      const ks=effKeepers().filter(k=>k.team===t2).sort((a,b)=>a.round-b.round);
+      html+='<tr'+(t2===myTeam?' style="color:var(--accent2)"':'')+'><td><b>'+esc(t2)+'</b>'+(t2===myTeam?' (you)':'')+'</td><td>'
+        +(ks.length?ks.map(k=>'R'+k.round+' '+esc(k.player)+(k.source!=='mock'?' ⭐':'')).join(' · '):'<span class="hint">none — drafts all 16 rounds</span>')+'</td></tr>';
+    });
+    html+='</table>';
+    $('#wizBody').innerHTML=html;
+    $('#wizNav').innerHTML='<button id="wizBack3">‹ Back</button><button id="wizFinish" style="margin-left:auto;">Close — draft manually</button><button id="wizStart" class="primary">▶ Start the draft!</button>';
+    $('#wizBack3').onclick=()=>{ wiz.step=2; wiz.ti=wiz.order.length-1; renderWiz(); };
+    $('#wizFinish').onclick=closeWiz;
+    $('#wizStart').onclick=()=>{ $('#wizModal').classList.remove('open'); startMock(); };
+  }
+}
+/* --- setup progress banner (pre-draft, mock mode) --- */
+function setupCounts(){
+  const km=keeperMap(), dSet=draftedNorms();
+  let total=0, decided=0;
+  TEAMS.forEach(t=>{
+    const kt=teamKeepState(t).total;
+    Object.keys(CAND[t]).forEach(rs=>{
+      const r=+rs;
+      const k=km[t]&&km[t][r];
+      const open=CAND[t][r].filter(c=>!dSet.has(norm(c.name))&&!isKept(c.name));
+      if(k){ total++; decided++; return; }
+      if(!open.length||kt>=5) return;
+      total++;
+      if(isPassed(t,r)) decided++;
+    });
+  });
+  return {total,decided};
+}
+function renderSetupBanner(){
+  const bn=$('#setupBanner');
+  const preDraft = mode==='mock' && !mockRunning && Object.keys(picks).length===0;
+  if(!preDraft){ bn.style.display='none'; return; }
+  const c=setupCounts();
+  bn.style.display='flex';
+  $('#sbCount').innerHTML='Keeper decisions: <b>'+c.decided+' / '+c.total+'</b>';
+  $('#sbBarFill').style.width=(c.total?Math.round(100*c.decided/c.total):100)+'%';
+  $('#sbNext').style.display=c.decided<c.total?'':'none';
+}
+$('#sbNext').onclick=()=>{
+  const cell=document.querySelector('#board td.cand');
+  if(cell){ cell.scrollIntoView({block:'center',inline:'center',behavior:'smooth'}); cell.classList.remove('flash'); void cell.offsetWidth; cell.classList.add('flash'); }
+};
+$('#sbWiz').onclick=openWiz;
+$('#wizOpenBtn').onclick=openWiz;
+/* --- first-visit coach marks --- */
+let coachSteps=[], coachIdx=0;
+function startCoach(){
+  if(store.get('wpial_coach_done',false)||mode!=='mock') return;
+  coachSteps=[
+    {sel:'#mockPanel', ttl:'Mock mode', txt:'This is your practice sandbox. Pick your franchise here — the CPU drafts for the other nine teams.'},
+    {sel:'#board td.cand', ttl:'Keeper decisions', txt:'Dotted boxes are keeper calls: ⭐ Keep locks that player into that round, ✕ makes it a normal draft pick. Decide for every team to mirror real draft night.'},
+    {sel:'#posfilters', ttl:'Player pool filters', txt:'Filter Best Available by position, FLEX, 🐣 rookies — and ⭐ Keep shows the on-the-clock team’s own keeper options as a reminder.'},
+    {sel:'#mockGo', ttl:'Kickoff', txt:'Hit Start and the CPU drafts until you’re on the clock. After all 160 picks, open the Season Sim and play out the year. 🖤💛'}
+  ];
+  coachIdx=0; showCoach();
+}
+function clearCoachHi(){ document.querySelectorAll('.coach-hi').forEach(el=>el.classList.remove('coach-hi')); }
+function showCoach(){
+  clearCoachHi();
+  while(coachIdx<coachSteps.length && !document.querySelector(coachSteps[coachIdx].sel)) coachIdx++;
+  if(coachIdx>=coachSteps.length){ endCoach(); return; }
+  const s=coachSteps[coachIdx], el=document.querySelector(s.sel);
+  el.classList.add('coach-hi');
+  el.scrollIntoView({block:'nearest'});
+  const r=el.getBoundingClientRect(), box=$('#coachBox');
+  box.style.display='block';
+  $('#coachTtl').textContent=s.ttl; $('#coachTxt').textContent=s.txt;
+  $('#coachDots').textContent=(coachIdx+1)+' / '+coachSteps.length;
+  $('#coachNext').textContent=coachIdx===coachSteps.length-1?'Done':'Next';
+  let top=r.bottom+10, left=Math.min(Math.max(8,r.left),window.innerWidth-320);
+  if(top+150>window.innerHeight) top=Math.max(8,r.top-160);
+  box.style.top=top+'px'; box.style.left=left+'px';
+}
+function endCoach(){ clearCoachHi(); $('#coachBox').style.display='none'; store.set('wpial_coach_done',true); }
+$('#coachNext').onclick=()=>{ coachIdx++; if(coachIdx>=coachSteps.length) endCoach(); else showCoach(); };
+$('#coachSkip').onclick=endCoach;
 
 /* ================= SEASON SIM ================= */
 /* Madden-style statistical sim. 14-week regular season (round-robin, repeats),
