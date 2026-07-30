@@ -628,20 +628,81 @@ function assetLine(a) {
     ? a.name + ' (' + a.pos + ', keeps at R' + a.keepRound + (a.rank ? ', #' + a.rank + ' overall' : '') + ')'
     : a.label;
 }
-/* If the endpoint isn't deployed yet (or the network is down), Gelly still talks. */
+/* ------------------------------------------------------------ LOCAL GELLY
+   Gelly's own voice, written from the actual numbers. This is the PRIMARY
+   brain — the Gemini endpoint, when it answers, just replaces the output.
+   Lines are assembled from parts and seeded off the trade itself, so the same
+   deal always reads the same but different deals sound different.            */
+function gellySeed(g) {
+  var s = g.A + '|' + g.B + '|' + g.aSends.concat(g.bSends).map(function (x) { return x.key; }).join(',');
+  var h = 2166136261;
+  for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  var n = (h >>> 0);
+  return function (arr) { n = (Math.imul(n, 1103515245) + 12345) >>> 0; return arr[n % arr.length]; };
+}
+/* The single asset that most drives the verdict, with its round economics. */
+function headliner(g) {
+  var all = g.aSends.concat(g.bSends).filter(function (x) { return x.kind === 'p'; });
+  if (!all.length) return null;
+  var best = all[0];
+  all.forEach(function (x) { if (x.val > best.val) best = x; });
+  var st = baseState(best.from), ev = evaluate(best.from, st);
+  var sc = ev.scored.filter(function (p) { return p.key === best.key; })[0];
+  return { name: best.name, round: best.keepRound, rank: best.rank,
+           pick: pickOverall(best.keepRound, best.from),
+           surplus: sc ? r1(sc.surplus) : null };
+}
 function fallbackGelly(g) {
-  if (!g) return "Gelly's phone is in the Mon River again. Numbers are down — but I've done the research, and I'd still hang up on this one.";
-  var sp = Math.abs(g.eA - g.eB), win = g.eA > g.eB ? g.A : g.B, lose = g.eA > g.eB ? g.B : g.A;
-  var sw = findSweetener();
-  var fix = sw ? ' Throw in ' + sw.label + ' from ' + sw.from + " and I'd sign it." : '';
+  if (!g) return "Gelly's phone is in the Mon again. Numbers are down — but I've done the research, and I'd still hang up on this one.";
+  var pick = gellySeed(g);
+  var sp = Math.abs(g.eA - g.eB);
+  var win = g.eA > g.eB ? g.A : g.B, lose = g.eA > g.eB ? g.B : g.A;
+  var h = headliner(g), sw = findSweetener();
+  var sign = pick([" I've done the research. 🖤💛", ' HERE WE GO 🖤💛', ' Pay the debt. 🖤💛🪱',
+                   " That's the report. 🖤💛", ' 🖤💛🪱']);
+
+  /* the specific, number-driven middle sentence — this is what makes it land */
+  var insight = '';
+  if (h && h.surplus != null) {
+    if (h.surplus > 12) insight = pick([
+      ' ' + h.name + ' at R' + h.round + ' is highway larceny — #' + h.rank + " overall for a pick that lands at #" + h.pick + '.',
+      ' Keepin ' + h.name + ' costs the #' + h.pick + ' pick and he grades #' + h.rank + '. That is the whole ballgame.',
+      ' You do not give up ' + h.name + ' at an R' + h.round + ' price. Ever.']);
+    else if (h.surplus > 0) insight = pick([
+      ' ' + h.name + ' is only worth keepin by a hair at R' + h.round + ' — do not act like he is a franchise piece.',
+      ' ' + h.name + ' at R' + h.round + ' is fine, not a steal. The #' + h.pick + ' pick is not nothin.']);
+    else insight = pick([
+      ' ' + h.name + ' costs the #' + h.pick + ' pick and grades #' + h.rank + '. That is not a keeper, that is a rental.',
+      ' Nobody is keepin ' + h.name + ' at R' + h.round + '. Read the round values.']);
+  }
+  var fix = sw ? pick([
+    ' Throw in ' + sw.label + ' from ' + sw.from + " and I'd sign it.",
+    ' Add ' + sw.label + ' and we can talk.',
+    ' ' + sw.to + ', do not answer till ' + sw.label + ' is in the deal.']) : '';
+
   if (g.gross > 4 && Math.abs(g.dA) < 1 && Math.abs(g.dB) < 1)
-    return "Nobody's keepin' either of these guys, so this trade is two fellas swappin' seats on the same bus. I've done the research. 🖤💛";
+    return pick(["Nobody's keepin either of these guys, so this is two fellas swappin seats on the same bus.",
+                 'Zero keeper value movin here. You are tradin guys who go back in the pool anyway.',
+                 'This trade does nothin. Both of em hit the draft board regardless.']) + sign;
   if (g.dA > 0.5 && g.dB > 0.5 && sp < 12)
-    return "Now THIS is a Pittsburgh trade — both sides walk away happy and nobody's mother gets called. Rare. Pay the debt. 🖤💛🪱";
-  if (sp < 6) return "Dead even. Boring. Do it, don't do it, I've got insider reports to write. 🖤💛";
-  if (sp < 16) return win + " comes out a hair ahead here. Not a robbery, just a nudge." + fix;
-  if (sp < 32) return win + " is winnin' this one and they know it. " + lose + ", read the round values before you hit send." + fix + " I've done the research. 🖤💛";
-  return "🚨 SIREN. " + win + " is takin' " + lose + "'s lunch money and the lunch box. Veto it." + fix + " HERE WE GO 🖤💛🪱";
+    return pick(['Now THIS is a Pittsburgh trade — both sides walk away happy and nobody calls anybody a crook.',
+                 'Win-win, and I do not say that. Different round costs, both slates get better.',
+                 'Rare air: this one actually helps both teams.']) + insight + sign;
+  if (sp < 6)
+    return pick(['Dead even. Boring. Do it, do not do it, I have reports to write.',
+                 'Coin flip. Neither of yinz is gettin robbed.',
+                 'Even money. No story here.']) + insight + sign;
+  if (sp < 16)
+    return pick([win + ' comes out a hair ahead. Not a robbery, just a nudge.',
+                 'Slight edge ' + win + '. Nothin the league office needs to hear about.',
+                 win + ' wins on points, not by knockout.']) + insight + fix + sign;
+  if (sp < 32)
+    return pick([win + ' is winnin this one and they know it.',
+                 lose + ', read the round values before you hit send.',
+                 win + ' is takin ' + lose + ' to school here.']) + insight + fix + sign;
+  return pick(['🚨 SIREN. ' + win + " is takin " + lose + "'s lunch money AND the lunch box.",
+               '🚨 Veto it. ' + lose + ', what are we doin here.',
+               '🚨 Somebody check on ' + lose + '. This is a mugging.']) + insight + fix + sign;
 }
 
 /* ------------------------------------------------------------------- SHARE */
