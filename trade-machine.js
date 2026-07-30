@@ -697,7 +697,21 @@ function balance() {
 }
 
 /* -------------------------------------------------------------------- WIRE */
-function renderAll() { renderList(TA, 'tmLA'); renderList(TB, 'tmLB'); renderOut(); }
+/* The host page fills #teamGrid asynchronously and adds .keeper classes only after
+   its own keeper feed resolves, so a single scrape at mount time misses declarations.
+   Re-read before every render (178 rows — cheap) and keep the team order stable. */
+function refreshRosters() {
+  var fresh = readRosters();
+  if (fresh && fresh.teams.length) {
+    var order = D && D.teams.length ? D.teams : fresh.teams;
+    fresh.teams.sort(function (a, b) {
+      var i = order.indexOf(a), j = order.indexOf(b);
+      return (i < 0 ? 999 : i) - (j < 0 ? 999 : j);
+    });
+    D = fresh;
+  }
+}
+function renderAll() { refreshRosters(); renderList(TA, 'tmLA'); renderList(TB, 'tmLB'); renderOut(); }
 function setTeams(a, b) {
   if (a === b) b = D.teams.filter(function (t) { return t !== a; })[0];
   TA = a; TB = b; $('#tmA').value = TA; $('#tmB').value = TB;
@@ -769,6 +783,16 @@ function mount() {
     var t = e.target.getAttribute && e.target.getAttribute('data-s27');
     if (t) { show27[t] = true; renderAll(); }
   });
+
+  /* If the host page repaints the grid (keeper feed landing, roster refresh),
+     pick the change up instead of showing a stale slate. */
+  if (grid && window.MutationObserver) {
+    var pending = null;
+    new MutationObserver(function () {
+      clearTimeout(pending);
+      pending = setTimeout(function () { if (isOpen()) renderAll(); }, 250);
+    }).observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  }
 
   loadPool().then(function () {
     if (isOpen()) renderAll();
