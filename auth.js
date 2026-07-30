@@ -62,12 +62,20 @@
     '#' + GATE_ID + ' .wg-who{font-size:13px;color:#9aa4b2;margin:0 0 14px;}' +
     '#' + GATE_ID + ' .wg-who b{color:#e6edf3;}' +
     '#' + GATE_ID + ' .wg-foot{margin:16px 0 0;font-size:11px;color:#6b7480;text-align:center;line-height:1.5;}' +
-    '#wpial-chip{position:fixed;bottom:10px;right:10px;z-index:2147483000;background:#161b22;' +
-      'border:1px solid #2a3038;border-radius:20px;padding:6px 12px;font-size:11px;color:#9aa4b2;' +
-      'font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}' +
-    '#wpial-chip b{color:#e6edf3;}' +
-    '#wpial-chip button{background:none;border:0;color:#2ea6ff;font-size:11px;cursor:pointer;' +
-      'padding:0 0 0 8px;}';
+    // Sits inline in the page's own nav/header so it never collides with the
+    // Gelly tip FAB (fixed bottom-right) or the draftboard's controls.
+    '#wpial-chip{position:static;display:inline-flex;align-items:center;gap:7px;background:transparent;' +
+      'border:1px solid #2a3038;border-radius:20px;padding:7px 13px;font-size:12px;color:#9aa4b2;' +
+      'font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;' +
+      'vertical-align:middle;margin:0 0 0 6px;white-space:nowrap;}' +
+    '#wpial-chip b{color:#e6edf3;font-weight:600;}' +
+    '#wpial-chip button{background:none;border:0;color:#2ea6ff;font-size:12px;cursor:pointer;' +
+      'padding:0;text-decoration:underline;}' +
+    '#wpial-chip.wpial-chip-float{position:fixed;top:8px;left:8px;z-index:2147483000;' +
+      'background:#161b22;margin:0;}' +
+    '@media (max-width:600px){#wpial-chip{font-size:11px;padding:6px 10px;}}' +
+    // the board already shows which team is yours — save the space on phones
+    '@media (max-width:900px){#wpial-chip .wpial-team{display:none;}}';
   (document.head || html).appendChild(style);
 
   /* ---------- 2. Storage + token helpers ---------- */
@@ -111,18 +119,35 @@
 
   function addChip(user) {
     if (document.getElementById('wpial-chip') || !document.body) return;
-    var c = document.createElement('div');
+
+    var c = document.createElement('span');
     c.id = 'wpial-chip';
-    c.appendChild(document.createTextNode('signed in as '));
     var b = document.createElement('b');
     b.textContent = user.name || user.email;
     c.appendChild(b);
-    if (user.team) c.appendChild(document.createTextNode(' · ' + user.team));
+    if (user.team) {
+      var t = document.createElement('span');
+      t.className = 'wpial-team';
+      t.textContent = '· ' + user.team;
+      c.appendChild(t);
+    }
     var out = document.createElement('button');
     out.textContent = 'log out';
     out.onclick = logout;
     c.appendChild(out);
-    document.body.appendChild(c);
+
+    // Sit in whatever control row the page already has:
+    //   index.html    -> <nav> (the tab pills)
+    //   draftboard    -> .hdr-right (LIVE/MOCK, theme, Undo, Reset, Commish)
+    // Appending to <header> directly is NOT ok on the draftboard — the header
+    // spans the page and the chip ends up over the Best Available list.
+    var host = document.querySelector('nav') || document.querySelector('.hdr-right');
+    if (host) {
+      host.appendChild(c);
+    } else {
+      c.className = 'wpial-chip-float';
+      document.body.appendChild(c);
+    }
   }
 
   function logout() {
