@@ -198,6 +198,33 @@
     strip.innerHTML = html;
   }
 
+  /* ---------------------------------------------------------------------
+   * Publish the header's real height as --hdr-h.
+   * The draftboard sizes its board pane and sticks its sidebar against the
+   * header, and used to do it with a hardcoded 96px. Adding this nav strip —
+   * and later the draft clock — made the header taller, so the sidebar stuck
+   * underneath it and both panes ran past the bottom of the window. Anything
+   * that changes header height (a wrapped toolbar, a mode switch, a rotated
+   * phone) now updates the variable instead.
+   * ------------------------------------------------------------------ */
+  function trackHeaderHeight() {
+    var header = document.querySelector('header');
+    if (!header) return;
+    var apply = function () {
+      var h = Math.round(header.getBoundingClientRect().height);
+      if (h > 0) document.documentElement.style.setProperty('--hdr-h', h + 'px');
+    };
+    apply();
+    if (window.ResizeObserver) {
+      try { new ResizeObserver(apply).observe(header); } catch (e) {}
+    }
+    window.addEventListener('resize', apply);
+    window.addEventListener('orientationchange', apply);
+    // Fonts land after first paint and change the header's height with them.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(apply).catch(function () {});
+    document.addEventListener('wpial-auth', function () { setTimeout(apply, 50); });
+  }
+
   function init() {
     if (currentPage() === 'index.html') {
       wireIndex();
@@ -206,6 +233,7 @@
       // is_commish arrives after auth_me resolves; re-render to reveal 📊.
       document.addEventListener('wpial-auth', renderStrip);
     }
+    trackHeaderHeight();
   }
 
   if (document.readyState === 'loading') {

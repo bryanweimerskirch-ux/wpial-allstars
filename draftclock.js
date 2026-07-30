@@ -368,7 +368,12 @@
       ' <a href="#" id="dcRefresh" style="color:var(--accent2);">refresh</a>' +
       (watchAt ? '<br>as of ' + watchAt.toLocaleTimeString() : '');
 
-    document.getElementById('dcLog').innerHTML = log.map(function (l) {
+    // The log is a width:100% flex item, so even when empty it forces a line
+    // break and reserves a dead band across the header. The draftboard sizes
+    // its panes off header height, so that band costs real screen.
+    var logEl = document.getElementById('dcLog');
+    logEl.style.display = log.length ? '' : 'none';
+    logEl.innerHTML = log.map(function (l) {
       return '<span class="lg' + (l.via === 'watchlist' ? ' wl' : '') + '">⏱ ' + h(l.label) + ' ' +
         h(l.team) + ' → <b>' + h(l.name) + '</b> ' + h(l.pos) + ' · ' +
         (l.via === 'watchlist' ? 'watchlist #' + l.rank : 'best available') + '</span>';
