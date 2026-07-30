@@ -168,6 +168,9 @@
     if (!currentSlot()) return;
     S.running = true;
     S.deadline = Date.now() + Math.max(1000, S.left || S.dur);
+    // Owners keep editing their lists during the draft, so never start a clock
+    // on a stale copy.
+    loadWatchlists();
     save(); paint();
   }
   function pause() {
@@ -386,6 +389,12 @@
     clearInterval(timer);
     timer = setInterval(tick, TICK);
     if (isCommish()) loadWatchlists();
+    // An owner can add a name thirty seconds before their pick. Re-pull in the
+    // background so an auto-pick never fires off a list that's minutes old.
+    // Cheap: one small request a minute, and only while the board is in use.
+    setInterval(function () {
+      if (liveMode() && isCommish() && currentSlot()) loadWatchlists();
+    }, 60000);
     document.addEventListener('wpial-auth', function () { paint(); loadWatchlists(); });
     document.addEventListener('wpial-auth-refresh', function () { paint(); });
     // Mode toggle lives in the page's own header buttons; repaint after a click
