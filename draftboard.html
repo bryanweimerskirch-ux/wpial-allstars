@@ -317,7 +317,7 @@ footer{padding:10px 16px;color:var(--muted);font-size:11px;border-top:1px solid 
     <div class="side-section">
       <h3>Best Available <span style="font-weight:400;font-size:10px;color:var(--muted);">half-PPR</span></h3>
       <div class="posfilters" id="posfilters">
-        <button data-p="ALL" class="active">All</button><button data-p="QB">QB</button><button data-p="RB">RB</button><button data-p="WR">WR</button><button data-p="TE">TE</button><button data-p="FLEX" title="RB + WR + TE">FLEX</button><button data-p="K">K</button><button data-p="DEF">DEF</button><button data-p="ROOK" title="2026 rookie class only (needs the live feed for rookie flags)">🐣 Rookies</button><button data-p="KEEP" title="The on-the-clock team's own keeper-eligible players — a reminder of who they could have kept (or can still draft back)">⭐ Keep</button>
+        <button data-p="ALL" class="active">All</button><button data-p="QB">QB</button><button data-p="RB">RB</button><button data-p="WR">WR</button><button data-p="TE">TE</button><button data-p="FLEX" title="RB + WR + TE">FLEX</button><button data-p="K">K</button><button data-p="DEF">DEF</button><button data-p="ROOK" title="2026 rookie class only (needs the live feed for rookie flags)">🐣 Rookies</button><button data-p="KEEP" title="Your own keeper-eligible players and their round cost — a reminder of who they could have kept (or can still draft back)">⭐ Keep</button>
       </div>
       <div id="balist"></div>
     </div>
@@ -2290,9 +2290,19 @@ function renderBA(){
     '<div class="ba" data-id="'+p.id+'"><span class="rk">'+p.r+'</span><span class="nm">'+esc(p.n)+(p.rk?' <span title="rookie">🐣</span>':'')+'</span><span class="poschip '+p.p+'">'+p.p+'</span><span class="batm">'+esc(p.t)+'</span><span class="pt">'+(p.pts?p.pts+' pts':'')+(p.adp?' · '+p.adp:'')+'</span></div>'
   ).join('') || (posFilter==='ROOK'&&!POOL.some(p=>p.rk)?'<div class="hint">No rookie flags in the current data source — the live league feed provides them (embedded snapshot doesn’t).</div>':'<div class="hint">No players left at this position.</div>');
 }
+function keepViewTeam(){
+  /* The ⭐ Keep pool is about YOUR keepers, not whoever is on the clock.
+     Commish can point it at any team via the picker. Falls back to the old
+     on-the-clock behaviour only when nobody is logged in. */
+  const me = window.WPIAL_USER || {};
+  if(me.is_commish && window.__keepTeam && ROSTERS[window.__keepTeam]) return window.__keepTeam;
+  if(me.team && ROSTERS[me.team]) return me.team;
+  return cursor<SLOTS.length ? SLOTS[cursor].team : (mode==='mock'?myTeam:null);
+}
 function renderKeepable(){
-  const team = cursor<SLOTS.length ? SLOTS[cursor].team : (mode==='mock'?myTeam:null);
-  if(!team || !ROSTERS[team]){ $('#balist').innerHTML='<div class="hint">Draft complete — no team on the clock.</div>'; return; }
+  const me = window.WPIAL_USER || {};
+  const team = keepViewTeam();
+  if(!team || !ROSTERS[team]){ $('#balist').innerHTML='<div class="hint">Log in to see your keeper-eligible roster.</div>'; return; }
   const dSet=draftedNorms(), pm=poolByNorm();
   const st = teamKeepState(team);
   const items=[];
@@ -2301,7 +2311,15 @@ function renderKeepable(){
     items.push({round:r.round,name:p.name,pos:p.pos,pp:pp,kept:isKept(p.name),drafted:dSet.has(n),good:pp&&pp.r<=r.round*10});
   }));
   items.sort((a,b)=>a.round-b.round);
-  let html='<div class="hint" style="margin-bottom:5px;">⭐ <b style="color:var(--accent)">'+esc(team)+'</b> on the clock — their keeper-eligible roster:</div>';
+  const mine = me.team === team;
+  let html='';
+  if(me.is_commish){
+    html+='<div class="hint" style="margin-bottom:6px;">🔑 Commish view — team: <select id="keepTeamPick" style="background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:3px 6px;font-size:12px;">'
+      + TEAMS.map(t=>'<option value="'+esc(t)+'"'+(t===team?' selected':'')+'>'+esc(t)+'</option>').join('')
+      + '</select></div>';
+  }
+  html+='<div class="hint" style="margin-bottom:5px;">⭐ '+(mine?'<b style="color:var(--accent)">Your</b> keeper-eligible roster'
+      : '<b style="color:var(--accent)">'+esc(team)+'</b> — keeper-eligible roster')+':</div>';
   html+=items.map(it=>{
     const slot=SLOT_AT[it.round]&&SLOT_AT[it.round][team];
     const boxOpen=slot&&!picks[slot.overall]&&slot.overall>=cursor;
@@ -2316,6 +2334,8 @@ function renderKeepable(){
       +'<span class="pt" style="color:'+(it.good?'var(--ok)':'var(--muted)')+'">'+(it.pp?'rank '+it.pp.r:'unranked')+'</span>'+status+'</div>';
   }).join('');
   $('#balist').innerHTML=html;
+  const pick=$('#keepTeamPick');
+  if(pick) pick.onchange=function(){ window.__keepTeam=this.value; renderKeepable(); };
 }
 /* League lineup minimums (Constitution Art. V): 1 QB, 2 RB, 2 WR, 1 TE, 2 FLEX (RB/WR/TE), 1 D/ST, 1 K + 6 bench */
 function teamNeeds(team){
@@ -2703,7 +2723,7 @@ function startCoach(){
   coachSteps=[
     {sel:'#mockPanel', ttl:'Mock mode', txt:'This is your practice sandbox. Pick your franchise here — the CPU drafts for the other nine teams.'},
     {sel:'#board td.cand', ttl:'Keeper decisions', txt:'Dotted boxes are keeper calls: ⭐ Keep locks that player into that round, ✕ makes it a normal draft pick. Decide for every team to mirror real draft night.'},
-    {sel:'#posfilters', ttl:'Player pool filters', txt:'Filter Best Available by position, FLEX, 🐣 rookies — and ⭐ Keep shows the on-the-clock team’s own keeper options as a reminder.'},
+    {sel:'#posfilters', ttl:'Player pool filters', txt:'Filter Best Available by position, FLEX, 🐣 rookies — and ⭐ Keep shows your own keeper options and what round each would cost.'},
     {sel:'#mockGo', ttl:'Kickoff', txt:'Hit Start and the CPU drafts until you’re on the clock. After all 160 picks, open the Season Sim and play out the year. 🖤💛'}
   ];
   coachIdx=0; showCoach();
@@ -2984,6 +3004,8 @@ function fetchLivePool(){
   if(manual.length) loadKeepersFromList(manual,'manual');  // saved commish locks
   setMode(mode);
   tickCountdown();
+  // identity arrives asynchronously; refresh the pool so ⭐ Keep scopes to the owner
+  document.addEventListener('wpial-auth', function(){ try{ renderPool(); renderRoster(); }catch(e){} });
   setSrc('Rankings: embedded snapshot '+POOL.length+' players',true);
   fetchFeedRankings().then(ok=>{ if(!ok) fetchLivePool(); });  // ESPN via feed, else Sleeper live
   fetchLiveKeepers(false);  // upgrade to live keeper feed
