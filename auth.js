@@ -221,7 +221,7 @@
 
     var foot = document.createElement('p');
     foot.className = 'wg-foot';
-    foot.textContent = 'Forgot your password? Text Bryan and he can reset it.';
+    foot.textContent = 'Forgot your password? Text the commish for a reset.';
     card.appendChild(foot);
 
     (document.body || html).appendChild(wrap);
@@ -254,7 +254,7 @@
       post({ action: 'auth_status', email: v }).then(function (r) {
         if (!r || !r.ok) { say((r && r.error) || 'Something went wrong. Try again.'); busy(false); return; }
         if (!r.known) {
-          say('That email is not on the league list. Text Bryan to get added.');
+          say('That email is not on the league list. Text the commish to get added.');
           busy(false); return;
         }
         known = r;
