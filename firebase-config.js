@@ -1,14 +1,21 @@
-/* Firebase web config for wpail-allstars.
- * NOT a secret: the apiKey identifies the project, not the caller. Access is
- * controlled by Firebase Auth + database security rules, which is why this can
- * live in a public repo. See https://firebase.google.com/docs/projects/api-keys
+/* Firebase web config for the WPIAL All Stars league site.
+ *
+ * NOT a secret. A Firebase web apiKey identifies the project, not the caller —
+ * it is designed to ship in client code. Access is controlled entirely by
+ * Firebase Auth plus the Realtime Database security rules, which is why this is
+ * safe in a public repo. See https://firebase.google.com/docs/projects/api-keys
+ *
+ * Project: wpial-allstars (project number 440172107697), Spark/no-cost plan,
+ * no billing account attached. Google Analytics and Gemini both declined at
+ * creation. Auth: Email link (passwordless) only. Realtime Database exists in
+ * locked mode and nothing connects to it yet.
  */
 window.WPIAL_FIREBASE = {
-  apiKey: "AIzaSyA77M7BG84jHqPq9u666jNjenOtnk9t3MA",
-  authDomain: "wpail-allstars.firebaseapp.com",
-  projectId: "wpail-allstars",
-  storageBucket: "wpail-allstars.firebasestorage.app",
-  databaseURL: "https://wpail-allstars-default-rtdb.firebaseio.com",
-  messagingSenderId: "634032316042",
-  appId: "1:634032316042:web:6893cb5fb7ede087385773"
+  apiKey: "AIzaSyA-dHNnIHtzUwOWU1Dqa8G5qQ-67pDgg4Y",
+  authDomain: "wpial-allstars.firebaseapp.com",
+  projectId: "wpial-allstars",
+  storageBucket: "wpial-allstars.firebasestorage.app",
+  databaseURL: "https://wpial-allstars-default-rtdb.firebaseio.com",
+  messagingSenderId: "440172107697",
+  appId: "1:440172107697:web:49359d082b42a1af9c0f90"
 };
