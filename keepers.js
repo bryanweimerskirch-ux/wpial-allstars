@@ -47,7 +47,22 @@
     '.wk-bar b{color:var(--text);}' +
     '.wk-bar.done b{color:#3fb950;}' +
     '.wk-bar .wk-msg{color:#ff9f4d;}' +
-    '.wk-bar .wk-lock{color:#9aa4b2;}';
+    '.wk-bar .wk-lock{color:#9aa4b2;}' +
+
+    /* One player per line, never wrapping mid-name. The board was laid out as a
+       wrapping flex row; adding a pill pushed long names onto a second line. */
+    '#teamGrid .players{flex-direction:column !important;align-items:flex-start !important;' +
+      'flex-wrap:nowrap !important;gap:3px !important;width:100%;}' +
+    '#teamGrid .players .player{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' +
+      'max-width:100%;}' +
+    '.wk-line{display:flex;align-items:center;gap:6px;white-space:nowrap;max-width:100%;' +
+      'min-width:0;}' +
+    '.wk-line .player{flex:0 1 auto;min-width:0;}' +
+
+    /* The site already marks a declared keeper with a gold ⭐ via
+       .player.keeper::before. Where our KEEPING pill is present that is the same
+       statement twice, so drop the ⭐ on those rows only — other teams keep theirs. */
+    '.wk-line .player.keeper::before{content:none !important;}';
   document.head.appendChild(css);
 
   function post(params) {
@@ -161,10 +176,17 @@
       if (!r.btn) {
         if (!canEdit(r.team)) return;   // don't clutter other people's teams
 
+        // Wrap pill + player in one flex line so the pair can never split across
+        // two lines. Moving the span keeps its existing interest click handler.
+        var line = document.createElement('span');
+        line.className = 'wk-line';
+        r.playerSpan.parentNode.insertBefore(line, r.playerSpan);
+
         r.btn = document.createElement('button');
         r.btn.className = 'wk-star';
         r.btn.type = 'button';
-        r.playerSpan.parentNode.insertBefore(r.btn, r.playerSpan);
+        line.appendChild(r.btn);
+        line.appendChild(r.playerSpan);
         r.btn.addEventListener('click', function (ev) {
           ev.preventDefault();
           ev.stopPropagation();          // never trigger the interest ping
