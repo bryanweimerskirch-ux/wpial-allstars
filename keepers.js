@@ -1,18 +1,19 @@
 /**
  * WPIAL All Stars — owner keeper declaration on the Rosters board (keepers.js)
  * ---------------------------------------------------------------------------
- * Adds a ⭐ button to each player on the Rosters & round values board so an owner
- * can declare their 5 keepers. Requires auth.js (uses WPIAL_AUTH / WPIAL_USER).
+ * Adds a Keep/Keeping pill to each player on the Rosters & round values board so an
+ * owner can declare their 5 keepers. Requires auth.js (uses WPIAL_AUTH / WPIAL_USER).
+ * Deliberately NOT a ⭐ — the site already uses ⭐ for "declared 2026 keeper".
  *
  * DESIGN RULE (important): the existing click-to-signal-interest behaviour on
  * `span.player` is left COMPLETELY alone. Interest is the whole point of the Gelly
  * feed. Keeper selection gets its OWN button, a separate click target, and calls
  * stopPropagation so the two can never be confused.
  *
- * PERMISSIONS: commish sees actionable ⭐ on every team. A regular owner only gets
- * actionable ⭐ on their own team; other teams show a read-only marker. The server
- * enforces this too (keeper_save ignores a non-commish team param), so the UI is
- * convenience, not the boundary.
+ * PERMISSIONS: commish gets the pill on every team. A regular owner gets it only on
+ * their own team; other teams render nothing (the site already flags their declared
+ * keepers in gold). The server enforces this too — keeper_save ignores a `team` param
+ * from a non-commish caller — so the UI is convenience, not the boundary.
  */
 (function () {
   'use strict';
@@ -29,14 +30,17 @@
   /* ---------- styles ---------- */
   var css = document.createElement('style');
   css.textContent =
-    '.wk-star{background:none;border:1px solid transparent;border-radius:5px;cursor:pointer;' +
-      'font-size:13px;line-height:1;padding:1px 4px;margin-right:3px;opacity:.45;' +
-      'vertical-align:middle;transition:opacity .12s,background .12s;}' +
-    '.wk-star:hover{opacity:1;background:#22282f;}' +
-    '.wk-star.on{opacity:1;color:#ffd23f;border-color:#6b5a15;background:#2a2410;}' +
-    '.wk-star.ro{cursor:default;opacity:.85;border-color:transparent;}' +
-    '.wk-star.ro:hover{background:none;}' +
-    '.wk-star:disabled{cursor:not-allowed;}' +
+    // NOT a star: the site already uses ⭐ to mean "declared 2026 keeper" (see the
+    // Team rosters legend). A second ⭐ meaning "you are keeping this" on the same
+    // row was ambiguous, so this is a labelled pill instead.
+    '.wk-star{background:none;border:1px solid var(--line);border-radius:10px;cursor:pointer;' +
+      'font-size:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;' +
+      'line-height:1;padding:3px 7px;margin-right:5px;color:var(--muted);' +
+      'vertical-align:middle;transition:all .12s;}' +
+    '.wk-star:hover{color:var(--text);border-color:var(--muted);background:#22282f;}' +
+    '.wk-star.on{color:#1a0e04;background:#ffd23f;border-color:#ffd23f;}' +
+    '.wk-star.on:hover{background:#ffdd6b;}' +
+    '.wk-star:disabled{cursor:not-allowed;opacity:.5;}' +
     '.wk-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;' +
       'margin:2px 0 10px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;' +
       'background:#12171e;color:var(--muted);}' +
@@ -154,9 +158,9 @@
     rows.forEach(function (r) {
       var on = isPicked(r.team, r.name);
       var editable = editableNow(r.team);
-      var mayShow = canEdit(r.team) || on;   // other teams: only show if declared
       if (!r.btn) {
-        if (!mayShow) return;
+        if (!canEdit(r.team)) return;   // don't clutter other people's teams
+
         r.btn = document.createElement('button');
         r.btn.className = 'wk-star';
         r.btn.type = 'button';
@@ -167,11 +171,11 @@
           toggle(r);
         });
       }
-      r.btn.textContent = on ? '⭐' : '☆';
-      r.btn.className = 'wk-star' + (on ? ' on' : '') + (editable ? '' : ' ro');
+      r.btn.textContent = on ? 'Keeping' : 'Keep';
+      r.btn.className = 'wk-star' + (on ? ' on' : '');
       r.btn.disabled = !editable;
       r.btn.title = on
-        ? (editable ? 'Keeping ' + r.name + ' (Round ' + r.round + ') — click to drop' : r.name + ' is a declared keeper')
+        ? (editable ? 'Keeping ' + r.name + ' at your Round ' + r.round + ' pick — click to drop' : r.name + ' is a declared keeper')
         : (editable ? 'Keep ' + r.name + ' — costs your Round ' + r.round + ' pick' : 'Keeper selection is locked');
     });
   }
