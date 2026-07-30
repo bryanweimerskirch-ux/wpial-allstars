@@ -599,12 +599,16 @@ function askGelly(g) {
   if (!a.length && !b.length) { msg = 'Put something in the trade first.'; renderOut(); return; }
   gellyBusy = true; gelly = null; pubStage = 'idle'; renderOut();
 
+  /* Hand Gelly the specific piece that would even this up, so his closing line is
+     an actual counter-offer rather than vague "ask for more". */
+  var sw = findSweetener();
   var payload = {
     teamA: TA, teamB: TB,
     aSends: a.map(assetLine), bSends: b.map(assetLine),
     grades: g ? { A: g.gA[0], B: g.gB[0] } : null,
     net: g ? { A: r1(g.dA), B: r1(g.dB) } : null,
-    verdict: $('.tm-verdict') ? $('.tm-verdict').textContent : ''
+    verdict: $('.tm-verdict') ? $('.tm-verdict').textContent : '',
+    fix: sw ? { add: sw.label, from: sw.from, to: sw.to } : null
   };
   fetch(CFG.API + '?action=gelly_trade', {
     method: 'POST',
@@ -628,14 +632,16 @@ function assetLine(a) {
 function fallbackGelly(g) {
   if (!g) return "Gelly's phone is in the Mon River again. Numbers are down — but I've done the research, and I'd still hang up on this one.";
   var sp = Math.abs(g.eA - g.eB), win = g.eA > g.eB ? g.A : g.B, lose = g.eA > g.eB ? g.B : g.A;
+  var sw = findSweetener();
+  var fix = sw ? ' Throw in ' + sw.label + ' from ' + sw.from + " and I'd sign it." : '';
   if (g.gross > 4 && Math.abs(g.dA) < 1 && Math.abs(g.dB) < 1)
     return "Nobody's keepin' either of these guys, so this trade is two fellas swappin' seats on the same bus. I've done the research. 🖤💛";
   if (g.dA > 0.5 && g.dB > 0.5 && sp < 12)
     return "Now THIS is a Pittsburgh trade — both sides walk away happy and nobody's mother gets called. Rare. Pay the debt. 🖤💛🪱";
   if (sp < 6) return "Dead even. Boring. Do it, don't do it, I've got insider reports to write. 🖤💛";
-  if (sp < 16) return win + " comes out a hair ahead here. Not a robbery, just a nudge — but " + lose + " should ask for a 2027 pick to sleep better.";
-  if (sp < 32) return win + " is winnin' this one and they know it. " + lose + ", read the round values before you hit send. I've done the research. 🖤💛";
-  return "🚨 SIREN. " + win + " is takin' " + lose + "'s lunch money and the lunch box. Veto it. Burn it. HERE WE GO 🖤💛🪱";
+  if (sp < 16) return win + " comes out a hair ahead here. Not a robbery, just a nudge." + fix;
+  if (sp < 32) return win + " is winnin' this one and they know it. " + lose + ", read the round values before you hit send." + fix + " I've done the research. 🖤💛";
+  return "🚨 SIREN. " + win + " is takin' " + lose + "'s lunch money and the lunch box. Veto it." + fix + " HERE WE GO 🖤💛🪱";
 }
 
 /* ------------------------------------------------------------------- SHARE */
@@ -678,21 +684,33 @@ function fb(txt, done) {
 }
 
 /* ----------------------------------------------------------------- BALANCE */
-function balance() {
+/* Search the winning side's remaining assets for the single piece that gets the
+   deal closest to even. Powers both the ⚖️ Balance button and the concrete
+   "throw in X and I'd sign it" line Gelly closes with. */
+function findSweetener() {
   var a = picked(TA), b = picked(TB);
-  if ((!a.length && !b.length) || poolState === 'none') return;
+  if ((!a.length && !b.length) || poolState === 'none') return null;
   var g = grade(TA, TB, a, b);
-  var win = g.eA > g.eB ? TA : TB, cur = win === TA ? a : b, have = {};
+  var gap0 = Math.abs(g.eA - g.eB);
+  if (gap0 < 6) return null;                       // already fair, nothing to fix
+  var win = g.eA > g.eB ? TA : TB, lose = g.eA > g.eB ? TB : TA;
+  var cur = win === TA ? a : b, have = {};
   cur.forEach(function (x) { have[x.key] = 1; });
-  var best = null, gap = Math.abs(g.eA - g.eB);
+  var best = null, gap = gap0;
   assetsOf(win).filter(function (x) { return !have[x.key]; }).forEach(function (x) {
     var t = grade(TA, TB, win === TA ? a.concat([x]) : a, win === TB ? b.concat([x]) : b);
     var ng = Math.abs(t.eA - t.eB);
     if (ng < gap - 0.01) { gap = ng; best = x; }
   });
-  if (!best) { msg = "Nothing on " + win + "'s side gets this closer to even."; renderOut(); return; }
-  msg = 'Added ' + (best.kind === 'p' ? best.name : best.label) + ' from ' + win + '.';
-  sel[win] = (sel[win] || []).concat([best.key]);
+  if (!best) return null;
+  return { asset: best, from: win, to: lose, gapBefore: gap0, gapAfter: gap,
+           label: best.kind === 'p' ? best.name : best.label };
+}
+function balance() {
+  var s = findSweetener();
+  if (!s) { msg = 'Nothing on either side gets this closer to even.'; renderOut(); return; }
+  msg = 'Added ' + s.label + ' from ' + s.from + '.';
+  sel[s.from] = (sel[s.from] || []).concat([s.asset.key]);
   saveState(); renderAll();
 }
 
