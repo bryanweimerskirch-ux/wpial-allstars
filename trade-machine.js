@@ -266,6 +266,14 @@ var CSS = [
 '.tm-list{max-height:290px;overflow-y:auto;padding:6px 8px;}',
 '.tm-grp{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted,#9aa4b2);margin:9px 0 3px;}',
 '.tm-grp:first-child{margin-top:2px;}',
+'.tm-head{display:flex;align-items:center;gap:7px;padding:0 5px 4px 5px;font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted,#9aa4b2);border-bottom:1px solid var(--line,#2a3038);margin-bottom:3px;}',
+'.tm-head .nm{flex:1;padding-left:44px;}',
+'.tm-head .vv{min-width:32px;text-align:right;}',
+'.tm-head .pl{min-width:44px;text-align:right;cursor:help;}',
+'.tm-head .rd,.tm-head .vv{cursor:help;}',
+'.tm-decl{cursor:help;}',
+'.tm-legend{font-size:11.5px;color:var(--muted,#9aa4b2);line-height:1.5;margin:0 0 10px;padding:8px 11px;border-radius:8px;background:rgba(255,255,255,.035);border-left:3px solid var(--accent2,#2ea6ff);}',
+'.tm-legend b{color:var(--text,#e6edf3);}',
 '.tm-a{display:flex;align-items:center;gap:7px;padding:5px;border-radius:6px;cursor:pointer;font-size:12.5px;}',
 '.tm-a:hover{background:rgba(255,255,255,.05);}',
 '.tm-a.on{background:rgba(255,106,26,.15);outline:1px solid var(--accent,#ff6a1a);}',
@@ -332,6 +340,12 @@ var PANEL = [
 '    <button class="tm-btn sm" id="tmBal" title="Add one asset from the winning side to even it up">⚖️ Balance</button>',
 '    <button class="tm-btn sm" id="tmClr">Clear</button>',
 '  </div>',
+'  <div class="tm-legend">',
+'    <b>value</b> = trade value on a scale where the #1 overall player is ~100 (#12 ≈ 77, #24 ≈ 58, #60 ≈ 25, #100 ≈ 10). ',
+'    <b>keep</b> = what he is worth <i>after</i> paying his round cost — value minus the pick you burn to keep him. ',
+'    A star player who costs a 1st can be worth almost nothing to keep; a good one who costs a 12th can be worth a fortune. ',
+'    <b>The grade uses “keep”, not “value.”</b> Hover any row to see the arithmetic. 🔒 = officially declared keeper.',
+'  </div>',
 '  <div class="tm-cols">',
 '    <div class="tm-side"><h3><span id="tmAN"></span>&nbsp;sends<span class="tm-g c g" id="tmGA">–</span></h3><div class="tm-list" id="tmLA"></div></div>',
 '    <div class="tm-side"><h3><span id="tmBN"></span>&nbsp;sends<span class="tm-g c g" id="tmGB">–</span></h3><div class="tm-list" id="tmLB"></div></div>',
@@ -355,25 +369,43 @@ function renderList(team, elId) {
   var on = {}; (sel[team] || []).forEach(function (k) { on[k] = 1; });
   var st = baseState(team), ev = evaluate(team, st), smap = {};
   ev.scored.forEach(function (p) { smap[p.key] = p; });
-  var keptKeys = {}; ev.kept.forEach(function (p) { keptKeys[p.key] = 1; });
 
   var plist = st.players.slice().sort(function (a, b) {
     return (a.keepRound - b.keepRound) || ((a.rank || 999) - (b.rank || 999));
   });
   var h = '<div class="tm-grp">Roster · keeper round value</div>';
+  if (poolState !== 'none' && plist.length) {
+    h += '<div class="tm-head"><span class="nm">Player</span>' +
+      '<span class="rd" title="The round it costs to keep him, and his half-PPR overall rank">cost · rank</span>' +
+      '<span class="vv" title="Trade value. #1 overall is about 100, #12 about 77, #24 about 58, #60 about 25, #100 about 10.">value</span>' +
+      '<span class="pl" title="Value minus the pick you burn to keep him. THIS is what he is worth as a keeper.">keep</span></div>';
+  }
   if (!plist.length) h += '<div class="tm-empty">No players on file.</div>';
   plist.forEach(function (p) {
-    var s = smap[p.key], pill = '';
+    var s = smap[p.key], pill = '', vTitle = '', why = '';
     if (poolState !== 'none') {
-      pill = s && s.noPick
-        ? '<span class="tm-pill n" title="No pick left in that round">no pick</span>'
-        : '<span class="tm-pill ' + (s && s.surplus > 0 ? 'p' : 'n') + '" title="Keeper surplus: value minus the pick it costs">' +
-          (s && s.surplus > 0 ? '+' : '') + r1(s ? s.surplus : 0) + '</span>';
+      var ovPick = pickOverall(p.keepRound, team);
+      vTitle = p.name + (p.rank ? ' is #' + p.rank + ' overall in half-PPR, worth ' + r1(p.val) + ' trade points.'
+                                : ' is not in the current rankings, so he sits at the value floor.');
+      if (s && s.noPick) {
+        why = vTitle + '\n\n' + team + ' has no R' + p.keepRound + ' pick left, so he cannot be kept at all.';
+        pill = '<span class="tm-pill n" title="' + esc(why) + '">no pick</span>';
+      } else if (s) {
+        why = vTitle + '\n\nKeeping him costs ' + team + "'s R" + p.keepRound + ' pick (#' + ovPick +
+          ' overall), worth ' + r1(s.cost) + '.\n' + r1(p.val) + ' − ' + r1(s.cost) + ' = ' +
+          (s.surplus > 0 ? '+' : '') + r1(s.surplus) + ' keeper value.\n\n' +
+          (s.surplus > 12 ? 'Bargain — he costs far less than he is worth.'
+           : s.surplus > 0 ? 'Slightly worth keeping, but not a steal.'
+           : 'Not worth a keeper slot — you would give up more than you get.');
+        pill = '<span class="tm-pill ' + (s.surplus > 0 ? 'p' : 'n') + '" title="' + esc(why) + '">' +
+          (s.surplus > 0 ? '+' : '') + r1(s.surplus) + '</span>';
+      }
     }
-    h += '<label class="tm-a' + (on[p.key] ? ' on' : '') + '" data-k="' + esc(p.key) + '" data-t="' + esc(team) + '">' +
+    h += '<label class="tm-a' + (on[p.key] ? ' on' : '') + '" data-k="' + esc(p.key) + '" data-t="' + esc(team) + '"' +
+      (why ? ' title="' + esc(why) + '"' : '') + '>' +
       '<input type="checkbox"' + (on[p.key] ? ' checked' : '') + '>' +
       '<span class="tm-chip">' + esc(p.pos) + '</span>' +
-      '<span class="nm">' + (keptKeys[p.key] ? '⭐ ' : '') + (p.declared ? '🔒 ' : '') + esc(p.name) + '</span>' +
+      '<span class="nm">' + (p.declared ? '<span class="tm-decl" title="Officially declared as a 2026 keeper">🔒</span> ' : '') + esc(p.name) + '</span>' +
       '<span class="rd">R' + p.keepRound + (p.rank ? ' · #' + p.rank : '') + '</span>' +
       (poolState === 'none' ? '' : '<span class="vv">' + r1(p.val) + '</span>' + pill) +
       '</label>';
