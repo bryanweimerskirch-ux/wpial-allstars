@@ -57,7 +57,16 @@
       // Fire the page's own handler rather than duplicating its logic, so the
       // two can never drift apart.
       target.click();
-      if (scroll) window.scrollTo(0, 0);
+      // The section ids double as anchor targets, so the browser performs its
+      // own jump to #rosters after we've activated the tab — which lands you
+      // mid-page with the nav scrolled off. Undo it, twice, because that jump
+      // can happen a frame or two later.
+      if (scroll) {
+        var top = function () { window.scrollTo(0, 0); };
+        top();
+        requestAnimationFrame(top);
+        setTimeout(top, 80);
+      }
       return true;
     }
 
