@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WPIAL All Stars — Commish Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0e13; --panel:#12161d; --panel2:#0f1319; --line:#232a35;
+  --text:#e8eaee; --muted:#9aa3b0; --accent:#d8b45c; --accent2:#f0d488;
+  --ok:#57b26a; --warn:#e0644f; --none:#8a93a0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-size:14px;
+     font-family:'Barlow',-apple-system,Segoe UI,Roboto,sans-serif;}
+h1,h2,h3,.oswald{font-family:'Oswald',sans-serif;letter-spacing:.5px;}
+a{color:var(--accent2);}
+button{font-family:'Barlow',sans-serif;cursor:pointer;border-radius:6px;
+       border:1px solid var(--line);background:var(--panel);color:var(--text);
+       padding:6px 12px;font-size:13px;}
+button:hover{border-color:var(--accent);}
+button.primary{background:var(--accent);color:#14110a;border-color:var(--accent);font-weight:700;}
+
+header{display:flex;align-items:center;gap:16px;padding:10px 16px;
+       border-bottom:2px solid var(--accent);background:var(--panel2);
+       position:sticky;top:0;z-index:50;flex-wrap:wrap;}
+.logo{display:flex;flex-direction:column;line-height:1.05;}
+.logo b{font-family:'Oswald';font-size:20px;color:var(--accent);letter-spacing:1.5px;}
+.logo span{font-size:10px;color:var(--muted);letter-spacing:2.5px;text-transform:uppercase;}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+main{max-width:1080px;margin:0 auto;padding:22px 16px 70px;}
+.sub{color:var(--muted);margin:0 0 20px;font-size:13.5px;line-height:1.5;}
+
+/* ---- stat tiles: a headline number is not a chart ---- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:26px;}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+.tile .lab{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);}
+.tile .val{font-family:'Oswald';font-size:30px;line-height:1.15;margin-top:4px;color:var(--text);}
+.tile .val small{font-size:15px;color:var(--muted);font-family:'Barlow';font-weight:600;}
+.tile .note{font-size:11.5px;color:var(--muted);margin-top:3px;}
+.tile.hero .val{color:var(--accent2);}
+
+/* ---- table ---- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+      padding:0;overflow:hidden;margin-bottom:22px;}
+.card h2{font-size:16px;margin:0;padding:13px 16px;border-bottom:1px solid var(--line);}
+.card h2 span{font-family:'Barlow';font-size:12px;color:var(--muted);font-weight:400;
+              letter-spacing:0;margin-left:8px;}
+table{width:100%;border-collapse:collapse;}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px;
+      vertical-align:middle;}
+th{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);
+   font-weight:600;white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+td.team{font-weight:600;white-space:nowrap;}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.who{color:var(--muted);font-size:12px;font-weight:400;display:block;}
+
+/* Status is never color alone: each state carries a distinct glyph AND a word.
+   Gold/green and red/green are only ΔE ~4-5 apart under deutan/protan
+   (checked with the palette validator), so the text is what actually
+   communicates — the color is reinforcement for everyone else. */
+.st{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-weight:600;}
+.st .g{font-size:12px;width:13px;display:inline-block;text-align:center;}
+.st.done{color:var(--ok);}
+.st.part{color:var(--accent2);}
+.st.miss{color:var(--warn);}
+.st.never{color:var(--none);font-weight:400;}
+
+/* Single-hue magnitude meter — sequential, so no CVD concern. */
+.meter{display:inline-block;width:74px;height:7px;border-radius:4px;background:var(--panel2);
+       border:1px solid var(--line);overflow:hidden;vertical-align:middle;margin-right:8px;}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:4px;}
+.meter i.full{background:var(--ok);}
+
+.nudge{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;}
+.nudge h2{font-size:16px;margin:0 0 8px;}
+.nudge ul{margin:8px 0 14px;padding-left:20px;line-height:1.7;}
+.nudge textarea{width:100%;min-height:110px;background:var(--panel2);color:var(--text);
+                border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+                font-family:'Barlow';font-size:13px;line-height:1.5;resize:vertical;}
+.nudge .row{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;}
+.nudge .ok{color:var(--ok);font-size:12.5px;}
+
+.foot{color:var(--muted);font-size:12.5px;line-height:1.6;margin-top:26px;
+      border-top:1px solid var(--line);padding-top:16px;}
+.foot b{color:var(--text);}
+#msg{padding:26px 4px;color:var(--muted);}
+#msg.err{color:var(--warn);}
+@media (max-width:700px){
+  main{padding:16px 10px 60px;}
+  .tile .val{font-size:26px;}
+  th,td{padding:8px 8px;font-size:12.5px;}
+  .meter{width:52px;}
+  /* On a phone the two questions are "did they sign up" and "are their five in".
+     Sign-in count, last-seen and declared-when are supporting detail — drop them
+     rather than push the keeper column off the edge of a scroll container. */
+  .c-logins,.c-seen,.c-decl{display:none;}
+}
+</style>
+<script src="auth.js"></script>
+<script src="sitenav.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="logo"><b>WPIAL ALL STARS</b><span>Commissioner dashboard</span></div>
+  <div class="hdr-right">
+    <button id="refresh" class="primary" type="button">↻ Refresh</button>
+  </div>
+</header>
+
+<main>
+  <p class="sub">
+    Built entirely from data the league site already collects — who has created a
+    password, how often they've signed in, and how far along their keeper
+    declaration is. Nothing new is being tracked on anyone.
+  </p>
+
+  <div id="msg">Loading league activity…</div>
+  <div id="content" hidden>
+    <div class="tiles" id="tiles"></div>
+
+    <div class="card">
+      <h2>By team <span id="sortNote">most in need of a nudge first</span></h2>
+      <div style="overflow-x:auto">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>Account</th>
+              <th class="num c-logins">Sign-ins</th>
+              <th class="c-seen">Last seen</th>
+              <th>Keepers</th>
+              <th class="c-decl">Declared</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="nudge">
+      <h2>Who needs a nudge</h2>
+      <div id="nudgeList"></div>
+      <label for="nudgeText" class="sub" style="display:block;margin:0 0 6px;">
+        Draft group text — edit before you send it:
+      </label>
+      <textarea id="nudgeText"></textarea>
+      <div class="row">
+        <button id="copyBtn" type="button">Copy to clipboard</button>
+        <span id="copyOk" class="ok" hidden>Copied.</span>
+      </div>
+    </div>
+
+    <p class="foot">
+      <b>What this can't tell you yet:</b> which features people actually use —
+      draftboard vs rosters, mock drafts, the season sim, the trade machine,
+      phone vs laptop. None of that is recorded anywhere today. Adding it means a
+      small event log written to the same spreadsheet; this page is the place it
+      would show up.
+      <br><br>
+      <span id="stamp"></span>
+    </p>
+  </div>
+</main>
+
+<script>
+/* -------------------------------------------------------------------------
+ * Commish dashboard.
+ * The server is the real gate: admin_stats verifies the session token and
+ * refuses anyone whose Owners row isn't flagged is_commish. Everything here
+ * is presentation — hiding the page client-side would prove nothing.
+ * ---------------------------------------------------------------------- */
+(function () {
+  'use strict';
+
+  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxX-UpCAd7oeWug1KcnMZrSnMJyVuob_qHtSv0z1C7im7MpUMgHYMOtdvOKl98VXy37eA/exec';
+
+  var msg = document.getElementById('msg');
+  var content = document.getElementById('content');
+
+  function show(text, isErr) {
+    msg.textContent = text;
+    msg.hidden = false;
+    msg.className = isErr ? 'err' : '';
+    content.hidden = true;
+  }
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function ago(iso) {
+    if (!iso) return null;
+    var then = new Date(iso).getTime();
+    if (isNaN(then)) return null;
+    var mins = Math.round((Date.now() - then) / 60000);
+    if (mins < 2) return 'just now';
+    if (mins < 60) return mins + ' min ago';
+    var hrs = Math.round(mins / 60);
+    if (hrs < 24) return hrs + (hrs === 1 ? ' hour ago' : ' hours ago');
+    var days = Math.round(hrs / 24);
+    if (days < 30) return days + (days === 1 ? ' day ago' : ' days ago');
+    return new Date(iso).toLocaleDateString();
+  }
+
+  function untilLock(iso) {
+    var ms = new Date(iso).getTime() - Date.now();
+    if (isNaN(ms)) return { txt: '—', note: '' };
+    if (ms <= 0) return { txt: 'LOCKED', note: 'keepers are final' };
+    var d = Math.floor(ms / 86400000);
+    var h = Math.floor((ms % 86400000) / 3600000);
+    return {
+      txt: d + 'd ' + h + 'h',
+      note: 'lock ' + new Date(iso).toLocaleString([], {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+      })
+    };
+  }
+
+  function tile(lab, val, sub, note, hero) {
+    return '<div class="tile' + (hero ? ' hero' : '') + '">' +
+             '<div class="lab">' + esc(lab) + '</div>' +
+             '<div class="val">' + esc(val) +
+               (sub ? ' <small>' + esc(sub) + '</small>' : '') + '</div>' +
+             (note ? '<div class="note">' + esc(note) + '</div>' : '') +
+           '</div>';
+  }
+
+  // Worst first: no account, then account-but-nothing-declared, then partial,
+  // then done. Row order is itself a non-color encoding of urgency.
+  function urgency(o) {
+    if (!o.has_password) return 0;
+    if (o.keepers === 0) return 1;
+    if (o.keepers < 5) return 2;
+    return 3;
+  }
+
+  function render(data) {
+    var owners = (data.owners || []).slice();
+    var s = data.summary || {};
+    var lock = untilLock(data.lock_at);
+
+    document.getElementById('tiles').innerHTML =
+      tile('Accounts created', s.with_password + ' of ' + s.owners, '',
+           (s.owners - s.with_password) + ' have never set a password') +
+      tile('Teams fully declared', s.complete_keepers + ' of ' + s.owners, '',
+           s.any_keepers + ' have declared at least one') +
+      tile('Keepers on record', s.total_keepers, 'of ' + (s.owners * 5), '') +
+      tile('Total sign-ins', s.total_logins, '',
+           s.ever_logged_in + ' distinct owners') +
+      tile('Time to keeper lock', lock.txt, '', lock.note, true);
+
+    owners.sort(function (a, b) {
+      var d = urgency(a) - urgency(b);
+      if (d) return d;
+      return String(a.team).localeCompare(String(b.team));
+    });
+
+    var rows = owners.map(function (o) {
+      var acct = o.has_password
+        ? '<span class="st done"><span class="g">✓</span>Set up</span>'
+        : '<span class="st miss"><span class="g">!</span>No account</span>';
+
+      var seen = (o.last_login && esc(ago(o.last_login))) ||
+                 '<span class="st never"><span class="g">·</span>never</span>';
+
+      var pct = Math.min(100, (o.keepers / 5) * 100);
+      var full = o.keepers >= 5;
+      var keepCell =
+        '<span class="meter" title="' + o.keepers + ' of 5 declared">' +
+          '<i class="' + (full ? 'full' : '') + '" style="width:' + pct + '%"></i>' +
+        '</span>' +
+        '<span class="st ' + (full ? 'done' : (o.keepers ? 'part' : 'never')) + '">' +
+          '<span class="g">' + (full ? '✓' : (o.keepers ? '~' : '·')) + '</span>' +
+          (full ? 'All 5' : o.keepers + ' of 5') +
+        '</span>';
+
+      return '<tr>' +
+        '<td class="team">' + esc(o.team || '—') +
+          '<span class="who">' + esc(o.name || o.email) +
+          (o.is_commish ? ' · commish' : '') + '</span></td>' +
+        '<td>' + acct + '</td>' +
+        '<td class="num c-logins">' + (o.login_count || 0) + '</td>' +
+        '<td class="c-seen">' + seen + '</td>' +
+        '<td>' + keepCell + '</td>' +
+        '<td class="c-decl">' + (o.keepers_updated_at ? esc(ago(o.keepers_updated_at))
+                                       : '<span class="st never"><span class="g">·</span>—</span>') + '</td>' +
+      '</tr>';
+    }).join('');
+    document.querySelector('#tbl tbody').innerHTML = rows;
+
+    // ---- nudge list + draft message ----
+    var noAcct = owners.filter(function (o) { return !o.has_password; });
+    var short  = owners.filter(function (o) { return o.has_password && o.keepers < 5; });
+
+    var list = '';
+    if (!noAcct.length && !short.length) {
+      list = '<p class="sub" style="margin:0 0 12px;">Everyone has an account and all ' +
+             'five keepers in. Nothing to chase.</p>';
+    } else {
+      list = '<ul>';
+      if (noAcct.length) {
+        list += '<li><b>' + noAcct.length + '</b> never set a password: ' +
+                esc(noAcct.map(function (o) { return o.name || o.team; }).join(', ')) + '</li>';
+      }
+      if (short.length) {
+        list += '<li><b>' + short.length + '</b> logged in but short of five keepers: ' +
+                esc(short.map(function (o) {
+                  return (o.name || o.team) + ' (' + o.keepers + ')';
+                }).join(', ')) + '</li>';
+      }
+      list += '</ul>';
+    }
+    document.getElementById('nudgeList').innerHTML = list;
+
+    var names = noAcct.concat(short).map(function (o) { return o.name || o.team; });
+    var draft;
+    if (!names.length) {
+      draft = 'Everyone is squared away — keepers are all in ahead of the ' +
+              lock.note.replace('lock ', '') + ' lock. See you at the draft.';
+    } else {
+      draft = 'Keeper reminder: declarations lock ' + lock.note.replace('lock ', '') +
+              ' (' + lock.txt + ' from now). Head to wadi.solutions, sign in with ' +
+              'your league email, and pick your 5 on the Rosters tab or the ' +
+              'draftboard.\n\nStill outstanding: ' + names.join(', ') +
+              '.\n\nText me if you cannot get in.';
+    }
+    document.getElementById('nudgeText').value = draft;
+
+    document.getElementById('stamp').textContent =
+      'Read from the league sheet at ' + new Date(data.generated_at).toLocaleString() + '.' +
+      ((data.orphan_teams && data.orphan_teams.length)
+        ? ' Heads up — keeper rows exist for team name(s) with no owner record: ' +
+          data.orphan_teams.join(', ') + '.'
+        : '');
+
+    msg.hidden = true;
+    content.hidden = false;
+  }
+
+  function load() {
+    var token = (window.WPIAL_AUTH && window.WPIAL_AUTH.token && window.WPIAL_AUTH.token()) || '';
+    if (!token) { show('Sign in first.', true); return; }
+    show('Loading league activity…');
+
+    // POST, not GET: keeps the session token out of the URL and out of any
+    // referrer or access log. URLSearchParams is the body form Apps Script
+    // parses reliably (see the auth build notes).
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      body: new URLSearchParams({ action: 'admin_stats', token: token })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.ok) {
+          show(d && d.error ? d.error : 'Could not load stats.', true);
+          return;
+        }
+        render(d);
+      })
+      .catch(function (err) {
+        show('Could not reach the league backend. ' + err, true);
+      });
+  }
+
+  document.getElementById('refresh').onclick = load;
+
+  document.getElementById('copyBtn').onclick = function () {
+    var ta = document.getElementById('nudgeText');
+    ta.select();
+    var done = function () {
+      var ok = document.getElementById('copyOk');
+      ok.hidden = false;
+      setTimeout(function () { ok.hidden = true; }, 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ta.value).then(done, function () {
+        try { document.execCommand('copy'); done(); } catch (e) {}
+      });
+    } else {
+      try { document.execCommand('copy'); done(); } catch (e) {}
+    }
+  };
+
+  // auth.js unlocks the page, then hands us the session.
+  if (window.WPIAL_AUTH && window.WPIAL_AUTH.ready) window.WPIAL_AUTH.ready(load);
+  else document.addEventListener('wpial-auth', load);
+})();
+</script>
+</body>
+</html>

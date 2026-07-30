@@ -10,40 +10,62 @@
  *     index.html binds its tab switcher to `nav button[data-tab]` in an inline
  *     script; rebuilding that nav from here would silently unbind it.
  *   - Be additive. On index.html the nav already exists and is correct, so all
- *     we add there is hash routing so an inbound link can select a tab.
- *     On draftboard.html we inject the matching strip.
+ *     we add there is hash routing (so an inbound link can select a tab) and,
+ *     for the commissioner only, the dashboard link.
+ *     On every other page we inject the matching strip.
  *   - Match each page's own CSS variables so it inherits all three draftboard
  *     themes (broadcast / chalk / light) for free.
  *
- * Loaded from <head> on both pages, so everything waits for DOMContentLoaded.
+ * IMPORTANT: the injected strip is a <div role="navigation">, NOT a <nav>.
+ * auth.js parks the sign-out chip in `document.querySelector('nav') ||
+ * .hdr-right`, so injecting a real <nav> would race it — on a slow auth_me the
+ * chip would land in this strip instead of the page's own control row.
+ *
+ * Loaded from <head>, so everything waits for DOMContentLoaded.
  * ==========================================================================*/
 (function () {
   'use strict';
 
-  // The single source of truth for what's in the nav, used by both pages.
+  // Single source of truth for the nav, shared by every page.
   // `tab` is the section id on index.html; `page` is where the link points.
   var NAV = [
-    { tab: 'board',    page: 'index.html', label: 'The Gelly' },
-    { tab: 'rosters',  page: 'index.html', label: 'Rosters &amp; round values' },
-    { tab: 'history',  page: 'index.html', label: 'League history' },
-    { tab: 'schedule', page: 'index.html', label: '2026 Schedule' },
+    { tab: 'board',    page: 'index.html',      label: 'The Gelly' },
+    { tab: 'rosters',  page: 'index.html',      label: 'Rosters &amp; round values' },
+    { tab: 'history',  page: 'index.html',      label: 'League history' },
+    { tab: 'schedule', page: 'index.html',      label: '2026 Schedule' },
     { tab: null,       page: 'draftboard.html', label: '🏈 Draftboard',
-      title: 'Interactive keeper draftboard — mock drafts, keeper decisions, and a full season simulator' }
+      title: 'Interactive keeper draftboard — mock drafts, keeper decisions, and a full season simulator' },
+    { tab: null,       page: 'dashboard.html',  label: '📊 Commish', commishOnly: true,
+      title: 'League engagement — who has logged in and who still owes keepers' }
   ];
 
   var VALID_TABS = ['board', 'rosters', 'history', 'schedule'];
 
-  function page() {
+  function currentPage() {
     var p = (location.pathname || '').toLowerCase();
-    if (p.indexOf('draftboard') !== -1) return 'draftboard';
-    return 'index';
+    if (p.indexOf('draftboard') !== -1) return 'draftboard.html';
+    if (p.indexOf('dashboard') !== -1) return 'dashboard.html';
+    return 'index.html';
+  }
+
+  function isCommish() {
+    try {
+      var u = window.WPIAL_USER || (window.WPIAL_AUTH && window.WPIAL_AUTH.user && window.WPIAL_AUTH.user());
+      return !!(u && (u.is_commish === true || String(u.is_commish).toLowerCase() === 'true'));
+    } catch (e) { return false; }
+  }
+
+  function visibleItems() {
+    var commish = isCommish();
+    return NAV.filter(function (it) { return !it.commishOnly || commish; });
   }
 
   /* ---------------------------------------------------------------------
-   * index.html — hash routing only. The nav markup and its click handlers
-   * are the page's own; we don't touch them.
+   * index.html — hash routing, plus the commissioner's dashboard link.
+   * The nav markup and its click handlers are the page's own.
    * ------------------------------------------------------------------ */
   function wireIndex() {
+    var navEl = document.querySelector('nav');
     var buttons = document.querySelectorAll('nav button[data-tab]');
     if (!buttons.length) return;
 
@@ -59,8 +81,8 @@
       target.click();
       // The section ids double as anchor targets, so the browser performs its
       // own jump to #rosters after we've activated the tab — which lands you
-      // mid-page with the nav scrolled off. Undo it, twice, because that jump
-      // can happen a frame or two later.
+      // mid-page with the nav scrolled off. Undo it, more than once, because
+      // that jump can land a frame or two later.
       if (scroll) {
         var top = function () { window.scrollTo(0, 0); };
         top();
@@ -70,13 +92,12 @@
       return true;
     }
 
-    // Inbound deep link: draftboard.html -> index.html#rosters
     var incoming = (location.hash || '').replace(/^#/, '');
     if (incoming) selectTab(incoming, true);
 
-    // Keep the hash in step with manual tab clicks, so the address bar is
-    // always a shareable link to what you're looking at. replaceState avoids
-    // stuffing the back button with one entry per tab click.
+    // Keep the hash in step with manual tab clicks so the address bar is always
+    // a shareable link to what you're looking at. replaceState avoids stuffing
+    // the back button with one entry per tab click.
     for (var j = 0; j < buttons.length; j++) {
       (function (btn) {
         btn.addEventListener('click', function () {
@@ -87,22 +108,39 @@
       })(buttons[j]);
     }
 
-    // Back/forward between tabs.
     window.addEventListener('hashchange', function () {
       selectTab((location.hash || '').replace(/^#/, ''), false);
     });
+
+    // Commissioner-only dashboard button. No data-tab, so the page's own tab
+    // handler ignores it entirely. Identity arrives async, hence the event.
+    function addCommishLink() {
+      if (!navEl || !isCommish() || document.getElementById('snDash')) return;
+      var item = NAV[NAV.length - 1];
+      var b = document.createElement('button');
+      b.id = 'snDash';
+      b.type = 'button';
+      b.innerHTML = item.label;
+      b.title = item.title || '';
+      b.style.borderColor = 'var(--accent)';
+      b.style.color = 'var(--accent)';
+      b.onclick = function () { window.location.href = item.page; };
+      // Before the sign-out chip if it's already there, otherwise at the end.
+      var chip = document.getElementById('wpial-chip');
+      if (chip && chip.parentNode === navEl) navEl.insertBefore(b, chip);
+      else navEl.appendChild(b);
+    }
+    addCommishLink();
+    document.addEventListener('wpial-auth', addCommishLink);
   }
 
   /* ---------------------------------------------------------------------
-   * draftboard.html — inject the strip.
-   * It goes INSIDE <header>, which is position:sticky, so the way back stays
-   * on screen no matter how far down the board you've scrolled.
+   * Every other page — inject the strip.
+   * On the draftboard it goes INSIDE <header>, which is position:sticky, so
+   * the way back stays on screen no matter how far down the board you scroll.
    * ------------------------------------------------------------------ */
-  function buildDraftboardNav() {
-    if (document.getElementById('siteNav')) return;
-    var header = document.querySelector('header');
-    if (!header) return;
-
+  function injectStyles() {
+    if (document.getElementById('siteNavCss')) return;
     var css = document.createElement('style');
     css.id = 'siteNavCss';
     css.textContent = [
@@ -114,7 +152,7 @@
       '  color:var(--text);padding:5px 12px;border-radius:20px;font-size:12.5px;',
       '  text-decoration:none;white-space:nowrap;font-family:"Barlow",sans-serif;',
       '  transition:border-color .12s ease,color .12s ease;}',
-      '#siteNav a:hover{border-color:var(--accent);color:var(--accent2);}',
+      '#siteNav a:hover{border-color:var(--accent);color:var(--accent2,var(--accent));}',
       '#siteNav a.here{background:var(--accent);border-color:var(--accent);',
       '  color:#14110a;font-weight:700;cursor:default;}',
       '#siteNav a.here:hover{color:#14110a;}',
@@ -125,34 +163,49 @@
       '}'
     ].join('');
     document.head.appendChild(css);
+  }
 
-    var nav = document.createElement('nav');
-    nav.id = 'siteNav';
-    nav.setAttribute('aria-label', 'Site navigation');
+  function renderStrip() {
+    var header = document.querySelector('header');
+    if (!header) return;
+    injectStyles();
 
+    var here = currentPage();
+    var strip = document.getElementById('siteNav');
+    if (!strip) {
+      // A div, not a <nav> — see the note at the top of this file.
+      strip = document.createElement('div');
+      strip.id = 'siteNav';
+      strip.setAttribute('role', 'navigation');
+      strip.setAttribute('aria-label', 'Site navigation');
+      header.appendChild(strip);
+    }
+
+    var items = visibleItems();
     var html = '';
-    for (var i = 0; i < NAV.length; i++) {
-      var item = NAV[i];
-      var here = (item.page === 'draftboard.html');
-      var href = here ? '#' : (item.page + (item.tab ? '#' + item.tab : ''));
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var isHere = (item.page === here);
+      var href = isHere ? '#' : (item.page + (item.tab ? '#' + item.tab : ''));
       // First item doubles as the "get me out of here" affordance.
       var label = (i === 0) ? '← ' + item.label : item.label;
       html += '<a href="' + href + '"' +
-              (here ? ' class="here" aria-current="page"' : (i === 0 ? ' class="snhome"' : '')) +
+              (isHere ? ' class="here" aria-current="page"' : (i === 0 ? ' class="snhome"' : '')) +
               (item.title ? ' title="' + item.title + '"' : '') +
-              (here ? ' onclick="return false;"' : '') +
+              (isHere ? ' onclick="return false;"' : '') +
               '>' + label + '</a>';
     }
-    nav.innerHTML = html;
-
-    // Place it as the last row of the header. #statusbar is width:100% so the
-    // flex container already wraps; appending puts us on our own line beneath it.
-    header.appendChild(nav);
+    strip.innerHTML = html;
   }
 
   function init() {
-    if (page() === 'draftboard') buildDraftboardNav();
-    else wireIndex();
+    if (currentPage() === 'index.html') {
+      wireIndex();
+    } else {
+      renderStrip();
+      // is_commish arrives after auth_me resolves; re-render to reveal 📊.
+      document.addEventListener('wpial-auth', renderStrip);
+    }
   }
 
   if (document.readyState === 'loading') {
