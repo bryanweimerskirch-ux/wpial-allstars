@@ -74,8 +74,7 @@
     '#wpial-chip.wpial-chip-float{position:fixed;top:8px;left:8px;z-index:2147483000;' +
       'background:#161b22;margin:0;}' +
     '@media (max-width:600px){#wpial-chip{font-size:11px;padding:6px 10px;}}' +
-    // the board already shows which team is yours — save the space on phones
-    '@media (max-width:900px){#wpial-chip .wpial-team{display:none;}}';
+    '';
   (document.head || html).appendChild(style);
 
   /* ---------- 2. Storage + token helpers ---------- */
@@ -122,15 +121,10 @@
 
     var c = document.createElement('span');
     c.id = 'wpial-chip';
+    // Identity is shown as the TEAM, not the person's name.
     var b = document.createElement('b');
-    b.textContent = user.name || user.email;
+    b.textContent = user.team || user.name || user.email;
     c.appendChild(b);
-    if (user.team) {
-      var t = document.createElement('span');
-      t.className = 'wpial-team';
-      t.textContent = '· ' + user.team;
-      c.appendChild(t);
-    }
     var out = document.createElement('button');
     out.textContent = 'log out';
     out.onclick = logout;
@@ -262,7 +256,7 @@
         who.textContent = '';
         who.appendChild(document.createTextNode('Signing in as '));
         var b = document.createElement('b');
-        b.textContent = (r.name || v) + (r.team ? ' — ' + r.team : '');
+        b.textContent = r.team || r.name || v;
         who.appendChild(b);
         pwWrap.style.display = '';
         back.style.display = '';
