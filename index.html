@@ -194,7 +194,6 @@
   .nflwk-chip.q{color:#e6a23c;border:1.5px solid #e6a23c;background:transparent;}
   .nflwk-chip.d{color:#0d1117;background:#e07b39;border:1.5px solid #e07b39;}
   .nflwk-chip.o{color:#fff;background:#b3424a;border:1.5px solid #b3424a;}
-  .nflwk-k{flex:0 0 auto;font-size:9px;font-weight:800;color:var(--accent2);border:1.5px solid var(--accent2);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;}
   .nflwk-avail{flex:0 0 auto;font-size:9px;font-weight:700;color:var(--muted);border:1px dashed var(--muted);border-radius:4px;padding:0 4px;line-height:14px;}
   .nflwk-plr .fp{flex:0 0 auto;font-size:12px;font-weight:800;color:var(--text);min-width:34px;text-align:right;}
   .nflwk-plr .fp.proj{color:var(--muted);font-weight:600;}
@@ -205,7 +204,6 @@
   body.colorblind .nflwk-chip.q{color:#F0E442;border-color:#F0E442;}
   body.colorblind .nflwk-chip.d{color:#0d1117;background:#E69F00;border-color:#E69F00;}
   body.colorblind .nflwk-chip.o{color:#fff;background:#D55E00;border-color:#D55E00;}
-  body.colorblind .nflwk-k{color:#56B4E9;border-color:#56B4E9;}
   body.colorblind .nflwk-plr .ow{color:#56B4E9;}
   /* ---- Standings table ---- */
   .standings-scroll{overflow-x:auto;}
@@ -392,7 +390,7 @@
       <span class="badge" style="background:none;border:1px solid var(--line);color:var(--muted);" id="nflwk-phase">keepers only — draft pending</span>
     </div>
     <p class="sub" style="margin:6px 0 0;">Every NFL game with the fantasy-relevant players in it, injury designations, and which WPIAL squads have skin in the game. Injury data refreshes from ESPN on every load.</p>
-    <div class="nflwk-legend"><span>Injury:</span><span class="nflwk-chip q">Q</span> Questionable <span class="nflwk-chip d">D</span> Doubtful <span class="nflwk-chip o">O</span> Out <span class="nflwk-chip o">IR</span> Inj. Reserve <span class="nflwk-k">K</span> Keeper <span class="nflwk-avail">Avail</span> Not kept/drafted</div>
+    <div class="nflwk-legend"><span>Injury:</span><span class="nflwk-chip q">Q</span> Questionable <span class="nflwk-chip d">D</span> Doubtful <span class="nflwk-chip o">O</span> Out <span class="nflwk-chip o">IR</span> Inj. Reserve <span class="nflwk-avail">Avail</span> Not kept/drafted</div>
     <div id="nfl-games"><p class="placeholder">Loading NFL week&hellip;</p></div>
   </div>
 
@@ -1770,7 +1768,6 @@ loadSchedule();
         + '<span class="ps">' + p.pos + '</span>'
         + '<span class="nm">' + p.name + '</span>'
         + (chip ? '<span class="nflwk-chip ' + (chip === 'Q' ? 'q' : chip === 'D' ? 'd' : 'o') + '">' + chip + '</span>' : '')
-        + (p.keeper ? '<span class="nflwk-k" title="keeper">K</span>' : '')
         + fp
         + (p.team ? '<span class="ow">' + p.team + '</span>' : '<span class="nflwk-avail">Avail</span>')
         + '</div>'
