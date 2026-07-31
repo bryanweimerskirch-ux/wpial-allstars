@@ -201,6 +201,17 @@
   body.colorblind .nflwk-chip.o{color:#fff;background:#D55E00;border-color:#D55E00;}
   body.colorblind .nflwk-k{color:#56B4E9;border-color:#56B4E9;}
   body.colorblind .nflwk-plr .ow{color:#56B4E9;}
+  /* ---- Standings table ---- */
+  .standings-scroll{overflow-x:auto;}
+  .standings-table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap;}
+  .standings-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--line);padding:6px 8px;text-align:right;}
+  .standings-table td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;}
+  .standings-table tr:last-child td{border-bottom:none;}
+  .standings-table .tm{text-align:left;font-weight:600;}
+  .standings-table .rk{text-align:right;color:var(--muted);width:26px;}
+  .standings-table td.pos{color:#3fb950;}
+  .standings-table td.neg{color:#f85149;}
+  .standings-table tbody tr:hover{background:rgba(255,255,255,.03);}
 </style>
 <!-- Cloudflare Web Analytics -->
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d6f258a2e69e49c9ab652c37c8503de2"}'></script>
@@ -1753,8 +1764,8 @@ loadSchedule();
             const bump = (name) => { if (!rec[name]) rec[name] = { w: 0, l: 0, t: 0, pf: 0, pa: 0 }; return rec[name]; };
             Object.values(data.weeks).forEach(matchups => {
               matchups.forEach(mu => {
+                const a = bump(mu.away), h = bump(mu.home);   // seed every team, scored or not
                 if (!(mu.awayScore > 0 || mu.homeScore > 0) && mu.winner === 'UNDECIDED') return;
-                const a = bump(mu.away), h = bump(mu.home);
                 a.pf += Number(mu.awayScore) || 0; a.pa += Number(mu.homeScore) || 0;
                 h.pf += Number(mu.homeScore) || 0; h.pa += Number(mu.awayScore) || 0;
                 if (mu.winner === 'AWAY') { a.w++; h.l++; }
@@ -1762,14 +1773,27 @@ loadSchedule();
                 else if (mu.winner === 'TIE') { a.t++; h.t++; }
               });
             });
-            const rows = Object.keys(rec).map(name => ({ name: name, w: rec[name].w, l: rec[name].l, t: rec[name].t, pf: rec[name].pf, pa: rec[name].pa }));
-            rows.sort((x, y) => (y.w - y.l) - (x.w - x.l) || y.pf - x.pf);
-            if (!rows.length) { wrap.innerHTML = '<p class="placeholder">Standings will appear once games are scored.</p>'; return; }
-            let html = '<div class="row" style="font-weight:600;color:var(--muted);font-size:12px;"><div style="flex:1;">Team</div><div style="width:70px;">Record</div><div style="width:70px;">PF</div><div style="width:70px;">PA</div></div>';
-            rows.forEach((r, i) => {
-              html += '<div class="row"><div style="flex:1;">' + (i + 1) + '. ' + teamLogoHTML(r.name) + r.name + '</div><div style="width:70px;">' + r.w + '-' + r.l + (r.t ? '-' + r.t : '') + '</div><div style="width:70px;">' + r.pf.toFixed(1) + '</div><div style="width:70px;">' + r.pa.toFixed(1) + '</div></div>';
+            const rows = Object.keys(rec).map(name => {
+              const r = rec[name], g = r.w + r.l + r.t;
+              return { name: name, w: r.w, l: r.l, t: r.t, pf: r.pf, pa: r.pa,
+                       pct: g ? (r.w + 0.5 * r.t) / g : 0 };
             });
-            wrap.innerHTML = html;
+            rows.sort((x, y) => y.pct - x.pct || y.pf - x.pf || (y.pf - y.pa) - (x.pf - x.pa) || x.name.localeCompare(y.name));
+            if (!rows.length) { wrap.innerHTML = '<p class="placeholder">Standings unavailable.</p>'; return; }
+            let out = '<div class="standings-scroll"><table class="standings-table"><thead><tr>'
+              + '<th class="rk">#</th><th class="tm">Team</th><th>W</th><th>L</th><th>T</th>'
+              + '<th>Pct</th><th>PF</th><th>PA</th><th>Diff</th></tr></thead><tbody>';
+            rows.forEach((r, i) => {
+              const diff = r.pf - r.pa;
+              out += '<tr><td class="rk">' + (i + 1) + '</td>'
+                + '<td class="tm">' + teamLogoHTML(r.name) + r.name + '</td>'
+                + '<td>' + r.w + '</td><td>' + r.l + '</td><td>' + r.t + '</td>'
+                + '<td>' + r.pct.toFixed(3).replace(/^0/, '') + '</td>'
+                + '<td>' + r.pf.toFixed(1) + '</td><td>' + r.pa.toFixed(1) + '</td>'
+                + '<td class="' + (diff > 0 ? 'pos' : diff < 0 ? 'neg' : '') + '">' + (diff > 0 ? '+' : '') + diff.toFixed(1) + '</td></tr>';
+            });
+            out += '</tbody></table></div>';
+            wrap.innerHTML = out;
           })
           .catch(() => { wrap.innerHTML = '<p class="placeholder">Standings unavailable.</p>'; });
       }
