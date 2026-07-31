@@ -172,7 +172,36 @@
   .cb-gag-skip{color:#4a525c;font-size:11px;margin-top:14px;}
   @keyframes cbPop{0%{transform:scale(.6);opacity:0;}100%{transform:scale(1);opacity:1;}}
   @keyframes cbShake{0%,100%{transform:rotate(0);}25%{transform:rotate(-2deg);}75%{transform:rotate(2deg);}}
-    </style>
+      /* ---- NFL week card (schedule tab) ---- */
+  .nflwk-legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:11px;color:var(--muted);margin:10px 0 4px;}
+  .nflwk-slot{margin:16px 2px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+  .nflwk-game{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:10px;}
+  .nflwk-head{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;}
+  .nflwk-head b{font-size:14px;}
+  .nflwk-head .mt{color:var(--muted);font-size:11px;}
+  .nflwk-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
+  .nflwk-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;margin-top:8px;}
+  @media(max-width:640px){.nflwk-cols{grid-template-columns:1fr;}}
+  .nflwk-side .tm{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:6px 0 4px;}
+  .nflwk-plr{display:flex;align-items:center;gap:6px;padding:2px 0;font-size:13px;min-height:22px;}
+  .nflwk-plr .ps{flex:0 0 30px;font-size:10px;font-weight:700;color:var(--muted);}
+  .nflwk-plr .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .nflwk-plr .ow{font-size:10px;color:var(--accent2);max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .nflwk-plr.avail .nm,.nflwk-plr.avail .ps{color:var(--muted);}
+  .nflwk-plr.out .nm{text-decoration:line-through;opacity:.55;}
+  /* colorblind-safe: letters always shown; severity = outline vs solid */
+  .nflwk-chip{flex:0 0 auto;font-size:10px;font-weight:800;border-radius:4px;padding:0 5px;line-height:16px;}
+  .nflwk-chip.q{color:#e6a23c;border:1.5px solid #e6a23c;background:transparent;}
+  .nflwk-chip.d{color:#0d1117;background:#e07b39;border:1.5px solid #e07b39;}
+  .nflwk-chip.o{color:#fff;background:#b3424a;border:1.5px solid #b3424a;}
+  .nflwk-k{flex:0 0 auto;font-size:9px;font-weight:800;color:var(--accent2);border:1.5px solid var(--accent2);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;}
+  .nflwk-avail{flex:0 0 auto;font-size:9px;font-weight:700;color:var(--muted);border:1px dashed var(--muted);border-radius:4px;padding:0 4px;line-height:14px;}
+  body.colorblind .nflwk-chip.q{color:#F0E442;border-color:#F0E442;}
+  body.colorblind .nflwk-chip.d{color:#0d1117;background:#E69F00;border-color:#E69F00;}
+  body.colorblind .nflwk-chip.o{color:#fff;background:#D55E00;border-color:#D55E00;}
+  body.colorblind .nflwk-k{color:#56B4E9;border-color:#56B4E9;}
+  body.colorblind .nflwk-plr .ow{color:#56B4E9;}
+</style>
 <!-- Cloudflare Web Analytics -->
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d6f258a2e69e49c9ab652c37c8503de2"}'></script>
 <!-- End Cloudflare Web Analytics -->
@@ -337,6 +366,17 @@
 <section id="schedule">
   <h2>2026 Schedule</h2>
   <p class="sub">Straight from ESPN &mdash; updates automatically. Once the season kicks off, this page doubles as the WPIAL live scoreboard.</p>
+
+  <div class="card" id="nfl-week-card" style="margin-top:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
+      <h3 style="margin:0;border-bottom:none;padding-bottom:0;">🏥 NFL Week <span id="nflwk-num">1</span> — who's playing, who's hurt</h3>
+      <span class="badge" style="background:none;border:1px solid var(--line);color:var(--muted);" id="nflwk-phase">keepers only — draft pending</span>
+    </div>
+    <p class="sub" style="margin:6px 0 0;">Every NFL game with the fantasy-relevant players in it, injury designations, and which WPIAL squads have skin in the game. Injury data refreshes from ESPN on every load.</p>
+    <div class="nflwk-legend"><span>Injury:</span><span class="nflwk-chip q">Q</span> Questionable <span class="nflwk-chip d">D</span> Doubtful <span class="nflwk-chip o">O</span> Out <span class="nflwk-chip o">IR</span> Inj. Reserve <span class="nflwk-k">K</span> Keeper <span class="nflwk-avail">Avail</span> Not kept/drafted</div>
+    <div id="nfl-games"><p class="placeholder">Loading NFL week&hellip;</p></div>
+  </div>
+
       <div id="gelly-picks-card" class="card" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
           <h3 style="margin:0;border-bottom:none;padding-bottom:0;">🔮 The Gelly Line <span style="font-weight:400;font-size:12px;color:var(--muted);">&mdash; Gelly&#39;s calling it</span></h3>
@@ -1554,6 +1594,138 @@ function loadSchedule() {
     .catch(() => { wrap.innerHTML = '<p class="placeholder">Schedule feed unavailable.</p>'; });
 }
 loadSchedule();
+// ---- NFL week: games + fantasy players + injury status ----------------------
+// Assignments come from the backend (?action=schedule_rosters): keepers only
+// until the live draft is done, then the draftboard takes over automatically.
+// Schedule + injuries come straight from ESPN's public APIs, client-side.
+(function () {
+  var SEASON = 2026;
+  var PRO = {1:'ATL',2:'BUF',3:'CHI',4:'CIN',5:'CLE',6:'DAL',7:'DEN',8:'DET',9:'GB',10:'TEN',11:'IND',12:'KC',13:'LV',14:'LAR',15:'MIA',16:'MIN',17:'NE',18:'NO',19:'NYG',20:'NYJ',21:'PHI',22:'ARI',23:'PIT',24:'LAC',25:'SF',26:'SEA',27:'TB',28:'WSH',29:'CAR',30:'JAX',33:'BAL',34:'HOU'};
+  var POSN = {1:'QB',2:'RB',3:'WR',4:'TE',5:'PK',16:'DEF'};
+  var CHIPS = {QUESTIONABLE:'Q', DOUBTFUL:'D', OUT:'O', INJURY_RESERVE:'IR'};
+  var sev = function (s) { return {OUT:0, INJURY_RESERVE:0, DOUBTFUL:1, QUESTIONABLE:2}[s] !== undefined ? {OUT:0, INJURY_RESERVE:0, DOUBTFUL:1, QUESTIONABLE:2}[s] : 9; };
+
+  function norm(s) {
+    return String(s).toLowerCase().replace(/[.'-]/g, ' ')
+      .replace(/\b(jr|sr|ii|iii|iv|v)\b/g, '').replace(/\bd\/?st\b|\bdefense\b|\bdef\b/g, 'dst')
+      .replace(/\s+/g, ' ').trim();
+  }
+  function et(iso) {
+    var d = new Date(iso);
+    var w = d.toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long' });
+    var t = d.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+    var h = parseInt(d.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false }), 10);
+    return { day: w, time: t + ' ET', hour: h };
+  }
+  function slotLabel(iso) {
+    var p = et(iso);
+    if (p.day === 'Sunday') return p.hour < 15 ? 'Sunday Early' : (p.hour < 19 ? 'Sunday Late' : 'Sunday Night');
+    return p.day + (p.hour >= 18 ? ' Night' : '');
+  }
+
+  function loadNflWeek() {
+    var wrap = document.getElementById('nfl-games');
+    if (!wrap) return;
+    var week = 1; // pre-season default; scoreboard call below corrects it in-season
+
+    var pAssign = fetch(WEB_APP_URL + '?action=schedule_rosters').then(function (r) { return r.json(); }).catch(function () { return null; });
+    var pSched = fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=' + SEASON + '&seasontype=2&week=' + week).then(function (r) { return r.json(); });
+    var pPool = fetch('https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/' + SEASON + '/segments/0/leaguedefaults/3?view=kona_player_info',
+      { headers: { 'x-fantasy-filter': JSON.stringify({ players: { limit: 400, sortPercOwned: { sortAsc: false, sortPriority: 1 } } }) } })
+      .then(function (r) { return r.json(); });
+
+    Promise.all([pAssign, pSched, pPool]).then(function (res) {
+      var assign = res[0], sched = res[1], kona = res[2];
+
+      var owned = {}, keeper = {};
+      var phaseEl = document.getElementById('nflwk-phase');
+      if (assign && assign.ok !== false && assign.players && assign.players.length) {
+        assign.players.forEach(function (a) { owned[norm(a.player)] = a.team; if (a.keeper) keeper[norm(a.player)] = true; });
+        if (phaseEl) phaseEl.textContent = assign.phase === 'post-draft' ? 'full rosters — drafted' : 'keepers only — draft pending';
+      } else if (phaseEl) { phaseEl.textContent = 'roster feed warming up'; }
+
+      var players = [];
+      (kona.players || []).forEach(function (p) {
+        var pl = p.player, pos = POSN[pl.defaultPositionId];
+        if (!pos) return;
+        var n = norm(pl.fullName);
+        players.push({ name: pl.fullName, pos: pos, pro: pl.proTeamId,
+          inj: pl.injuryStatus || 'ACTIVE',
+          own: (pl.ownership && pl.ownership.percentOwned) || 0,
+          team: owned[n] || null, keeper: !!keeper[n] });
+      });
+      var byPro = {};
+      players.forEach(function (p) { (byPro[p.pro] = byPro[p.pro] || []).push(p); });
+      Object.keys(byPro).forEach(function (k) {
+        byPro[k].sort(function (a, b) {
+          return (a.team ? 0 : 1) - (b.team ? 0 : 1) || sev(a.inj) - sev(b.inj) || b.own - a.own;
+        });
+      });
+
+      var games = (sched.events || []).map(function (e) {
+        var c = e.competitions[0];
+        var home, away;
+        c.competitors.forEach(function (t) { if (t.homeAway === 'home') home = t; else away = t; });
+        return { date: e.date,
+          home: { id: +home.team.id, abbr: home.team.abbreviation, name: home.team.displayName },
+          away: { id: +away.team.id, abbr: away.team.abbreviation, name: away.team.displayName },
+          tv: (c.broadcasts && c.broadcasts[0] && c.broadcasts[0].names[0]) || '' };
+      }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+      if (sched.week && sched.week.number) {
+        var el = document.getElementById('nflwk-num'); if (el) el.textContent = sched.week.number;
+      }
+
+      wrap.innerHTML = '';
+      var lastSlot = null;
+      games.forEach(function (g) {
+        var slot = slotLabel(g.date);
+        if (slot !== lastSlot) {
+          var sh = document.createElement('div'); sh.className = 'nflwk-slot'; sh.textContent = slot;
+          wrap.appendChild(sh); lastSlot = slot;
+        }
+        wrap.appendChild(gameEl(g, byPro));
+      });
+    }).catch(function () {
+      wrap.innerHTML = '<p class="placeholder">NFL feed unavailable right now.</p>';
+    });
+  }
+
+  function sideHTML(team, byPro) {
+    var list = (byPro[team.id] || []).slice(0, 9);
+    var rows = list.map(function (p) {
+      var chip = CHIPS[p.inj];
+      var isOut = p.inj === 'OUT' || p.inj === 'INJURY_RESERVE';
+      return '<div class="nflwk-plr' + (p.team ? '' : ' avail') + (isOut ? ' out' : '') + '">'
+        + '<span class="ps">' + p.pos + '</span>'
+        + '<span class="nm">' + p.name + '</span>'
+        + (chip ? '<span class="nflwk-chip ' + (chip === 'Q' ? 'q' : chip === 'D' ? 'd' : 'o') + '">' + chip + '</span>' : '')
+        + (p.keeper ? '<span class="nflwk-k" title="keeper">K</span>' : '')
+        + (p.team ? '<span class="ow">' + p.team + '</span>' : '<span class="nflwk-avail">Avail</span>')
+        + '</div>';
+    }).join('');
+    return '<div class="nflwk-side"><div class="tm">' + team.name + '</div>' + (rows || '<div class="nflwk-plr avail"><span class="nm" style="font-style:italic;">No fantasy-relevant players</span></div>') + '</div>';
+  }
+
+  function gameEl(g, byPro) {
+    var counts = {};
+    [g.away.id, g.home.id].forEach(function (id) {
+      (byPro[id] || []).forEach(function (p) { if (p.team) counts[p.team] = (counts[p.team] || 0) + 1; });
+    });
+    var t = et(g.date);
+    var badges = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; })
+      .map(function (n) { return '<span class="badge" style="margin-left:0;">' + n + ' ×' + counts[n] + '</span>'; }).join(' ');
+    var el = document.createElement('div');
+    el.className = 'nflwk-game';
+    el.innerHTML = '<div class="nflwk-head"><b>' + g.away.abbr + ' @ ' + g.home.abbr + '</b>'
+      + '<span class="mt">' + t.day + ' ' + t.time + (g.tv ? ' · ' + g.tv : '') + '</span></div>'
+      + (badges ? '<div class="nflwk-badges">' + badges + '</div>' : '')
+      + '<div class="nflwk-cols">' + sideHTML(g.away, byPro) + sideHTML(g.home, byPro) + '</div>';
+    return el;
+  }
+
+  loadNflWeek();
+})();
+
 
       // ---- Standings (computed client-side from ESPN schedule data) ----
       function loadStandings() {
