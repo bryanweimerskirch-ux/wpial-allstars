@@ -1652,6 +1652,10 @@ loadSchedule();
     return p.day + (p.hour >= 18 ? ' Night' : '');
   }
 
+  // Baked keeper snapshot (from the sheet, 2026-07-31) — used only until the
+  // schedule_rosters backend action is deployed; the live feed then wins.
+  var KEEPERS_FALLBACK = [{"team": "Mud Dogs", "player": "Jonathan Taylor", "keeper": true}, {"team": "Mud Dogs", "player": "Matthew Golden", "keeper": true}, {"team": "Mud Dogs", "player": "George Pickens", "keeper": true}, {"team": "Mud Dogs", "player": "Quinshon Judkins", "keeper": true}, {"team": "Mud Dogs", "player": "Blake Corum", "keeper": true}, {"team": "THE Vagitarians", "player": "Ashton Jeanty", "keeper": true}, {"team": "THE Vagitarians", "player": "Jaylen Waddle", "keeper": true}, {"team": "THE Vagitarians", "player": "Chris Olave", "keeper": true}, {"team": "THE Vagitarians", "player": "Christian Watson", "keeper": true}, {"team": "THE Vagitarians", "player": "Kyle Pitts Sr.", "keeper": true}, {"team": "Return of The Mac", "player": "Ja'Marr Chase", "keeper": true}, {"team": "Return of The Mac", "player": "James Cook III", "keeper": true}, {"team": "Return of The Mac", "player": "Jaxon Smith-Njigba", "keeper": true}, {"team": "Return of The Mac", "player": "Chase Brown", "keeper": true}, {"team": "Return of The Mac", "player": "Bhayshul Tuten", "keeper": true}, {"team": "Bijan Mustard", "player": "Bijan Robinson", "keeper": true}, {"team": "Bijan Mustard", "player": "Justin Jefferson", "keeper": true}, {"team": "Bijan Mustard", "player": "Michael Wilson", "keeper": true}, {"team": "Bijan Mustard", "player": "Ladd McConkey", "keeper": true}, {"team": "Bijan Mustard", "player": "Dalton Kincaid", "keeper": true}];
+
   var STAT_IDS = [
     [3, 'PaYd'], [4, 'PaTD'], [20, 'INT'],
     [24, 'RuYd'], [25, 'RuTD'],
@@ -1688,7 +1692,10 @@ loadSchedule();
       if (assign && assign.ok !== false && assign.players && assign.players.length) {
         assign.players.forEach(function (a) { owned[norm(a.player)] = a.team; if (a.keeper) keeper[norm(a.player)] = true; });
         if (phaseEl) phaseEl.textContent = assign.phase === 'post-draft' ? 'full rosters — drafted' : 'keepers only — draft pending';
-      } else if (phaseEl) { phaseEl.textContent = 'roster feed warming up'; }
+      } else {
+        KEEPERS_FALLBACK.forEach(function (a) { owned[norm(a.player)] = a.team; if (a.keeper) keeper[norm(a.player)] = true; });
+        if (phaseEl) phaseEl.textContent = 'keepers (cached) — draft pending';
+      }
 
       var players = [];
       (kona.players || []).forEach(function (p) {
