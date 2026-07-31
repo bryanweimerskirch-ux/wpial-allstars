@@ -30,8 +30,8 @@
   // `tab` is the section id on index.html; `page` is where the link points.
   var NAV = [
     { tab: 'board',    page: 'index.html',      label: 'The Gelly' },
-    { tab: 'rosters',  page: 'index.html',      label: 'Rosters &amp; round values' },
-    { tab: 'history',  page: 'index.html',      label: 'League history' },
+    { tab: 'rosters',  page: 'index.html',      label: 'Rosters &amp; Round Values' },
+    { tab: 'history',  page: 'index.html',      label: 'League History' },
     { tab: 'schedule', page: 'index.html',      label: '2026 Schedule' },
     { tab: 'standings', page: 'index.html',      label: 'Standings' },
     { tab: null,       page: 'draftboard.html', label: '🏈 Draftboard',
