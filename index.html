@@ -201,6 +201,7 @@
   .nflwk-plr .fp.proj::before{content:'proj ';font-size:9px;font-weight:600;}
   .nflwk-statline{font-size:10px;color:var(--muted);padding:0 0 3px 36px;margin-top:-2px;}
   .nflwk-head .mt.live{color:#3fb950;font-weight:700;}
+  .nflwk-slot.live{color:#3fb950;}
   body.colorblind .nflwk-chip.q{color:#F0E442;border-color:#F0E442;}
   body.colorblind .nflwk-chip.d{color:#0d1117;background:#E69F00;border-color:#E69F00;}
   body.colorblind .nflwk-chip.o{color:#fff;background:#D55E00;border-color:#D55E00;}
@@ -1715,7 +1716,8 @@ loadSchedule();
       Object.keys(byPro).forEach(function (k) {
         byPro[k].sort(function (a, b) {
           var ap = a.pts == null ? -1e9 : a.pts, bp = b.pts == null ? -1e9 : b.pts;
-          return bp - ap || (a.team ? 0 : 1) - (b.team ? 0 : 1) || sev(a.inj) - sev(b.inj) || b.own - a.own;
+          var apr = a.proj == null ? -1e9 : a.proj, bpr = b.proj == null ? -1e9 : b.proj;
+          return bp - ap || bpr - apr || (a.team ? 0 : 1) - (b.team ? 0 : 1) || sev(a.inj) - sev(b.inj) || b.own - a.own;
         });
       });
 
@@ -1735,13 +1737,20 @@ loadSchedule();
       }
 
       wrap.innerHTML = '';
+      function slotHeader(txt, cls) {
+        var sh = document.createElement('div');
+        sh.className = 'nflwk-slot' + (cls ? ' ' + cls : '');
+        sh.textContent = txt; wrap.appendChild(sh);
+      }
+      var live = games.filter(function (g) { return g.state === 'in'; });
+      var done = games.filter(function (g) { return g.state === 'post'; });
+      var upcoming = games.filter(function (g) { return g.state !== 'in' && g.state !== 'post'; });
+      if (live.length) { slotHeader('🔴 Live now', 'live'); live.forEach(function (g) { wrap.appendChild(gameEl(g, byPro)); }); }
+      if (done.length) { slotHeader('Final'); done.forEach(function (g) { wrap.appendChild(gameEl(g, byPro)); }); }
       var lastSlot = null;
-      games.forEach(function (g) {
+      upcoming.forEach(function (g) {
         var slot = slotLabel(g.date);
-        if (slot !== lastSlot) {
-          var sh = document.createElement('div'); sh.className = 'nflwk-slot'; sh.textContent = slot;
-          wrap.appendChild(sh); lastSlot = slot;
-        }
+        if (slot !== lastSlot) { slotHeader(slot); lastSlot = slot; }
         wrap.appendChild(gameEl(g, byPro));
       });
     }).catch(function () {
