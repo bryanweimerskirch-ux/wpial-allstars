@@ -1645,9 +1645,10 @@ loadSchedule();
   function et(iso) {
     var d = new Date(iso);
     var w = d.toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long' });
+    var md = d.toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' });
     var t = d.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
     var h = parseInt(d.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false }), 10);
-    return { day: w, time: t + ' ET', hour: h };
+    return { day: w, date: md, time: t + ' ET', hour: h };
   }
   function slotLabel(iso) {
     var p = et(iso);
@@ -1797,7 +1798,7 @@ loadSchedule();
     var el = document.createElement('div');
     el.className = 'nflwk-game';
     var title = g.state === 'pre'
-      ? '<b>' + g.away.abbr + ' @ ' + g.home.abbr + '</b><span class="mt">' + t.day + ' ' + t.time + (g.tv ? ' · ' + g.tv : '') + '</span>'
+      ? '<b>' + g.away.abbr + ' @ ' + g.home.abbr + '</b><span class="mt">' + t.day + ', ' + t.date + ' · ' + t.time + (g.tv ? ' · ' + g.tv : '') + '</span>'
       : '<b>' + g.away.abbr + ' ' + g.away.score + ' – ' + g.home.score + ' ' + g.home.abbr + '</b><span class="mt' + (g.state === 'in' ? ' live' : '') + '">' + (g.detail || '') + '</span>';
     el.innerHTML = '<div class="nflwk-head">' + title + '</div>'
       + (badges ? '<div class="nflwk-badges">' + badges + '</div>' : '')
