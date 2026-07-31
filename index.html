@@ -216,6 +216,8 @@
   .standings-table td.pos{color:#3fb950;}
   .standings-table td.neg{color:#f85149;}
   .standings-table tbody tr:hover{background:rgba(255,255,255,.03);}
+  .standings-legend{display:flex;flex-direction:column;gap:5px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);}
+  .standings-legend b{color:var(--text);font-weight:600;}
 </style>
 <!-- Cloudflare Web Analytics -->
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d6f258a2e69e49c9ab652c37c8503de2"}'></script>
@@ -1873,8 +1875,8 @@ loadSchedule();
               + '<th class="rk">#</th><th class="tm">Team</th><th>Record</th><th>Pct</th><th>GB</th>'
               + '<th>Strk</th><th>Last 5</th><th>PF/G</th><th>PA/G</th><th>Diff</th>'
               + '<th title="Record if you played every team every week">All-Play</th>'
-              + '<th title="Weeks with the league-high score">Hi Wks</th>'
-              + '<th title="Record vs the weekly median score">vs Med</th></tr></thead><tbody>';
+              + '<th title="Weeks with the league-high score">High Wks</th>'
+              + '<th title="Record vs the weekly median score">vs Median</th></tr></thead><tbody>';
             rows.forEach((r, i) => {
               const diff = r.pf - r.pa;
               const gb = i === 0 ? '—' : (((leader.w - r.w) + (r.l - leader.l)) / 2).toFixed(1).replace(/\.0$/, '');
@@ -1890,7 +1892,12 @@ loadSchedule();
                 + '<td class="' + (diff > 0 ? 'pos' : diff < 0 ? 'neg' : '') + '">' + (diff > 0 ? '+' : '') + diff.toFixed(1) + '</td>'
                 + '<td>' + r.ap + '</td><td>' + (r.hi || '—') + '</td><td>' + r.med + '</td></tr>';
             });
-            out += '</tbody></table></div>';
+            out += '</tbody></table></div>'
+              + '<div class="standings-legend">'
+              + '<span><b>All-Play</b> &mdash; your record if you played every team, every week. The schedule-luck detector.</span>'
+              + '<span><b>High Wks</b> &mdash; weeks you posted the league\'s highest score outright.</span>'
+              + '<span><b>vs Median</b> &mdash; your record against each week\'s median score. Above .500 here but not in Record? You\'ve been robbed.</span>'
+              + '</div>';
             wrap.innerHTML = out;
           })
           .catch(() => { wrap.innerHTML = '<p class="placeholder">Standings unavailable.</p>'; });
