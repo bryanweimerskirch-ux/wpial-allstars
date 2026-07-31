@@ -33,13 +33,14 @@
     { tab: 'rosters',  page: 'index.html',      label: 'Rosters &amp; round values' },
     { tab: 'history',  page: 'index.html',      label: 'League history' },
     { tab: 'schedule', page: 'index.html',      label: '2026 Schedule' },
+    { tab: 'standings', page: 'index.html',      label: 'Standings' },
     { tab: null,       page: 'draftboard.html', label: '🏈 Draftboard',
       title: 'Interactive keeper draftboard — mock drafts, keeper decisions, and a full season simulator' },
     { tab: null,       page: 'dashboard.html',  label: '📊 Commish', commishOnly: true,
       title: 'League engagement — who has logged in and who still owes keepers' }
   ];
 
-  var VALID_TABS = ['board', 'rosters', 'history', 'schedule'];
+  var VALID_TABS = ['board', 'rosters', 'history', 'schedule', 'standings'];
 
   function currentPage() {
     var p = (location.pathname || '').toLowerCase();

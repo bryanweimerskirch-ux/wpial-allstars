@@ -249,6 +249,7 @@
   <button data-tab="rosters">Rosters &amp; round values</button>
   <button data-tab="history">League history</button>
   <button data-tab="schedule">2026 Schedule</button>
+  <button data-tab="standings">Standings</button>
   <button type="button" onclick="window.location.href='draftboard.html'" style="border-color:var(--accent);color:var(--accent);font-weight:700;" title="Interactive keeper draftboard — mock drafts, keeper decisions, and a full season simulator">🏈 Draftboard</button>
   <button id="cbToggle" class="cb-toggle" type="button" aria-pressed="false" title="The Wadi Accessibility Initiative — colors even Wadi can tell apart">👓 Colorblind mode</button>
 </nav>
@@ -369,7 +370,7 @@
 
   <div class="card" id="nfl-week-card" style="margin-top:16px;">
     <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
-      <h3 style="margin:0;border-bottom:none;padding-bottom:0;">🏥 NFL Week <span id="nflwk-num">1</span> — who's playing, who's hurt</h3>
+      <h3 style="margin:0;border-bottom:none;padding-bottom:0;">🏈 NFL Schedule — Week <span id="nflwk-num">1</span>, who's playing &amp; who's hurt</h3>
       <span class="badge" style="background:none;border:1px solid var(--line);color:var(--muted);" id="nflwk-phase">keepers only — draft pending</span>
     </div>
     <p class="sub" style="margin:6px 0 0;">Every NFL game with the fantasy-relevant players in it, injury designations, and which WPIAL squads have skin in the game. Injury data refreshes from ESPN on every load.</p>
@@ -385,12 +386,19 @@
         <div id="gelly-picks-body"><p class="placeholder">Loading Gelly's picks&hellip;</p></div>
       </div>
 
-  <div id="schedule-weeks" class="grid" style="margin-top:16px;"><p class="placeholder">Loading schedule&hellip;</p></div>
+  <h3 style="margin:22px 0 0;">🏆 WPIAL Matchups</h3>
+  <p class="sub" style="margin:4px 0 0;">Your fantasy schedule &mdash; who plays who, week by week. Doubles as the live scoreboard once games count.</p>
+  <div id="schedule-weeks" class="grid" style="margin-top:12px;"><p class="placeholder">Loading matchups&hellip;</p></div>
 
-      <div class="card" style="margin-top:16px;">
-        <h3>Standings</h3>
-        <div id="standings-body"><p class="placeholder">Loading standings&hellip;</p></div>
-      </div>
+
+</section>
+
+<section id="standings">
+  <h2>Standings</h2>
+  <p class="sub">Computed from the ESPN schedule feed &mdash; updates as games go final.</p>
+  <div class="card" style="margin-top:16px;">
+    <div id="standings-body"><p class="placeholder">Loading standings&hellip;</p></div>
+  </div>
 </section>
 
 <section id="board" class="active">
