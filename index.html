@@ -218,6 +218,7 @@
   .standings-table tbody tr:hover{background:rgba(255,255,255,.03);}
   .standings-legend{display:flex;flex-direction:column;gap:5px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);}
   .standings-legend b{color:var(--text);font-weight:600;}
+  .standings-table .th-sub{display:block;font-size:9px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);white-space:normal;max-width:120px;line-height:1.25;margin-top:2px;}
 </style>
 <!-- Cloudflare Web Analytics -->
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d6f258a2e69e49c9ab652c37c8503de2"}'></script>
@@ -1874,7 +1875,7 @@ loadSchedule();
             let out = '<div class="standings-scroll"><table class="standings-table"><thead><tr>'
               + '<th class="rk">#</th><th class="tm">Team</th><th>Record</th><th>Pct</th><th>GB</th>'
               + '<th>Strk</th><th>Last 5</th><th>PF/G</th><th>PA/G</th><th>Diff</th>'
-              + '<th title="Record if you played every team every week">All-Play</th>'
+              + '<th title="Record if you played every team every week">All-Play<span class="th-sub">(record if you played every team every week)</span></th>'
               + '<th title="Weeks with the league-high score">High Wks</th>'
               + '<th title="Record vs the weekly median score">vs Median</th></tr></thead><tbody>';
             rows.forEach((r, i) => {
