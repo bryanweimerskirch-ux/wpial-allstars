@@ -248,7 +248,8 @@
   <button data-tab="board" class="active">The Gelly</button>
   <button data-tab="rosters">Rosters &amp; Round Values</button>
   <button data-tab="history">League History</button>
-  <button data-tab="schedule">2026 Schedule</button>
+  <button data-tab="schedule">2026 NFL Schedule</button>
+  <button data-tab="scoreboard">Scoreboard</button>
   <button data-tab="standings">Standings</button>
   <button type="button" onclick="window.location.href='draftboard.html'" style="border-color:var(--accent);color:var(--accent);font-weight:700;" title="Interactive keeper draftboard — mock drafts, keeper decisions, and a full season simulator">🏈 Draftboard</button>
   <button id="cbToggle" class="cb-toggle" type="button" aria-pressed="false" title="The Wadi Accessibility Initiative — colors even Wadi can tell apart">👓 Colorblind mode</button>
@@ -365,8 +366,8 @@
 </section>
 
 <section id="schedule">
-  <h2>2026 Schedule</h2>
-  <p class="sub">Straight from ESPN &mdash; updates automatically. Once the season kicks off, this page doubles as the WPIAL live scoreboard.</p>
+  <h2>2026 NFL Schedule</h2>
+  <p class="sub">The NFL slate, straight from ESPN &mdash; updates automatically. Fantasy matchups live on the Scoreboard tab.</p>
 
   <div class="card" id="nfl-week-card" style="margin-top:16px;">
     <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
@@ -378,6 +379,16 @@
     <div id="nfl-games"><p class="placeholder">Loading NFL week&hellip;</p></div>
   </div>
 
+
+
+  
+
+
+</section>
+
+<section id="scoreboard">
+  <h2>Scoreboard</h2>
+  <p class="sub">WPIAL matchups week by week &mdash; who plays who, and live scores once the games count.</p>
       <div id="gelly-picks-card" class="card" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
           <h3 style="margin:0;border-bottom:none;padding-bottom:0;">🔮 The Gelly Line <span style="font-weight:400;font-size:12px;color:var(--muted);">&mdash; Gelly&#39;s calling it</span></h3>
@@ -385,12 +396,7 @@
         </div>
         <div id="gelly-picks-body"><p class="placeholder">Loading Gelly's picks&hellip;</p></div>
       </div>
-
-  <h3 style="margin:22px 0 0;">🏆 WPIAL Matchups</h3>
-  <p class="sub" style="margin:4px 0 0;">Your fantasy schedule &mdash; who plays who, week by week. Doubles as the live scoreboard once games count.</p>
-  <div id="schedule-weeks" class="grid" style="margin-top:12px;"><p class="placeholder">Loading matchups&hellip;</p></div>
-
-
+  <div id="schedule-weeks" class="grid" style="margin-top:16px;"><p class="placeholder">Loading matchups&hellip;</p></div>
 </section>
 
 <section id="standings">

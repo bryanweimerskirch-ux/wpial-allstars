@@ -32,7 +32,8 @@
     { tab: 'board',    page: 'index.html',      label: 'The Gelly' },
     { tab: 'rosters',  page: 'index.html',      label: 'Rosters &amp; Round Values' },
     { tab: 'history',  page: 'index.html',      label: 'League History' },
-    { tab: 'schedule', page: 'index.html',      label: '2026 Schedule' },
+    { tab: 'schedule', page: 'index.html',      label: '2026 NFL Schedule' },
+    { tab: 'scoreboard', page: 'index.html',     label: 'Scoreboard' },
     { tab: 'standings', page: 'index.html',      label: 'Standings' },
     { tab: null,       page: 'draftboard.html', label: '🏈 Draftboard',
       title: 'Interactive keeper draftboard — mock drafts, keeper decisions, and a full season simulator' },
@@ -40,7 +41,7 @@
       title: 'League engagement — who has logged in and who still owes keepers' }
   ];
 
-  var VALID_TABS = ['board', 'rosters', 'history', 'schedule', 'standings'];
+  var VALID_TABS = ['board', 'rosters', 'history', 'schedule', 'scoreboard', 'standings'];
 
   function currentPage() {
     var p = (location.pathname || '').toLowerCase();
