@@ -173,32 +173,32 @@
   @keyframes cbPop{0%{transform:scale(.6);opacity:0;}100%{transform:scale(1);opacity:1;}}
   @keyframes cbShake{0%,100%{transform:rotate(0);}25%{transform:rotate(-2deg);}75%{transform:rotate(2deg);}}
       /* ---- NFL week card (schedule tab) ---- */
-  .nflwk-legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:11px;color:var(--muted);margin:10px 0 4px;}
-  .nflwk-slot{margin:16px 2px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+  .nflwk-legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);margin:10px 0 4px;}
+  .nflwk-slot{margin:16px 2px 8px;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
   .nflwk-game{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:10px;}
   .nflwk-head{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;}
-  .nflwk-head b{font-size:14px;}
-  .nflwk-head .mt{color:var(--muted);font-size:11px;}
+  .nflwk-head b{font-size:16px;}
+  .nflwk-head .mt{color:var(--muted);font-size:12.5px;}
   .nflwk-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
   .nflwk-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;margin-top:8px;}
   @media(max-width:640px){.nflwk-cols{grid-template-columns:1fr;}}
-  .nflwk-side .tm{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:6px 0 4px;}
-  .nflwk-plr{display:flex;align-items:center;gap:6px;padding:2px 0;font-size:13px;min-height:22px;}
-  .nflwk-plr .ps{flex:0 0 30px;font-size:10px;font-weight:700;color:var(--muted);}
+  .nflwk-side .tm{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:6px 0 4px;}
+  .nflwk-plr{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:15px;min-height:25px;}
+  .nflwk-plr .ps{flex:0 0 34px;font-size:11.5px;font-weight:700;color:var(--muted);}
   .nflwk-plr .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .nflwk-plr .ow{font-size:10px;color:var(--accent2);max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .nflwk-plr .ow{font-size:11.5px;color:var(--accent2);max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .nflwk-plr.avail .nm,.nflwk-plr.avail .ps{color:var(--muted);}
   .nflwk-plr.out .nm{text-decoration:line-through;opacity:.55;}
   /* colorblind-safe: letters always shown; severity = outline vs solid */
-  .nflwk-chip{flex:0 0 auto;font-size:10px;font-weight:800;border-radius:4px;padding:0 5px;line-height:16px;}
+  .nflwk-chip{flex:0 0 auto;font-size:11.5px;font-weight:800;border-radius:4px;padding:0 6px;line-height:18px;}
   .nflwk-chip.q{color:#e6a23c;border:1.5px solid #e6a23c;background:transparent;}
   .nflwk-chip.d{color:#0d1117;background:#e07b39;border:1.5px solid #e07b39;}
   .nflwk-chip.o{color:#fff;background:#b3424a;border:1.5px solid #b3424a;}
-  .nflwk-avail{flex:0 0 auto;font-size:9px;font-weight:700;color:var(--muted);border:1px dashed var(--muted);border-radius:4px;padding:0 4px;line-height:14px;}
-  .nflwk-plr .fp{flex:0 0 auto;font-size:12px;font-weight:800;color:var(--text);min-width:34px;text-align:right;}
+  .nflwk-avail{flex:0 0 auto;font-size:10.5px;font-weight:700;color:var(--muted);border:1px dashed var(--muted);border-radius:4px;padding:0 4px;line-height:14px;}
+  .nflwk-plr .fp{flex:0 0 auto;font-size:13.5px;font-weight:800;color:var(--text);min-width:34px;text-align:right;}
   .nflwk-plr .fp.proj{color:var(--muted);font-weight:600;}
   .nflwk-plr .fp.proj::before{content:'proj ';font-size:9px;font-weight:600;}
-  .nflwk-statline{font-size:10px;color:var(--muted);padding:0 0 3px 36px;margin-top:-2px;}
+  .nflwk-statline{font-size:11.5px;color:var(--muted);padding:0 0 4px 41px;margin-top:-2px;}
   .nflwk-head .mt.live{color:#3fb950;font-weight:700;}
   .nflwk-slot.live{color:#3fb950;}
   body.colorblind .nflwk-chip.q{color:#F0E442;border-color:#F0E442;}
@@ -207,8 +207,8 @@
   body.colorblind .nflwk-plr .ow{color:#56B4E9;}
   /* ---- Standings table ---- */
   .standings-scroll{overflow-x:auto;}
-  .standings-table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap;}
-  .standings-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--line);padding:6px 8px;text-align:right;}
+  .standings-table{width:100%;border-collapse:collapse;font-size:15px;white-space:nowrap;}
+  .standings-table th{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--line);padding:6px 8px;text-align:right;}
   .standings-table td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;}
   .standings-table tr:last-child td{border-bottom:none;}
   .standings-table .tm{text-align:left;font-weight:600;}
@@ -216,9 +216,9 @@
   .standings-table td.pos{color:#3fb950;}
   .standings-table td.neg{color:#f85149;}
   .standings-table tbody tr:hover{background:rgba(255,255,255,.03);}
-  .standings-legend{display:flex;flex-direction:column;gap:5px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);}
+  .standings-legend{display:flex;flex-direction:column;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);}
   .standings-legend b{color:var(--text);font-weight:600;}
-  .standings-table .th-sub{display:block;font-size:9px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);white-space:normal;max-width:120px;line-height:1.25;margin-top:2px;}
+  .standings-table .th-sub{display:block;font-size:10.5px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);white-space:normal;max-width:120px;line-height:1.25;margin-top:2px;}
 </style>
 <!-- Cloudflare Web Analytics -->
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d6f258a2e69e49c9ab652c37c8503de2"}'></script>
