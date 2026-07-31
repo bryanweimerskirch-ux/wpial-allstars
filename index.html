@@ -196,6 +196,11 @@
   .nflwk-chip.o{color:#fff;background:#b3424a;border:1.5px solid #b3424a;}
   .nflwk-k{flex:0 0 auto;font-size:9px;font-weight:800;color:var(--accent2);border:1.5px solid var(--accent2);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;}
   .nflwk-avail{flex:0 0 auto;font-size:9px;font-weight:700;color:var(--muted);border:1px dashed var(--muted);border-radius:4px;padding:0 4px;line-height:14px;}
+  .nflwk-plr .fp{flex:0 0 auto;font-size:12px;font-weight:800;color:var(--text);min-width:34px;text-align:right;}
+  .nflwk-plr .fp.proj{color:var(--muted);font-weight:600;}
+  .nflwk-plr .fp.proj::before{content:'proj ';font-size:9px;font-weight:600;}
+  .nflwk-statline{font-size:10px;color:var(--muted);padding:0 0 3px 36px;margin-top:-2px;}
+  .nflwk-head .mt.live{color:#3fb950;font-weight:700;}
   body.colorblind .nflwk-chip.q{color:#F0E442;border-color:#F0E442;}
   body.colorblind .nflwk-chip.d{color:#0d1117;background:#E69F00;border-color:#E69F00;}
   body.colorblind .nflwk-chip.o{color:#fff;background:#D55E00;border-color:#D55E00;}
@@ -1648,6 +1653,22 @@ loadSchedule();
     return p.day + (p.hour >= 18 ? ' Night' : '');
   }
 
+  var STAT_IDS = [
+    [3, 'PaYd'], [4, 'PaTD'], [20, 'INT'],
+    [24, 'RuYd'], [25, 'RuTD'],
+    [53, 'Rec'], [42, 'ReYd'], [43, 'ReTD'],
+    [72, 'FumL']
+  ];
+  function statLine(pos, raw) {
+    if (pos === 'DEF' || pos === 'PK') return '';
+    var parts = [];
+    STAT_IDS.forEach(function (m) {
+      var v = raw[m[0]];
+      if (v && Math.abs(v) >= 1) parts.push(Math.round(v) + ' ' + m[1]);
+    });
+    return parts.slice(0, 4).join(', ');
+  }
+
   function loadNflWeek() {
     var wrap = document.getElementById('nfl-games');
     if (!wrap) return;
@@ -1656,11 +1677,12 @@ loadSchedule();
     var pAssign = fetch(WEB_APP_URL + '?action=schedule_rosters').then(function (r) { return r.json(); }).catch(function () { return null; });
     var pSched = fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=' + SEASON + '&seasontype=2&week=' + week).then(function (r) { return r.json(); });
     var pPool = fetch('https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/' + SEASON + '/segments/0/leaguedefaults/3?view=kona_player_info',
-      { headers: { 'x-fantasy-filter': JSON.stringify({ players: { limit: 400, sortPercOwned: { sortAsc: false, sortPriority: 1 } } }) } })
+      { headers: { 'x-fantasy-filter': JSON.stringify({ players: { limit: 400, sortPercOwned: { sortAsc: false, sortPriority: 1 }, filterStatsForSplitTypeIds: { value: [1] } } }) } })
       .then(function (r) { return r.json(); });
 
     Promise.all([pAssign, pSched, pPool]).then(function (res) {
       var assign = res[0], sched = res[1], kona = res[2];
+      var wk = (sched.week && sched.week.number) || week;
 
       var owned = {}, keeper = {};
       var phaseEl = document.getElementById('nflwk-phase');
@@ -1674,16 +1696,26 @@ loadSchedule();
         var pl = p.player, pos = POSN[pl.defaultPositionId];
         if (!pos) return;
         var n = norm(pl.fullName);
+        var actual = null, proj = null;
+        (pl.stats || []).forEach(function (s) {
+          if (s.seasonId !== SEASON || s.scoringPeriodId !== wk) return;
+          if (s.statSourceId === 0) actual = s;
+          else if (s.statSourceId === 1) proj = s;
+        });
         players.push({ name: pl.fullName, pos: pos, pro: pl.proTeamId,
           inj: pl.injuryStatus || 'ACTIVE',
           own: (pl.ownership && pl.ownership.percentOwned) || 0,
-          team: owned[n] || null, keeper: !!keeper[n] });
+          team: owned[n] || null, keeper: !!keeper[n],
+          pts: actual ? actual.appliedTotal : null,
+          proj: proj ? proj.appliedTotal : null,
+          line: actual ? statLine(pos, actual.stats || {}) : '' });
       });
       var byPro = {};
       players.forEach(function (p) { (byPro[p.pro] = byPro[p.pro] || []).push(p); });
       Object.keys(byPro).forEach(function (k) {
         byPro[k].sort(function (a, b) {
-          return (a.team ? 0 : 1) - (b.team ? 0 : 1) || sev(a.inj) - sev(b.inj) || b.own - a.own;
+          var ap = a.pts == null ? -1e9 : a.pts, bp = b.pts == null ? -1e9 : b.pts;
+          return bp - ap || (a.team ? 0 : 1) - (b.team ? 0 : 1) || sev(a.inj) - sev(b.inj) || b.own - a.own;
         });
       });
 
@@ -1691,10 +1723,12 @@ loadSchedule();
         var c = e.competitions[0];
         var home, away;
         c.competitors.forEach(function (t) { if (t.homeAway === 'home') home = t; else away = t; });
+        var st = (e.status && e.status.type) || {};
         return { date: e.date,
-          home: { id: +home.team.id, abbr: home.team.abbreviation, name: home.team.displayName },
-          away: { id: +away.team.id, abbr: away.team.abbreviation, name: away.team.displayName },
-          tv: (c.broadcasts && c.broadcasts[0] && c.broadcasts[0].names[0]) || '' };
+          home: { id: +home.team.id, abbr: home.team.abbreviation, name: home.team.displayName, score: home.score },
+          away: { id: +away.team.id, abbr: away.team.abbreviation, name: away.team.displayName, score: away.score },
+          tv: (c.broadcasts && c.broadcasts[0] && c.broadcasts[0].names[0]) || '',
+          state: st.state || 'pre', detail: st.shortDetail || '' };
       }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
       if (sched.week && sched.week.number) {
         var el = document.getElementById('nflwk-num'); if (el) el.textContent = sched.week.number;
@@ -1720,13 +1754,18 @@ loadSchedule();
     var rows = list.map(function (p) {
       var chip = CHIPS[p.inj];
       var isOut = p.inj === 'OUT' || p.inj === 'INJURY_RESERVE';
+      var fp = p.pts != null
+        ? '<span class="fp">' + p.pts.toFixed(1) + '</span>'
+        : (p.proj != null ? '<span class="fp proj">' + p.proj.toFixed(1) + '</span>' : '');
       return '<div class="nflwk-plr' + (p.team ? '' : ' avail') + (isOut ? ' out' : '') + '">'
         + '<span class="ps">' + p.pos + '</span>'
         + '<span class="nm">' + p.name + '</span>'
         + (chip ? '<span class="nflwk-chip ' + (chip === 'Q' ? 'q' : chip === 'D' ? 'd' : 'o') + '">' + chip + '</span>' : '')
         + (p.keeper ? '<span class="nflwk-k" title="keeper">K</span>' : '')
+        + fp
         + (p.team ? '<span class="ow">' + p.team + '</span>' : '<span class="nflwk-avail">Avail</span>')
-        + '</div>';
+        + '</div>'
+        + (p.line ? '<div class="nflwk-statline">' + p.line + '</div>' : '');
     }).join('');
     return '<div class="nflwk-side"><div class="tm">' + team.name + '</div>' + (rows || '<div class="nflwk-plr avail"><span class="nm" style="font-style:italic;">No fantasy-relevant players</span></div>') + '</div>';
   }
@@ -1741,8 +1780,10 @@ loadSchedule();
       .map(function (n) { return '<span class="badge" style="margin-left:0;">' + n + ' ×' + counts[n] + '</span>'; }).join(' ');
     var el = document.createElement('div');
     el.className = 'nflwk-game';
-    el.innerHTML = '<div class="nflwk-head"><b>' + g.away.abbr + ' @ ' + g.home.abbr + '</b>'
-      + '<span class="mt">' + t.day + ' ' + t.time + (g.tv ? ' · ' + g.tv : '') + '</span></div>'
+    var title = g.state === 'pre'
+      ? '<b>' + g.away.abbr + ' @ ' + g.home.abbr + '</b><span class="mt">' + t.day + ' ' + t.time + (g.tv ? ' · ' + g.tv : '') + '</span>'
+      : '<b>' + g.away.abbr + ' ' + g.away.score + ' – ' + g.home.score + ' ' + g.home.abbr + '</b><span class="mt' + (g.state === 'in' ? ' live' : '') + '">' + (g.detail || '') + '</span>';
+    el.innerHTML = '<div class="nflwk-head">' + title + '</div>'
       + (badges ? '<div class="nflwk-badges">' + badges + '</div>' : '')
       + '<div class="nflwk-cols">' + sideHTML(g.away, byPro) + sideHTML(g.home, byPro) + '</div>';
     return el;
