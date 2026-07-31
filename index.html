@@ -1815,36 +1815,80 @@ loadSchedule();
           .then(data => {
             if (!data.ok || !data.weeks) { wrap.innerHTML = '<p class="placeholder">Standings unavailable.</p>'; return; }
             const rec = {};
-            const bump = (name) => { if (!rec[name]) rec[name] = { w: 0, l: 0, t: 0, pf: 0, pa: 0 }; return rec[name]; };
-            Object.values(data.weeks).forEach(matchups => {
-              matchups.forEach(mu => {
-                const a = bump(mu.away), h = bump(mu.home);   // seed every team, scored or not
-                if (!(mu.awayScore > 0 || mu.homeScore > 0) && mu.winner === 'UNDECIDED') return;
-                a.pf += Number(mu.awayScore) || 0; a.pa += Number(mu.homeScore) || 0;
-                h.pf += Number(mu.homeScore) || 0; h.pa += Number(mu.awayScore) || 0;
-                if (mu.winner === 'AWAY') { a.w++; h.l++; }
-                else if (mu.winner === 'HOME') { h.w++; a.l++; }
-                else if (mu.winner === 'TIE') { a.t++; h.t++; }
+            const bump = (name) => { if (!rec[name]) rec[name] = { w:0,l:0,t:0,pf:0,pa:0, games:[] }; return rec[name]; };
+            const weekNums = Object.keys(data.weeks).map(Number).sort((a,b)=>a-b);
+            const weekScores = {};   // week -> [{name, pts}]
+            weekNums.forEach(wk => {
+              (data.weeks[wk] || []).forEach(mu => {
+                const a = bump(mu.away), h = bump(mu.home);   // seed every team
+                const scored = (mu.awayScore > 0 || mu.homeScore > 0 || mu.winner !== 'UNDECIDED');
+                if (!scored) return;
+                const as = Number(mu.awayScore) || 0, hs = Number(mu.homeScore) || 0;
+                a.pf += as; a.pa += hs; h.pf += hs; h.pa += as;
+                let ar = 'T', hr = 'T';
+                if (mu.winner === 'AWAY') { a.w++; h.l++; ar='W'; hr='L'; }
+                else if (mu.winner === 'HOME') { h.w++; a.l++; hr='W'; ar='L'; }
+                else { a.t++; h.t++; }
+                a.games.push({ wk: wk, res: ar }); h.games.push({ wk: wk, res: hr });
+                (weekScores[wk] = weekScores[wk] || []).push({ name: mu.away, pts: as }, { name: mu.home, pts: hs });
               });
             });
-            const rows = Object.keys(rec).map(name => {
-              const r = rec[name], g = r.w + r.l + r.t;
-              return { name: name, w: r.w, l: r.l, t: r.t, pf: r.pf, pa: r.pa,
-                       pct: g ? (r.w + 0.5 * r.t) / g : 0 };
+            // all-play, weekly highs, vs-median
+            const extra = {};
+            Object.keys(rec).forEach(n => extra[n] = { apw:0, apl:0, apt:0, hi:0, mw:0, ml:0 });
+            Object.keys(weekScores).forEach(wk => {
+              const rows = weekScores[wk];
+              const pts = rows.map(r => r.pts).sort((a,b)=>a-b);
+              const max = pts[pts.length-1];
+              const mid = pts.length % 2 ? pts[(pts.length-1)/2] : (pts[pts.length/2-1] + pts[pts.length/2]) / 2;
+              rows.forEach(r => {
+                const e = extra[r.name];
+                rows.forEach(o => { if (o === r) return;
+                  if (r.pts > o.pts) e.apw++; else if (r.pts < o.pts) e.apl++; else e.apt++; });
+                if (r.pts === max && rows.filter(o => o.pts === max).length === 1) e.hi++;
+                if (r.pts > mid) e.mw++; else if (r.pts < mid) e.ml++;
+              });
             });
-            rows.sort((x, y) => y.pct - x.pct || y.pf - x.pf || (y.pf - y.pa) - (x.pf - x.pa) || x.name.localeCompare(y.name));
+            const fmtRec = (w,l,t) => w + '-' + l + (t ? '-' + t : '');
+            const rows = Object.keys(rec).map(name => {
+              const r = rec[name], e = extra[name], g = r.w + r.l + r.t;
+              const sorted = r.games.slice().sort((a,b)=>a.wk-b.wk);
+              let streak = '—';
+              if (sorted.length) {
+                const last = sorted[sorted.length-1].res; let n = 0;
+                for (let i = sorted.length-1; i >= 0 && sorted[i].res === last; i--) n++;
+                streak = last + n;
+              }
+              const l5 = sorted.slice(-5);
+              const last5 = l5.length ? fmtRec(l5.filter(x=>x.res==='W').length, l5.filter(x=>x.res==='L').length, l5.filter(x=>x.res==='T').length) : '—';
+              return { name: name, w:r.w, l:r.l, t:r.t, pf:r.pf, pa:r.pa, g:g,
+                       pct: g ? (r.w + 0.5*r.t)/g : 0, streak: streak, last5: last5,
+                       ap: (e.apw || e.apl || e.apt) ? fmtRec(e.apw, e.apl, e.apt) : '—',
+                       hi: e.hi, med: (e.mw || e.ml) ? fmtRec(e.mw, e.ml, 0) : '—' };
+            });
+            rows.sort((x,y) => y.pct - x.pct || y.pf - x.pf || (y.pf-y.pa) - (x.pf-x.pa) || x.name.localeCompare(y.name));
             if (!rows.length) { wrap.innerHTML = '<p class="placeholder">Standings unavailable.</p>'; return; }
+            const leader = rows[0];
             let out = '<div class="standings-scroll"><table class="standings-table"><thead><tr>'
-              + '<th class="rk">#</th><th class="tm">Team</th><th>W</th><th>L</th><th>T</th>'
-              + '<th>Pct</th><th>PF</th><th>PA</th><th>Diff</th></tr></thead><tbody>';
+              + '<th class="rk">#</th><th class="tm">Team</th><th>Record</th><th>Pct</th><th>GB</th>'
+              + '<th>Strk</th><th>Last 5</th><th>PF/G</th><th>PA/G</th><th>Diff</th>'
+              + '<th title="Record if you played every team every week">All-Play</th>'
+              + '<th title="Weeks with the league-high score">Hi Wks</th>'
+              + '<th title="Record vs the weekly median score">vs Med</th></tr></thead><tbody>';
             rows.forEach((r, i) => {
               const diff = r.pf - r.pa;
-              out += '<tr><td class="rk">' + (i + 1) + '</td>'
+              const gb = i === 0 ? '—' : (((leader.w - r.w) + (r.l - leader.l)) / 2).toFixed(1).replace(/\.0$/, '');
+              out += '<tr><td class="rk">' + (i+1) + '</td>'
                 + '<td class="tm">' + teamLogoHTML(r.name) + r.name + '</td>'
-                + '<td>' + r.w + '</td><td>' + r.l + '</td><td>' + r.t + '</td>'
+                + '<td>' + fmtRec(r.w, r.l, r.t) + '</td>'
                 + '<td>' + r.pct.toFixed(3).replace(/^0/, '') + '</td>'
-                + '<td>' + r.pf.toFixed(1) + '</td><td>' + r.pa.toFixed(1) + '</td>'
-                + '<td class="' + (diff > 0 ? 'pos' : diff < 0 ? 'neg' : '') + '">' + (diff > 0 ? '+' : '') + diff.toFixed(1) + '</td></tr>';
+                + '<td>' + gb + '</td>'
+                + '<td class="' + (r.streak[0]==='W' ? 'pos' : r.streak[0]==='L' ? 'neg' : '') + '">' + r.streak + '</td>'
+                + '<td>' + r.last5 + '</td>'
+                + '<td>' + (r.g ? (r.pf/r.g).toFixed(1) : '0.0') + '</td>'
+                + '<td>' + (r.g ? (r.pa/r.g).toFixed(1) : '0.0') + '</td>'
+                + '<td class="' + (diff > 0 ? 'pos' : diff < 0 ? 'neg' : '') + '">' + (diff > 0 ? '+' : '') + diff.toFixed(1) + '</td>'
+                + '<td>' + r.ap + '</td><td>' + (r.hi || '—') + '</td><td>' + r.med + '</td></tr>';
             });
             out += '</tbody></table></div>';
             wrap.innerHTML = out;
