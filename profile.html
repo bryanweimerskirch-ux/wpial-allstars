@@ -112,9 +112,6 @@ main{max-width:1180px;margin:0 auto;padding:20px 14px 80px;}
 .fillrow button i{width:11px;height:11px;border-radius:50%;display:inline-block;}
 .drop{border:1px dashed var(--line);border-radius:10px;padding:20px 14px;text-align:center;color:var(--muted);font-size:13px;}
 .drop input{display:none;}
-.aiGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
-.aiGrid .slot{aspect-ratio:1;border:1px solid var(--line);border-radius:8px;background:var(--panel2);
-     display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;overflow:hidden;}
 
 /* ---- jersey ---- */
 .jerseys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
@@ -244,7 +241,6 @@ main{max-width:1180px;margin:0 auto;padding:20px 14px 80px;}
         <div class="tabs" id="logoTabs">
           <button data-pane="builder" class="on">Builder</button>
           <button data-pane="upload">Upload</button>
-          <button data-pane="ai">AI <span class="pill" id="aiPill">Off</span></button>
         </div>
 
         <div class="pane on" data-pane="builder">
@@ -278,15 +274,6 @@ main{max-width:1180px;margin:0 auto;padding:20px 14px 80px;}
           </div>
         </div>
 
-        <div class="pane" data-pane="ai">
-          <div class="field">
-            <label for="fPrompt">Describe your logo <span class="count" id="cPrompt">0 / 200</span></label>
-            <input id="fPrompt" maxlength="200" placeholder="angry mustard bottle in a football helmet">
-          </div>
-          <button id="genBtn" class="primary" type="button">Generate</button>
-          <span class="sub" id="aiNote" style="margin-left:10px;"></span>
-          <div class="aiGrid" id="aiGrid"></div>
-        </div>
       </section>
 
       <!-- JERSEY -->

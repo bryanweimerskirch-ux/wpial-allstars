@@ -1,8 +1,8 @@
 /**
  * profile.js — the owner profile editor.
  *
- * WHAT AN OWNER CONTROLS: first name, motto, three team colours, their logo (builder,
- * upload or AI) and their jersey. NOT the team name — that comes from ESPN, hourly, so
+ * WHAT AN OWNER CONTROLS: first name, motto, three team colours, their logo (builder or
+ * upload) and their jersey. NOT the team name — that comes from ESPN, hourly, so
  * there is no field for it and no way for the site and ESPN to disagree.
  *
  * SAVING is ambient: 900ms after the last change, one PATCH of only the fields that
@@ -160,7 +160,6 @@
 
     $('#cMotto').textContent = (st.motto || '').length + ' / 60';
     $('#cWord').textContent = (st.jersey.wordmark || '').length + ' / 10';
-    $('#cPrompt').textContent = ($('#fPrompt').value || '').length + ' / 200';
 
     paintSeen();
   }
@@ -392,14 +391,6 @@
       });
     };
 
-    /* AI stays visibly disabled until the endpoint is confirmed live, rather than
-       pretending to work. Design drew this state on purpose. */
-    var aiTab = document.querySelector('#logoTabs button[data-pane="ai"]');
-    aiTab.disabled = true;
-    $('#genBtn').disabled = true;
-    $('#aiNote').textContent = 'The logo generator is warming up — the builder and upload both work today.';
-    $('#aiGrid').innerHTML = '<div class="slot">soon</div><div class="slot">soon</div><div class="slot">soon</div><div class="slot">soon</div>';
-    $('#fPrompt').oninput = function () { $('#cPrompt').textContent = this.value.length + ' / 200'; };
   }
 
   /* ---------- boot ---------- */

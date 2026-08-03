@@ -117,26 +117,37 @@
       selectTab((location.hash || '').replace(/^#/, ''), false);
     });
 
-    // Commissioner-only dashboard button. No data-tab, so the page's own tab
-    // handler ignores it entirely. Identity arrives async, hence the event.
-    function addCommishLink() {
-      if (!navEl || !isCommish() || document.getElementById('snDash')) return;
-      var item = NAV[NAV.length - 1];
-      var b = document.createElement('button');
-      b.id = 'snDash';
-      b.type = 'button';
-      b.innerHTML = item.label;
-      b.title = item.title || '';
-      b.style.borderColor = 'var(--accent)';
-      b.style.color = 'var(--accent)';
-      b.onclick = function () { window.location.href = item.page; };
-      // Before the sign-out chip if it's already there, otherwise at the end.
-      var chip = document.getElementById('wpial-chip');
-      if (chip && chip.parentNode === navEl) navEl.insertBefore(b, chip);
-      else navEl.appendChild(b);
+    /* index.html's <nav> is hardcoded HTML, so anything added to NAV shows up on every
+       OTHER page for free and is invisible here. That is exactly how the profile link
+       went missing from the homepage — the one page most people open first.
+       So: append every NAV entry that points at another page and is not already in the
+       markup. Draftboard is skipped because it is hand-written above; Profile and Commish
+       get injected. No data-tab, so the page's own tab handler ignores them entirely.
+       Identity arrives async, hence the event. */
+    function addExtraLinks() {
+      if (!navEl) return;
+      visibleItems().forEach(function (item) {
+        if (item.page === 'index.html') return;
+        var id = 'sn-' + item.page.replace(/[^a-z0-9]/gi, '');
+        if (document.getElementById(id)) return;
+        if (navEl.innerHTML.indexOf(item.page) !== -1) return;   // already hand-written
+        var b = document.createElement('button');
+        b.id = id;
+        b.type = 'button';
+        b.innerHTML = item.label;
+        b.title = item.title || '';
+        b.style.borderColor = 'var(--accent)';
+        b.style.color = 'var(--accent)';
+        b.onclick = function () { window.location.href = item.page; };
+        // Before the sign-out chip if it's already there, otherwise at the end.
+        var chip = document.getElementById('wpial-chip');
+        if (chip && chip.parentNode === navEl) navEl.insertBefore(b, chip);
+        else navEl.appendChild(b);
+      });
     }
-    addCommishLink();
-    document.addEventListener('wpial-auth', addCommishLink);
+    addExtraLinks();
+    document.addEventListener('wpial-auth', addExtraLinks);
+    document.addEventListener('wpial-profiles', addExtraLinks);
   }
 
   /* ---------------------------------------------------------------------
