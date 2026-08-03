@@ -133,7 +133,10 @@
       clock: String(pick(p, ['clock', 'gameClock', 'status_text'], '') || ''),
       kickoff: String(pick(p, ['kickoff', 'gameDate', 'start'], '') || ''),
       line: String(pick(p, ['line', 'statLine', 'stats'], '') || ''),
-      injury: String(pick(p, ['injury', 'injuryStatus', 'status'], '') || '').toUpperCase(),
+      /* `inj` is what matchup.gs actually ships (verified against the live Version 50
+         payload: {inj, name, nfl, pos, proj, pts, slot, starter}); the longer spellings are
+         kept for anything else that ever feeds this. 'ACTIVE' maps to no chip, correctly. */
+      injury: String(pick(p, ['inj', 'injury', 'injuryStatus', 'status'], '') || '').toUpperCase(),
       proj: pick(p, ['proj', 'projected', 'projectedPoints'], null),
       actual: pick(p, ['pts', 'points', 'actual', 'appliedTotal'], null),
       /* 'live' | 'final' | 'pre'. Absent from the feed is not the same as pre — an
