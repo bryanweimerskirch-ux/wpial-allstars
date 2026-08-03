@@ -5,19 +5,21 @@
  * upload) and their jersey. NOT the team name — that comes from ESPN, hourly, so
  * there is no field for it and no way for the site and ESPN to disagree.
  *
- * SAVING IS EXPLICIT, not ambient. An owner picks colours and shapes by trying things,
- * and autosave turns "let me see what purple looks like" into a committed change they
- * then have to reverse from memory. So: edit freely, the page shows what it would look
- * like, and nothing reaches the league until Save is pressed. Discard puts it back.
+ * SAVING IS AUTOMATIC, and the safety net is UNDO rather than a Save button.
  *
- * THREE LAYERS PROTECT UNSAVED WORK, in order of how much they can be trusted:
- *   1. The local draft. Every keystroke is mirrored to localStorage, so navigating away
- *      and coming back restores the edit with a Save / Discard prompt. This is the one
- *      that actually cannot lose work, and it is the only one that works on a phone.
- *   2. In-page navigation is intercepted while dirty — clicking a nav link asks first.
- *   3. beforeunload, as a backstop. Browsers show their own generic wording and MOBILE
- *      SAFARI AND CHROME OFTEN SKIP IT ENTIRELY, which is exactly why it is layer three
- *      and not the plan.
+ * The explicit-Save version shipped first and was wrong on a phone: the sticky action bar
+ * got clipped by the browser chrome, so the Save button was unreachable and all you could
+ * see were two labels disagreeing with each other. A save affordance you cannot reach is
+ * worse than no save affordance at all.
+ *
+ * So: changes save themselves 900ms after you stop, and the real answer to "I made a
+ * mistake" is UNDO — multi-level, not one-deep, because people notice a mistake three
+ * clicks after they make it, not immediately. RESET returns the franchise to league
+ * defaults, and because reset is itself pushed onto the undo stack, even that is
+ * recoverable.
+ *
+ * One status indicator, never two. The previous build could show "Saved" and "Unsaved
+ * changes" at the same time.
  *
  * CONTRAST is warn, never block. Telling somebody their team colours are illegal is the
  * wrong product. The rule is on text PLACEMENT: --fx-ink is whichever of dark/light
@@ -30,7 +32,7 @@
   'use strict';
 
   var API = 'https://script.google.com/macros/s/AKfycbxX-UpCAd7oeWug1KcnMZrSnMJyVuob_qHtSv0z1C7im7MpUMgHYMOtdvOKl98VXy37eA/exec';
-  var DRAFT_KEY = 'wpial_profile_draft_v1';
+  var SAVE_DELAY = 900;
   var UPLOAD_PX = 256;
   var TARGET_CHARS = 20000;     // aim under this
   var HARD_CHARS = 32000;       // server refuses above this
@@ -40,6 +42,12 @@
   var st = null;                 // working copy
   var saved = null;              // last known server copy
   var pending = {}, busy = false;
+  var saveTimer = null;
+  var undoStack = [];            // snapshots of `st`, newest last
+  var baseline = null;           // st as of the last recorded undo point
+  var lastKey = null, lastPush = 0;
+  var UNDO_MAX = 30;
+  var COALESCE_MS = 1200;        // typing in one field is one undo step, not twenty
 
   function post(params) {
     var b = new URLSearchParams();
@@ -58,7 +66,6 @@
   var SAVE_UI = {
     saved:   ['✓', 'Saved'],
     saving:  ['↻', 'Saving…'],
-    dirty:   ['●', 'Not saved yet'],
     offline: ['⌁', 'Offline — kept on this device'],
     error:   ['!', '']
   };
@@ -194,31 +201,110 @@
   /* ---------- change plumbing ---------- */
   function isDirty() { return !!Object.keys(pending).length; }
 
-  /** Record a change locally. Nothing goes to the server until Save. */
+  function snap() { return JSON.parse(JSON.stringify(st)); }
+
+  /** Push the state as it was BEFORE this change.
+   *
+   *  Deliberately uses `baseline` rather than the live `st`: most handlers mutate `st`
+   *  first and then call mark(), so snapshotting `st` here captured the change we were
+   *  trying to be able to undo — undo came out one step behind. `baseline` is only
+   *  advanced once a change has been recorded, so it is always the previous state.
+   *
+   *  Consecutive edits to the same field inside COALESCE_MS collapse into one step,
+   *  otherwise typing a seven-letter wordmark would cost seven undos. */
+  function pushUndo(key) {
+    var now = Date.now();
+    if (key && key === lastKey && (now - lastPush) < COALESCE_MS) { lastPush = now; return; }
+    if (baseline) {
+      undoStack.push(baseline);
+      if (undoStack.length > UNDO_MAX) undoStack.shift();
+    }
+    lastKey = key; lastPush = now;
+  }
+
+  /** Record a change and queue the autosave. */
   function mark(patch) {
-    Object.keys(patch).forEach(function (k) { pending[k] = patch[k]; });
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ fid: fid, st: st, pending: pending })); } catch (e) {}
+    var keys = Object.keys(patch);
+    pushUndo(keys.join(','));
+    baseline = snap();
+    keys.forEach(function (k) { pending[k] = patch[k]; });
     paint();
-    setSave('dirty');
+    setSave('saving');
     paintActions();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(flush, SAVE_DELAY);
+  }
+
+  /** Apply a whole state object and persist every field it covers. Used by undo and
+   *  reset, which both move more than one field at a time. */
+  function applyState(next, label) {
+    st = JSON.parse(JSON.stringify(next));
+    syncInputs();
+    paint();
+    pending = {
+      first_name: st.first_name,
+      motto: st.motto,
+      color_primary: st.colors.primary,
+      color_secondary: st.colors.secondary,
+      color_accent: st.colors.accent,
+      logo_kind: st.logo_kind,
+      logo_data: st.logo_kind === 'builder'
+        ? JSON.stringify({ shape: st.shape, icon: st.icon, mono: st.mono, useMono: st.useMono })
+        : st.logo_data,
+      jersey_json: JSON.stringify(st.jersey)
+    };
+    lastKey = null;
+    setSave('saving', label);
+    paintActions();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(flush, 250);
+  }
+
+  function undo() {
+    if (!undoStack.length) return;
+    applyState(undoStack.pop(), 'Undoing…');
+    baseline = snap();
+    lastKey = null;
+    paintActions();
+  }
+
+  /** Back to what the league gave you: default logo, franchise colours, no motto,
+   *  stock jersey. Pushed onto the undo stack first, so it is not a one-way door. */
+  function resetToDefaults() {
+    if (!FX) return;
+    var base = FX.byId(fid);
+    undoStack.push(snap());
+    if (undoStack.length > UNDO_MAX) undoStack.shift();
+    applyState({
+      fid: st.fid, team_name: st.team_name, prior_names: st.prior_names,
+      first_name: st.first_name,                 // a person's name is not decoration
+      motto: '',
+      colors: {
+        primary: base.colors.primary, secondary: base.colors.secondary, accent: base.colors.accent
+      },
+      logo_kind: 'default', logo_data: '',
+      shape: 'shield', icon: 'football', mono: '', useMono: false,
+      jersey: { template: 'classic', number: fid.replace(/[^0-9]/g, ''), wordmark: '', sleeves: 'stripe' }
+    }, 'Reset…');
+    baseline = snap();
+    lastKey = null;
   }
 
   function paintActions() {
-    var d = isDirty();
-    $('#saveBtn').hidden = !d;
-    $('#discardBtn').hidden = !d;
-    $('#dirtyNote').hidden = !d;
-    $('#saveBtn').disabled = busy;
+    var u = $('#undoBtn');
+    if (u) { u.disabled = !undoStack.length; u.hidden = false; }
+    var r = $('#resetBtn');
+    if (r) r.hidden = false;
   }
 
-  function save() {
-    if (busy || !isDirty()) return;
-    var body = {}, keys = Object.keys(pending);
+  function flush() {
+    if (busy) { clearTimeout(saveTimer); saveTimer = setTimeout(flush, 250); return; }
+    var keys = Object.keys(pending);
+    if (!keys.length) { setSave('saved'); return; }
+    var body = {};
     keys.forEach(function (k) { body[k] = pending[k]; });
-    var snapshot = JSON.parse(JSON.stringify(saved));
     busy = true;
     setSave('saving');
-    paintActions();
     body.action = 'profile_save';
     body.token = token();
     if (me && me.is_commish && fid !== (me.fid || '')) body.fid = fid;
@@ -226,40 +312,25 @@
     post(body).then(function (r) {
       busy = false;
       if (r && r.ok && r.profile) {
-        /* Only clear the keys we actually sent — anything changed while the request was
-           in flight stays dirty rather than being silently dropped. */
         keys.forEach(function (k) { delete pending[k]; });
-        saved = r.profile;                       // prefer the server's echo
-        if (!isDirty()) {
-          adopt(saved, true);
-          setSave('saved');
-          try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
-        } else {
-          setSave('dirty');
-        }
+        saved = r.profile;
+        if (!isDirty()) setSave('saved');
       } else {
-        /* Server prose, rendered raw — bad_payload, forbidden, read_only, too_big all
-           arrive as sentences written for a human. Edits are KEPT so nothing is lost. */
-        if (r && r.code === 'bad_token') { setSave('error', 'Session expired — reloading.'); setTimeout(function () { location.reload(); }, 1400); return; }
-        saved = snapshot;
-        setSave('error', (r && r.error) || 'Could not save — your changes are still here.');
+        if (r && r.code === 'bad_token') {
+          setSave('error', 'Session expired — reloading.');
+          setTimeout(function () { location.reload(); }, 1400);
+          return;
+        }
+        /* Keep the change on screen and in `pending`. Undo is how you back out of a
+           rejected edit — silently reverting it would be the surprising thing. */
+        setSave('error', (r && r.error) || 'Could not save — press undo to back it out.');
       }
       paintActions();
     }).catch(function () {
       busy = false;
-      setSave('offline');                        // kept locally; the draft survives
+      setSave('offline');
       paintActions();
     });
-  }
-
-  /** Put everything back to what the league currently sees. */
-  function discard() {
-    pending = {};
-    try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
-    adopt(saved, false);
-    setSave('saved');
-    paintActions();
-    $('#restoreBar').hidden = true;
   }
 
   /** Load a server profile into the working copy. */
@@ -287,6 +358,7 @@
       }
     };
     if (!keepFocus) syncInputs();
+    baseline = snap();
     paint();
   }
 
@@ -302,11 +374,14 @@
     $('#fSleeve').value = st.jersey.sleeves;
   }
 
+  /** Touching ANY builder control switches you to the builder. Previously this bailed
+   *  out unless logo_kind was already 'builder', and only the icon handler set that — so
+   *  clicking a shape first did nothing at all, and you had to click around before the
+   *  logo would move. That was the "took a few clicks" bug. */
   function saveLogo() {
-    if (st.logo_kind === 'builder') {
-      mark({ logo_kind: 'builder', logo_data: JSON.stringify({
-        shape: st.shape, icon: st.icon, mono: st.mono, useMono: st.useMono }) });
-    }
+    st.logo_kind = 'builder';
+    mark({ logo_kind: 'builder', logo_data: JSON.stringify({
+      shape: st.shape, icon: st.icon, mono: st.mono, useMono: st.useMono }) });
   }
   function saveJersey() { mark({ jersey_json: JSON.stringify(st.jersey) }); }
 
@@ -357,7 +432,7 @@
     };
     $('#iconChips').onclick = function (e) {
       var b = e.target.closest('button[data-id]'); if (!b) return;
-      st.icon = b.dataset.id; st.useMono = false; st.logo_kind = 'builder'; saveLogo();
+      st.icon = b.dataset.id; st.useMono = false; saveLogo();
     };
 
     $('#presets').innerHTML = FX.presets().map(function (p, i) {
@@ -400,7 +475,6 @@
     $('#fMono').oninput = function () {
       st.mono = this.value.toUpperCase();
       st.useMono = !!st.mono;
-      st.logo_kind = 'builder';
       saveLogo();
     };
     $('#fMono').onfocus = function () { if (st.mono) { st.useMono = true; saveLogo(); } };
@@ -410,39 +484,8 @@
     $('#fWord').oninput = function () { st.jersey.wordmark = this.value.toUpperCase(); saveJersey(); };
     $('#fSleeve').onchange = function () { st.jersey.sleeves = this.value; saveJersey(); };
 
-    $('#saveBtn').onclick = save;
-    $('#discardBtn').onclick = discard;
-    $('#restoreSave').onclick = function () { $('#restoreBar').hidden = true; save(); };
-    $('#restoreDiscard').onclick = discard;
-
-    /* Layer 2 — in-page navigation. The nav strip and the injected links are ordinary
-       same-origin navigations, so catch them while dirty and ask rather than letting the
-       browser's generic dialog (or nothing at all, on a phone) handle it. */
-    document.addEventListener('click', function (e) {
-      if (!isDirty()) return;
-      var a = e.target.closest('a[href], button[id^="sn-"], #snDash');
-      if (!a) return;
-      if (a.closest('#savebar') || a.closest('#restoreBar')) return;
-      var href = a.getAttribute && a.getAttribute('href');
-      if (href && (href.charAt(0) === '#' || /^(mailto:|tel:)/.test(href))) return;
-      e.preventDefault();
-      e.stopPropagation();
-      var go = function () {
-        if (href) window.location.href = href;
-        else a.click();
-      };
-      askBeforeLeaving(go);
-    }, true);
-
-    /* Layer 3 — the backstop. Browsers substitute their own wording, and mobile Safari
-       and Chrome frequently ignore this entirely. It is here to catch a desktop tab
-       close, nothing more; the local draft is what actually keeps the work. */
-    window.addEventListener('beforeunload', function (e) {
-      if (!isDirty()) return;
-      e.preventDefault();
-      e.returnValue = '';
-      return '';
-    });
+    $('#undoBtn').onclick = undo;
+    $('#resetBtn').onclick = resetToDefaults;
 
     $('#logoTabs').onclick = function (e) {
       var b = e.target.closest('button[data-pane]'); if (!b || b.disabled) return;
@@ -464,38 +507,6 @@
       });
     };
 
-  }
-
-  /** Inline "you have unsaved changes" prompt. Deliberately not window.confirm: the site
-   *  has never used blocking dialogs, and a native confirm cannot say what Save will do. */
-  function askBeforeLeaving(proceed) {
-    var bar = $('#restoreBar');
-    bar.hidden = false;
-    bar.innerHTML =
-      '<b>Unsaved changes.</b><span>Save them before you go, or leave them behind?</span>' +
-      '<span class="rspacer"></span>' +
-      '<button type="button" id="leaveStay">Stay here</button>' +
-      '<button type="button" id="leaveDiscard">Leave without saving</button>' +
-      '<button type="button" class="primary" id="leaveSave">Save and go</button>';
-    bar.scrollIntoView({ block: 'nearest' });
-    $('#leaveStay').onclick = function () { bar.hidden = true; };
-    $('#leaveDiscard').onclick = function () {
-      pending = {};
-      try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
-      proceed();
-    };
-    $('#leaveSave').onclick = function () {
-      bar.hidden = true;
-      var wasDirty = isDirty();
-      save();
-      if (!wasDirty) return proceed();
-      var waited = 0;
-      var poll = setInterval(function () {
-        waited += 120;
-        if (!busy && !isDirty()) { clearInterval(poll); proceed(); }
-        else if (waited > 8000) { clearInterval(poll); }   // save failed; stay put
-      }, 120);
-    };
   }
 
   /* ---------- boot ---------- */
@@ -525,19 +536,6 @@
       $('#app').hidden = false;
       setSave('saved');
       paintActions();
-
-      /* Layer 1 — the one that actually cannot lose work. An edit that never reached the
-         server survives a refresh, a closed tab, or a phone that killed the page. */
-      try {
-        var d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
-        if (d && d.fid === fid && d.pending && Object.keys(d.pending).length) {
-          st = d.st; pending = d.pending;
-          syncInputs(); paint();
-          setSave('dirty');
-          paintActions();
-          $('#restoreBar').hidden = false;
-        }
-      } catch (e) {}
     });
   }
 

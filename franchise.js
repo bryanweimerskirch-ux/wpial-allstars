@@ -306,8 +306,14 @@
     }
     g += '<path d="M27 14 Q32 20 37 14 L34 13 Q32 16 30 13 Z" fill="' + S + '"/>';
     if (word) {
+      /* The shirt body is only 24 units wide, so a fixed font size clipped anything past
+         about five characters — MUSTARD rendered as USTAR. Scale to fit instead, and drop
+         the letter-spacing as the word gets longer. */
+      var wsize = Math.max(2.6, Math.min(6, 30 / word.length));
+      var wtrack = word.length > 6 ? 0.3 : 1.2;
       g += '<text x="32" y="38" text-anchor="middle" fill="' + (tpl === 'throwback' ? A : ink(bodyFill)) +
-        '" font-family="Oswald,Impact,sans-serif" font-weight="600" font-size="6" letter-spacing="1.2">' + esc(word) + '</text>';
+        '" font-family="Oswald,Impact,sans-serif" font-weight="600" font-size="' + wsize +
+        '" letter-spacing="' + wtrack + '">' + esc(word) + '</text>';
     }
     g += '<text x="32" y="60" text-anchor="middle" fill="' + numFill + '"' +
       (numStroke === 'none' ? '' : ' stroke="' + numStroke + '" stroke-width="0.9" paint-order="stroke"') +
