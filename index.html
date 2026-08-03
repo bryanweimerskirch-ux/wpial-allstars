@@ -42,6 +42,23 @@
 .spotlight-vs{text-align:center;color:var(--muted);font-size:11px;margin:2px 0;}
 .spotlight-top{font-size:11px;color:var(--muted);margin-top:2px;}
   .spotlight-h2h{font-size:11px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);text-align:center;}
+  /* ---- Projected-winner jerseys ----
+     The jersey is the projection: the bigger one is the favourite. Size is a real visual
+     channel, but it is never the ONLY channel — the percentage is always printed next to
+     it, so the call is readable at a glance and unambiguous when you look. */
+  .spot-kits{display:flex;align-items:flex-end;justify-content:center;gap:14px;
+             margin:2px 0 8px;min-height:78px;}
+  .spot-kit{display:flex;flex-direction:column;align-items:center;gap:3px;
+            transition:width .25s ease,opacity .25s ease;}
+  .spot-kit .kit{display:block;}
+  .spot-kit .odds{font-size:10px;letter-spacing:.6px;color:var(--muted);
+                  font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .spot-kit.fav .odds{color:var(--accent);font-weight:700;}
+  .spot-kit.dog{opacity:.72;}
+  .spot-kit.lost{opacity:.35;filter:saturate(.25);}
+  .spot-kit.won .odds{color:var(--accent);font-weight:700;}
+  .spot-basis{font-size:10px;color:var(--muted);text-align:center;margin:-4px 0 6px;opacity:.8;}
+  body.colorblind .spot-kit.fav .odds,body.colorblind .spot-kit.won .odds{color:var(--accent2);}
   #history .card{margin-bottom:14px;}
   textarea{width:100%;min-height:140px;background:#0f1319;border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:12px;font-size:13px;font-family:inherit;}
   #board .card{margin-bottom:12px;}
@@ -1189,6 +1206,86 @@ function teamLogoHTML(name) {
 function teamDisplayName(name) {
   return (window.WPIAL_FX && WPIAL_FX.name(name)) || String(name == null ? '' : name);
 }
+/* ---- Projected winner ------------------------------------------------------
+   Everyone has a jersey from the moment their franchise exists: an owner who has
+   never opened the profile page still gets one built from their franchise colours,
+   with their franchise number on the back. Customising it makes it theirs; not
+   customising it does not make it invisible. */
+function jerseyFor(name) {
+  if (!window.WPIAL_FX) return '';
+  var fid = WPIAL_FX.resolve(name);
+  if (!fid) return '';
+  var c = WPIAL_FX.colors(fid);
+  var j = WPIAL_FX.jersey(fid) || {};
+  return WPIAL_FX.jerseySVG({
+    template: j.template || 'classic',
+    number: j.number || fid.replace(/[^0-9]/g, ''),
+    wordmark: j.wordmark || '',
+    sleeves: j.sleeves || 'stripe',
+    primary: c.primary, secondary: c.secondary, accent: c.accent
+  });
+}
+
+/* Season form from every completed game in the feed: points scored and allowed per
+   game. Before a ball is thrown these are all empty, which is the normal state for
+   most of the offseason — the projection falls back to all-time head-to-head, which
+   is the more entertaining answer anyway. */
+function seasonForm(weeks) {
+  var f = {};
+  var touch = function (k) { return f[k] || (f[k] = { g: 0, pf: 0, pa: 0, w: 0, l: 0 }); };
+  Object.keys(weeks || {}).forEach(function (w) {
+    (weeks[w] || []).forEach(function (mu) {
+      var scored = (mu.awayScore > 0 || mu.homeScore > 0 || mu.winner !== 'UNDECIDED');
+      if (!scored) return;
+      var a = touch(teamKey(mu.away)), h = touch(teamKey(mu.home));
+      var as = Number(mu.awayScore) || 0, hs = Number(mu.homeScore) || 0;
+      a.g++; h.g++; a.pf += as; a.pa += hs; h.pf += hs; h.pa += as;
+      if (mu.winner === 'AWAY') { a.w++; h.l++; } else if (mu.winner === 'HOME') { h.w++; a.l++; }
+    });
+  });
+  return f;
+}
+
+/* Win probability for the away side. Expected margin from scoring form, squashed
+   through a logistic; s=11 is roughly a fantasy week's standard deviation, so a
+   projected 11-point edge lands near 73%. Head-to-head history nudges it a few
+   points either way — it is lore, not signal, so it is capped. */
+function projectWin(awayName, homeName, form, h2hRec) {
+  var a = form[teamKey(awayName)], h = form[teamKey(homeName)];
+  var p = 0.5, basis = 'even money — no games played yet';
+
+  if (a && h && a.g >= 2 && h.g >= 2) {
+    /* Expected margin: what each side usually scores, blended with what the other
+       side usually gives up. */
+    var margin = ((a.pf / a.g) + (h.pa / h.g)) / 2 - ((h.pf / h.g) + (a.pa / a.g)) / 2;
+    p = 1 / (1 + Math.exp(-margin / 11));
+    basis = 'projected on scoring form';
+  }
+
+  if (h2hRec && (h2hRec.winsA || h2hRec.winsB)) {
+    var awayIsA = teamKey(h2hRec.teamA) === teamKey(awayName);
+    var wAway = awayIsA ? h2hRec.winsA : h2hRec.winsB;
+    var wHome = awayIsA ? h2hRec.winsB : h2hRec.winsA;
+    var tot = wAway + wHome;
+    if (tot) {
+      var edge = (wAway / tot) - 0.5;
+      if (basis.indexOf('no games') === 0 || basis.indexOf('even') === 0) {
+        p = 0.5 + edge * 0.6;                       // preseason: history is all we have
+        basis = 'on all-time head-to-head';
+      } else {
+        p = Math.max(0.02, Math.min(0.98, p + edge * 0.12));
+        basis = 'scoring form + head-to-head';
+      }
+    }
+  }
+  return { p: Math.max(0.05, Math.min(0.95, p)), basis: basis };
+}
+
+/* Favourite gets the bigger kit. 50/50 renders them identical; a lopsided call should be
+   obvious from across the room, so the range is deliberately wide — roughly 2.5x from
+   longest shot to heaviest favourite. */
+function kitWidth(p) { return Math.round(28 + 48 * Math.max(0, Math.min(1, p))); }
+
 // The stable key for a team name that arrived from OUTSIDE this page — ESPN, the h2h
 // feed, the history feed. Team names in those feeds drift the moment somebody renames
 // their team in the ESPN app, and matching them by string is what produced an 11-row
@@ -1628,6 +1725,7 @@ function loadSchedule() {
           }
       if (!data.ok || !data.weeks) { wrap.innerHTML = '<p class="placeholder">Schedule feed is warming up &mdash; check back soon.</p>'; return; }
       const weekNums = Object.keys(data.weeks).map(Number).sort((a, b) => a - b);
+      const form = seasonForm(data.weeks);
       wrap.innerHTML = '';
       weekNums.forEach(w => {
         const card = document.createElement('div');
@@ -1646,14 +1744,36 @@ function loadSchedule() {
           const homeScore = scored ? Number(mu.homeScore).toFixed(1) : '—';
           const awayWon = scored && mu.winner === 'AWAY';
           const homeWon = scored && mu.winner === 'HOME';
+          const h2hKeyEarly = [teamKey(mu.away), teamKey(mu.home)].sort().join('|');
+          const proj = projectWin(mu.away, mu.home, form, h2hMap[h2hKeyEarly]);
+          const pA = proj.p, pH = 1 - proj.p;
+
           let sh = '';
+          /* The kits. Unplayed: size is the projection, favourite bigger. Final: the
+             winner stands full size and the loser fades out — the scoreboard tells you
+             who won before you have read a single number. */
+          const kitA = jerseyFor(mu.away), kitH = jerseyFor(mu.home);
+          if (kitA || kitH) {
+            const wA = scored ? (awayWon ? 68 : 40) : kitWidth(pA);
+            const wH = scored ? (homeWon ? 68 : 40) : kitWidth(pH);
+            const clsA = scored ? (awayWon ? 'won' : 'lost') : (pA >= pH ? 'fav' : 'dog');
+            const clsH = scored ? (homeWon ? 'won' : 'lost') : (pH > pA ? 'fav' : 'dog');
+            const lblA = scored ? (awayWon ? 'WON' : '') : Math.round(pA * 100) + '%';
+            const lblH = scored ? (homeWon ? 'WON' : '') : Math.round(pH * 100) + '%';
+            sh += '<div class="spot-kits">' +
+              '<span class="spot-kit ' + clsA + '" style="width:' + wA + 'px" title="' + escapeAttr(teamDisplayName(mu.away)) + '">' +
+                '<span class="kit">' + kitA + '</span><span class="odds">' + lblA + '</span></span>' +
+              '<span class="spot-kit ' + clsH + '" style="width:' + wH + 'px" title="' + escapeAttr(teamDisplayName(mu.home)) + '">' +
+                '<span class="kit">' + kitH + '</span><span class="odds">' + lblH + '</span></span>' +
+              '</div>';
+            if (!scored) sh += '<div class="spot-basis">' + escapeHtml(proj.basis) + '</div>';
+          }
           sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.away) + teamDisplayName(mu.away) + (awayWon ? ' ✓' : '') + '</span><span class="sc">' + awayScore + '</span></div>';
           if (mu.awayTopScorer) sh += '<div class="spotlight-top">Top: ' + mu.awayTopScorer.name + ' — ' + mu.awayTopScorer.points + '</div>';
           sh += '<div class="spotlight-vs">vs</div>';
           sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.home) + teamDisplayName(mu.home) + (homeWon ? ' ✓' : '') + '</span><span class="sc">' + homeScore + '</span></div>';
           if (mu.homeTopScorer) sh += '<div class="spotlight-top">Top: ' + mu.homeTopScorer.name + ' — ' + mu.homeTopScorer.points + '</div>';
-          const h2hKey = [teamKey(mu.away), teamKey(mu.home)].sort().join('|');
-          const h2hRec = h2hMap[h2hKey];
+          const h2hRec = h2hMap[h2hKeyEarly];
           if (h2hRec) {
             let h2hText;
             if (h2hRec.winsA === h2hRec.winsB) {
