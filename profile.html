@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WPIAL All Stars — Franchise HQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0e13; --panel:#12161d; --panel2:#0f1319; --line:#232a35;
+  --text:#e8eaee; --muted:#9aa3b0; --accent:#d8b45c; --accent2:#f0d488;
+  --ok:#57b26a; --warn:#e0644f; --none:#8a93a0;
+  --hdr-h:96px;
+  /* Owner colours are SCOPED. They never reassign --accent/--text/--bg, which carry
+     site meaning (on-the-clock, conflict, keeper gold). One owner picking a bad orange
+     must not repaint what every other page means. --fx-ink is derived, never chosen. */
+  --fx-primary:#d8b45c; --fx-secondary:#12161d; --fx-accent:#f0d488; --fx-ink:#0d1117;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-size:14px;
+     font-family:'Barlow',-apple-system,Segoe UI,Roboto,sans-serif;}
+h1,h2,h3,.oswald{font-family:'Oswald',sans-serif;letter-spacing:.5px;margin:0;}
+a{color:var(--accent2);}
+button{font-family:'Barlow',sans-serif;cursor:pointer;border-radius:6px;border:1px solid var(--line);
+       background:var(--panel);color:var(--text);padding:6px 12px;font-size:13px;}
+button:hover{border-color:var(--accent);}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent2);outline-offset:1px;}
+input,select{font-family:'Barlow',sans-serif;background:var(--panel2);color:var(--text);
+       border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:14px;width:100%;}
+input:focus{border-color:var(--accent);}
+
+header{display:flex;align-items:center;gap:16px;padding:10px 16px;border-bottom:2px solid var(--accent);
+       background:var(--panel2);position:sticky;top:0;z-index:50;flex-wrap:wrap;}
+.logo{display:flex;flex-direction:column;line-height:1.05;}
+.logo b{font-family:'Oswald';font-size:20px;color:var(--accent);letter-spacing:1.5px;}
+.logo span{font-size:10px;color:var(--muted);letter-spacing:2.5px;text-transform:uppercase;}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+main{max-width:1180px;margin:0 auto;padding:20px 14px 80px;}
+.grid{display:grid;gap:16px;grid-template-columns:1fr;}
+@media (min-width:900px){ .grid{grid-template-columns:320px 1fr 1fr;align-items:start;} .span2{grid-column:span 2;} }
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;}
+.lab{font-family:'Oswald';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);
+     margin-bottom:10px;display:block;}
+.sub{color:var(--muted);font-size:12.5px;line-height:1.5;margin:4px 0 0;}
+.field{margin-bottom:14px;}
+.field > label{display:block;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;
+     color:var(--muted);margin-bottom:5px;}
+.count{float:right;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums;}
+
+/* ---- hero ---- */
+.hero{text-align:center;border-left:4px solid var(--fx-primary);}
+.hero .badge{width:104px;height:104px;margin:6px auto 12px;display:block;}
+.hero h2{font-size:26px;line-height:1.1;color:var(--text);}
+.hero .meta{font-family:'Oswald';font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;
+     color:var(--muted);margin-top:6px;}
+.hero .motto{font-style:italic;color:var(--muted);margin-top:8px;font-size:13px;min-height:18px;}
+.hero .formerly{border-top:1px solid var(--line);margin-top:14px;padding-top:10px;font-size:11.5px;color:var(--muted);}
+.hero .formerly b{font-family:'Oswald';letter-spacing:1.4px;text-transform:uppercase;font-size:10px;color:var(--accent);}
+
+/* ---- read-only team name ---- */
+.readonly{background:var(--panel2);border:1px dashed var(--line);border-radius:8px;padding:10px 12px;}
+.readonly .v{font-family:'Oswald';font-size:17px;letter-spacing:.6px;}
+
+/* ---- lineage ---- */
+.lineage{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;}
+.lineage ol{margin:6px 0 0;padding:0;list-style:none;}
+.lineage li{font-size:12.5px;color:var(--muted);padding:3px 0 3px 16px;position:relative;}
+.lineage li::before{content:'·';position:absolute;left:4px;color:var(--muted);}
+.lineage li.now{color:var(--text);font-weight:600;}
+.lineage li.now::before{content:'●';color:var(--fx-primary);font-size:9px;top:4px;}
+
+/* ---- colours ---- */
+.swatchRow{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.swatchRow input[type=color]{width:40px;height:34px;padding:2px;border-radius:7px;flex:0 0 auto;cursor:pointer;}
+.swatchRow .nm{font-size:10.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);width:78px;flex:0 0 auto;}
+.swatchRow .hex{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--muted);}
+.contrast{display:flex;gap:9px;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);
+     border-radius:8px;padding:9px 11px;font-size:12px;line-height:1.45;margin-top:4px;}
+.contrast .chip{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+     font-weight:700;font-size:13px;flex:0 0 auto;background:var(--fx-primary);color:var(--fx-ink);}
+.contrast.warn{border-color:var(--accent);}
+.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px;}
+@media (max-width:420px){ .presets{grid-template-columns:repeat(2,1fr);} }
+.presets button{padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:9.5px;
+     letter-spacing:.8px;text-transform:uppercase;color:var(--muted);}
+.presets .sw{display:flex;gap:2px;}
+.presets .sw i{width:12px;height:12px;border-radius:3px;display:block;}
+
+/* ---- tabs ---- */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px;}
+.tabs button{background:none;border:none;border-bottom:2px solid transparent;border-radius:0;
+     color:var(--muted);font-family:'Oswald';font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 11px;}
+.tabs button.on{color:var(--accent);border-bottom-color:var(--accent);}
+.tabs button[disabled]{opacity:.45;cursor:not-allowed;}
+.tabs .pill{font-size:8.5px;border:1px solid var(--line);border-radius:8px;padding:0 5px;margin-left:5px;letter-spacing:1px;}
+.pane{display:none;} .pane.on{display:block;}
+
+/* ---- logo builder ---- */
+.builder{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;}
+.preview{width:96px;height:96px;flex:0 0 auto;}
+.opts{flex:1 1 210px;min-width:200px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.chips button{width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;background:var(--panel2);}
+.chips button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+.chips button svg{width:22px;height:22px;}
+.fillrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.fillrow button{font-size:11px;display:flex;align-items:center;gap:5px;}
+.fillrow button i{width:11px;height:11px;border-radius:50%;display:inline-block;}
+.drop{border:1px dashed var(--line);border-radius:10px;padding:20px 14px;text-align:center;color:var(--muted);font-size:13px;}
+.drop input{display:none;}
+.aiGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
+.aiGrid .slot{aspect-ratio:1;border:1px solid var(--line);border-radius:8px;background:var(--panel2);
+     display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;overflow:hidden;}
+
+/* ---- jersey ---- */
+.jerseys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+@media (max-width:520px){ .jerseys{grid-template-columns:repeat(2,1fr);} }
+.jerseys button{padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;
+     font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.jerseys button.on{border-color:var(--accent);color:var(--accent);}
+.jerseys .j{width:100%;max-width:78px;aspect-ratio:64/88;}
+.jrow{display:flex;gap:10px;flex-wrap:wrap;}
+.jrow .field{flex:1 1 100px;margin-bottom:10px;}
+
+/* ---- as the league sees you ---- */
+.seen{display:flex;flex-direction:column;gap:9px;}
+.seenItem{display:flex;align-items:center;gap:9px;background:var(--panel2);border:1px solid var(--line);
+     border-radius:9px;padding:8px 11px;}
+.seenItem .cap{margin-left:auto;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);}
+.chipLogo{flex:0 0 auto;display:block;}
+.chipName{font-family:'Oswald';letter-spacing:.6px;}
+.ownerChip{font-size:10px;letter-spacing:1.1px;text-transform:uppercase;background:var(--fx-primary);
+     color:var(--fx-ink);border-radius:9px;padding:1px 7px;font-weight:700;}
+.dbHead{border:1px solid var(--line);border-top:3px solid var(--fx-primary);border-radius:5px;
+     padding:5px 9px;text-align:center;background:var(--panel2);min-width:104px;}
+.dbHead b{display:block;font-family:'Oswald';font-size:12px;letter-spacing:.4px;}
+.dbHead span{display:block;font-size:10px;color:var(--muted);}
+
+/* ---- save state: glyph AND word, never colour alone ---- */
+.savebar{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 40%);
+     padding:14px 0 4px;margin-top:6px;text-align:center;}
+.save{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);
+     background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:6px 15px;}
+.save .g{font-weight:700;}
+.save.saved{color:var(--ok);border-color:var(--ok);}
+.save.saving{color:var(--muted);}
+.save.offline{color:var(--accent2);border-color:var(--accent2);}
+.save.error{color:var(--warn);border-color:var(--warn);}
+#gate{padding:40px 16px;text-align:center;color:var(--muted);}
+</style>
+<script src="env.js"></script>
+<script src="franchise.js"></script>
+<script src="auth.js"></script>
+<script src="profile.js"></script>
+<script src="sitenav.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="logo"><b>WPIAL ALL STARS</b><span>Franchise HQ · Owner Profile</span></div>
+  <div class="hdr-right"></div>
+</header>
+
+<main>
+  <div id="gate">Loading your franchise…</div>
+
+  <div id="app" hidden>
+    <div class="grid">
+
+      <!-- HERO -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <section class="card hero" id="hero">
+          <span class="badge" id="heroLogo"></span>
+          <h2 id="heroName">—</h2>
+          <div class="meta" id="heroMeta"></div>
+          <div class="motto" id="heroMotto"></div>
+          <div class="formerly" id="heroFormerly" hidden></div>
+        </section>
+
+        <section class="card">
+          <span class="lab">As the league sees you</span>
+          <div class="seen" id="seen"></div>
+          <p class="sub">Live previews of every place your franchise shows up.</p>
+        </section>
+      </div>
+
+      <!-- IDENTITY -->
+      <section class="card">
+        <span class="lab">Name &amp; identity</span>
+
+        <div class="field">
+          <label for="fFirst">First name</label>
+          <input id="fFirst" maxlength="16" autocomplete="given-name" spellcheck="false">
+          <p class="sub">Shown next to your team on the rosters and the draft board — so nobody
+            has to text the commish to find out whose team this is. Never in the public repo.</p>
+        </div>
+
+        <div class="field">
+          <label>Team name</label>
+          <div class="readonly">
+            <div class="v" id="fTeam">—</div>
+            <p class="sub">Comes from ESPN. Rename your team in the ESPN app and this follows
+              within the hour — there is nothing to type here, and the two can never disagree.</p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fMotto">Motto <span class="count" id="cMotto">0 / 60</span></label>
+          <input id="fMotto" maxlength="60" placeholder="Optional. Talk your talk.">
+        </div>
+
+        <div class="field" id="lineageWrap">
+          <label>Franchise lineage</label>
+          <div class="lineage"><ol id="lineage"></ol></div>
+        </div>
+      </section>
+
+      <!-- COLOURS -->
+      <section class="card">
+        <span class="lab">Team colours</span>
+        <div class="swatchRow">
+          <span class="nm">Primary</span><input type="color" id="cP"><span class="hex" id="hP"></span>
+        </div>
+        <div class="swatchRow">
+          <span class="nm">Secondary</span><input type="color" id="cS"><span class="hex" id="hS"></span>
+        </div>
+        <div class="swatchRow">
+          <span class="nm">Accent</span><input type="color" id="cA"><span class="hex" id="hA"></span>
+        </div>
+        <div class="contrast" id="contrast">
+          <span class="chip">Aa</span><span id="contrastText"></span>
+        </div>
+        <span class="lab" style="margin-top:16px;">Or pick a preset</span>
+        <div class="presets" id="presets"></div>
+      </section>
+
+      <!-- LOGO -->
+      <section class="card span2">
+        <span class="lab">Logo</span>
+        <div class="tabs" id="logoTabs">
+          <button data-pane="builder" class="on">Builder</button>
+          <button data-pane="upload">Upload</button>
+          <button data-pane="ai">AI <span class="pill" id="aiPill">Off</span></button>
+        </div>
+
+        <div class="pane on" data-pane="builder">
+          <div class="builder">
+            <span class="preview" id="bPreview"></span>
+            <div class="opts">
+              <label style="display:block;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">Shape</label>
+              <div class="chips" id="shapeChips"></div>
+              <label style="display:block;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">Icon</label>
+              <div class="chips" id="iconChips"></div>
+              <div class="field" style="margin-bottom:6px;">
+                <label for="fMono">…or 1–3 letters instead</label>
+                <input id="fMono" maxlength="3" placeholder="BM" style="max-width:110px;text-transform:uppercase;">
+              </div>
+              <div class="fillrow" id="fillRow"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pane" data-pane="upload">
+          <label class="drop" id="drop" for="fFile">
+            <b>Choose an image</b><br>
+            <span class="sub">PNG, JPEG or WebP. Resized to 256&times;256 in your browser before it
+            is ever uploaded. SVG is not accepted — your logo renders on nine other people's
+            screens and SVG can carry scripts.</span>
+            <input type="file" id="fFile" accept="image/png,image/jpeg,image/webp">
+          </label>
+          <div style="display:flex;gap:14px;align-items:center;margin-top:12px;">
+            <span class="preview" id="uPreview" style="width:64px;height:64px;"></span>
+            <span class="sub" id="uNote">Nothing uploaded yet.</span>
+          </div>
+        </div>
+
+        <div class="pane" data-pane="ai">
+          <div class="field">
+            <label for="fPrompt">Describe your logo <span class="count" id="cPrompt">0 / 200</span></label>
+            <input id="fPrompt" maxlength="200" placeholder="angry mustard bottle in a football helmet">
+          </div>
+          <button id="genBtn" class="primary" type="button">Generate</button>
+          <span class="sub" id="aiNote" style="margin-left:10px;"></span>
+          <div class="aiGrid" id="aiGrid"></div>
+        </div>
+      </section>
+
+      <!-- JERSEY -->
+      <section class="card span2">
+        <span class="lab">Jersey</span>
+        <div class="jerseys" id="jerseys"></div>
+        <div class="jrow">
+          <div class="field"><label for="fNum">Number</label><input id="fNum" maxlength="2" inputmode="numeric" placeholder="08"></div>
+          <div class="field"><label for="fWord">Wordmark <span class="count" id="cWord">0 / 10</span></label><input id="fWord" maxlength="10" placeholder="MUSTARD" style="text-transform:uppercase;"></div>
+          <div class="field"><label for="fSleeve">Sleeves</label>
+            <select id="fSleeve"><option value="stripe">Stripe</option><option value="solid">Solid</option><option value="none">None</option></select>
+          </div>
+        </div>
+        <p class="sub">Colour slots: primary is the body, secondary the sleeves and collar,
+          accent the number and stripes. The number gets an outline automatically when it
+          would otherwise wash out against your body colour.</p>
+      </section>
+
+    </div>
+
+    <div class="savebar"><span class="save" id="saveState"><span class="g">✓</span> Saved</span></div>
+  </div>
+</main>
+
+</body>
+</html>

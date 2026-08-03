@@ -188,6 +188,133 @@
   }
   function ink(hex) { return ratio(hex, '#0d1117') >= ratio(hex, '#ffffff') ? '#0d1117' : '#ffffff'; }
 
+  /* ---------- logo builder assets (from the design handoff) ---------- */
+  var SHAPES = [
+    { id:'circle', d64:'M58 32a26 26 0 1 1-52 0a26 26 0 1 1 52 0z', d40:'M34 20a14 14 0 1 1-28 0a14 14 0 1 1 28 0z', t:'translate(18.8 18.8) scale(1.1)', my:40 },
+    { id:'shield', d64:'M32 4l24 8v18c0 14-10 24-24 30C18 54 8 44 8 30V12z', d40:'M20 4l14 5v10c0 8-6 13.5-14 17-8-3.5-14-9-14-17V9z', t:'translate(19.4 16) scale(1.05)', my:38 },
+    { id:'hex', d64:'M32 4l24.2 14v28L32 60 7.8 46V18z', d40:'M20 4l13.9 8v16L20 36 6.1 28V12z', t:'translate(18.8 18.8) scale(1.1)', my:40 },
+    { id:'pennant', d64:'M12 6h40v38L32 58 12 44z', d40:'M8 4h24v26l-12 8-12-8z', t:'translate(19.4 14) scale(1.05)', my:36 },
+    { id:'diamond', d64:'M32 4l26 28-26 28L6 32z', d40:'M20 4l14 16-14 16L6 20z', t:'translate(20.6 20.6) scale(0.95)', my:39 }
+  ];
+  var ICONS = [
+    { id:'football', ps:[{d:'M2 12a10 6.3 0 1 0 20 0a10 6.3 0 1 0-20 0z',t:'rotate(-35 12 12)'},{d:'M7 11.2h10v1.6H7z',t:'rotate(-35 12 12)',cut:1}] },
+    { id:'helmet', ps:[{d:'M3.5 13a8.5 8.5 0 0 1 17-.5l.5 2.5h-5l-1 5h-4l-1-4H7.5v3h-3z'}] },
+    { id:'trophy', ps:[{d:'M6 3h12v6a6 6 0 0 1-4.6 5.8L14 18h3v3H7v-3h3l.6-3.2A6 6 0 0 1 6 9z'}] },
+    { id:'star', ps:[{d:'M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8-6.1-3.4-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8z'}] },
+    { id:'bolt', ps:[{d:'M13 2L5 14h5l-1 8 8-12h-5z'}] },
+    { id:'flame', ps:[{d:'M13.5 2s.8 2.7.8 4.9c0 2.1-1.4 3.8-3.5 3.8S7.3 9 7.3 6.9c0-.3 0-.7.1-1C5.6 7.6 4.5 10 4.5 12.5a7.5 7.5 0 0 0 15 0C19.5 8 16 4 13.5 2z'}] },
+    { id:'crown', ps:[{d:'M3 8l5 4 4-7 4 7 5-4-2 11H5z'}] },
+    { id:'skull', ps:[{d:'M12 2a8 8 0 0 0-8 8c0 2.9 1.6 5 4 6.3V21h8v-4.7c2.4-1.3 4-3.4 4-6.3a8 8 0 0 0-8-8z'},{d:'M7.2 10.5a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0z',cut:1},{d:'M13.2 10.5a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0z',cut:1}] },
+    { id:'mustard', ps:[{d:'M10.5 1.5h3L14 4h-4zM9.5 5h5v2h-5zM8 8.5h8l.8 2.5v9a2 2 0 0 1-2 2H9.2a2 2 0 0 1-2-2v-9z'}] },
+    { id:'paw', ps:[{d:'M4.8 8a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0-4.4 0z'},{d:'M9.8 6.5a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0-4.4 0z'},{d:'M14.8 8a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0-4.4 0z'},{d:'M12 11c3.5 0 6 2.5 6 5.5 0 2-1.5 3.5-3.5 3.5-1 0-1.7-.4-2.5-.4s-1.5.4-2.5.4C7.5 20 6 18.5 6 16.5 6 13.5 8.5 11 12 11z'}] },
+    { id:'anchor', ps:[{d:'M12 2a3 3 0 0 1 1 5.8V10h4v3h-4v5.6A7 7 0 0 0 18.5 14H21a9 9 0 0 1-18 0h2.5A7 7 0 0 0 11 18.6V13H7v-3h4V7.8A3 3 0 0 1 12 2z'}] },
+    { id:'rocket', ps:[{d:'M12 2c3 2 4.5 6 4.5 10l2.5 4h-4.5l-.8 4h-3.4l-.8-4H5l2.5-4C7.5 8 9 4 12 2z'},{d:'M10.2 9a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0z',cut:1}] },
+    { id:'gem', ps:[{d:'M7 3h10l4.5 6L12 21 2.5 9z'}] },
+    { id:'target', ps:[{d:'M2.5 12a9.5 9.5 0 1 0 19 0a9.5 9.5 0 1 0-19 0z'},{d:'M6 12a6 6 0 1 0 12 0a6 6 0 1 0-12 0z',cut:1},{d:'M9.2 12a2.8 2.8 0 1 0 5.6 0a2.8 2.8 0 1 0-5.6 0z'}] },
+    { id:'peaks', ps:[{d:'M2 20L9.5 5l4 7.5L16 8l6 12z'}] },
+    { id:'heart', ps:[{d:'M12 21C5 15 2 11 2 7.5A4.5 4.5 0 0 1 6.5 3 5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 5.5-3A4.5 4.5 0 0 1 22 7.5C22 11 19 15 12 21z'}] }
+  ];
+  /* Every shipped preset clears 4.5:1 with its winning ink. Mint arrived at #0f8a80,
+     which lands at 4.48 — below the bar the UI promises — and was nudged to #0d7d74 (5.00). */
+  var PRESETS = [
+    { name:'Blitz', p:'#FFB612', s:'#101010', a:'#f4f4f2' },
+    { name:'Turf', p:'#1f7a3d', s:'#f4f1e6', a:'#ffd45e' },
+    { name:'Glacier', p:'#2a5da8', s:'#cdd6e0', a:'#e8edf4' },
+    { name:'Crimson', p:'#a3232e', s:'#2b2b2b', a:'#e9e2d0' },
+    { name:'Grape', p:'#4b2e83', s:'#d8b45c', a:'#efe7f7' },
+    { name:'Creamsicle', p:'#e8641b', s:'#1b2a4a', a:'#fef0e4' },
+    { name:'Mint', p:'#0d7d74', s:'#12233d', a:'#e2f6f4' },
+    { name:'Storm', p:'#22304a', s:'#8d9db5', a:'#eef1f6' }
+  ];
+
+  function esc(t) {
+    return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  /** Pure: same spec in, byte-identical SVG out. No DOM, no network. */
+  function logoSVG(spec) {
+    spec = spec || {};
+    var sh = null, i;
+    for (i = 0; i < SHAPES.length; i++) if (SHAPES[i].id === spec.shape) sh = SHAPES[i];
+    if (!sh) sh = SHAPES[1];                                   // shield
+    var bg = /^#[0-9a-fA-F]{6}$/.test(spec.bg || '') ? spec.bg : '#d8b45c';
+    var fg = /^#[0-9a-fA-F]{6}$/.test(spec.fg || '') ? spec.fg : '#12161d';
+    var ring = /^#[0-9a-fA-F]{6}$/.test(spec.ring || '') ? spec.ring : null;
+
+    var body = '<path d="' + sh.d64 + '" fill="' + bg + '"' +
+      (ring ? ' stroke="' + ring + '" stroke-width="3"' : '') + '/>';
+
+    var mono = String(spec.mono || '').slice(0, 3);
+    if (spec.useMono && mono) {
+      /* Font size steps by letter count so three letters still fit the emblem. */
+      var size = mono.length === 1 ? 26 : (mono.length === 2 ? 19 : 14);
+      body += '<text x="32" y="' + sh.my + '" text-anchor="middle" fill="' + fg +
+        '" font-family="Oswald,Impact,sans-serif" font-weight="700" font-size="' + size +
+        '" letter-spacing="0.5">' + esc(mono.toUpperCase()) + '</text>';
+    } else {
+      var ic = null;
+      for (i = 0; i < ICONS.length; i++) if (ICONS[i].id === spec.icon) ic = ICONS[i];
+      if (!ic) ic = ICONS[0];
+      var inner = '';
+      for (i = 0; i < ic.ps.length; i++) {
+        var pp = ic.ps[i];
+        inner += '<path d="' + pp.d + '"' + (pp.t ? ' transform="' + pp.t + '"' : '') +
+          ' fill="' + (pp.cut ? bg : fg) + '"/>';
+      }
+      body += '<g transform="' + sh.t + '">' + inner + '</g>';
+    }
+    return '<svg viewBox="0 0 64 64" width="100%" height="100%" role="img" aria-hidden="true">' + body + '</svg>';
+  }
+
+  /** The four jersey templates, driven by the same three colour slots. */
+  function jerseySVG(spec) {
+    spec = spec || {};
+    var tpl = ['classic','throwback','colorrush','pinstripe'].indexOf(spec.template) >= 0 ? spec.template : 'classic';
+    var P = /^#[0-9a-fA-F]{6}$/.test(spec.primary || '') ? spec.primary : '#d8b45c';
+    var S = /^#[0-9a-fA-F]{6}$/.test(spec.secondary || '') ? spec.secondary : '#12161d';
+    var A = /^#[0-9a-fA-F]{6}$/.test(spec.accent || '') ? spec.accent : '#f4f4f2';
+    var num = String(spec.number == null ? '' : spec.number).replace(/[^0-9]/g, '').slice(0, 2);
+    if (num === '') num = '00';
+    if (num.length === 1) num = '0' + num;
+    var word = String(spec.wordmark || '').slice(0, 10).toUpperCase();
+    var sleeve = ['stripe','solid','none'].indexOf(spec.sleeves) >= 0 ? spec.sleeves : 'stripe';
+
+    var bodyFill = tpl === 'pinstripe' ? A : P;
+    var sleeveFill = tpl === 'colorrush' ? P : S;
+    var inkOnBody = ink(bodyFill);
+    /* The number carries the identity, so it is the one element that must stay legible
+       whatever three colours somebody picks. It renders in the accent with an outline in
+       the ink that actually wins against the body — Design's Classic template did this and
+       Color Rush did not, which is why Color Rush washed out at 1.94:1. */
+    var numFill = tpl === 'pinstripe' ? P : A;
+    var numStroke = ratio(numFill, bodyFill) >= 3 ? 'none' : inkOnBody;
+
+    var g = '';
+    g += '<path d="M34 14 L52 20 L48 34 L44 32 L44 74 L20 74 L20 32 L16 34 L12 20 L30 14 Z" fill="' + bodyFill + '"/>';
+    if (tpl === 'pinstripe') {
+      for (var x = 22; x < 44; x += 4) g += '<rect x="' + x + '" y="32" width="1.2" height="42" fill="' + P + '" opacity="0.55"/>';
+    }
+    if (tpl === 'throwback') g += '<rect x="20" y="40" width="24" height="14" fill="' + S + '"/>';
+    if (sleeve !== 'none') {
+      g += '<path d="M12 20 L30 14 L32 22 L16 34 Z" fill="' + sleeveFill + '"/>';
+      g += '<path d="M52 20 L34 14 L32 22 L48 34 Z" fill="' + sleeveFill + '"/>';
+      if (sleeve === 'stripe') {
+        g += '<path d="M14 27 L24 22 L25 25 L15 30 Z" fill="' + A + '"/>';
+        g += '<path d="M50 27 L40 22 L39 25 L49 30 Z" fill="' + A + '"/>';
+      }
+    }
+    g += '<path d="M27 14 Q32 20 37 14 L34 13 Q32 16 30 13 Z" fill="' + S + '"/>';
+    if (word) {
+      g += '<text x="32" y="38" text-anchor="middle" fill="' + (tpl === 'throwback' ? A : ink(bodyFill)) +
+        '" font-family="Oswald,Impact,sans-serif" font-weight="600" font-size="6" letter-spacing="1.2">' + esc(word) + '</text>';
+    }
+    g += '<text x="32" y="60" text-anchor="middle" fill="' + numFill + '"' +
+      (numStroke === 'none' ? '' : ' stroke="' + numStroke + '" stroke-width="0.9" paint-order="stroke"') +
+      ' font-family="Oswald,Impact,sans-serif" font-weight="700" font-size="20">' + num + '</text>';
+    return '<svg viewBox="0 0 64 88" width="100%" height="100%" role="img" aria-hidden="true">' + g + '</svg>';
+  }
+
   /* ---------- logo ----------
      30px emits byte-identical markup to the old teamLogoHTML(), so the standings,
      scoreboard and roster grid render exactly as before until an owner customizes. */
@@ -198,6 +325,10 @@
     var inner;
     if ((r.logo_kind === 'upload' || r.logo_kind === 'ai') && isSafeDataUrl(r.logo_data)) {
       inner = '<img alt="" src="' + r.logo_data + '" style="width:100%;height:100%;display:block;border-radius:50%">';
+    } else if (r.logo_kind === 'builder' && r.logo_data) {
+      var spec = null;
+      try { spec = JSON.parse(r.logo_data); } catch (e) { spec = null; }
+      inner = spec ? logoSVG(spec) : defaultLogo(r.fid);
     } else {
       inner = defaultLogo(r.fid);
     }
@@ -303,6 +434,13 @@
       return { primary: c.primary, secondary: c.secondary, accent: c.accent, ink: ink(c.primary) };
     },
     logoHTML: logoHTML,
+    logoSVG: logoSVG,
+    jerseySVG: jerseySVG,
+    jersey: function (x) { var r = rec(x); return r ? r.jersey : null; },
+    motto: function (x) { var r = rec(x); return r ? r.motto : ''; },
+    shapes: function () { return SHAPES.slice(); },
+    icons: function () { return ICONS.slice(); },
+    presets: function () { return PRESETS.slice(); },
     all: function () { return order.map(function (f) { return byFid[f]; }); },
     contrast: { lum: lum, ratio: ratio, ink: ink },
     hydrated: function () { return hydrated; },

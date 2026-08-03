@@ -37,7 +37,9 @@
     { tab: 'standings', page: 'index.html',      label: 'Standings' },
     { tab: null,       page: 'draftboard.html', label: '🏈 Draftboard',
       title: 'Interactive keeper draftboard — mock drafts, keeper decisions, and a full season simulator' },
-    { tab: null,       page: 'dashboard.html',  label: '📊 Commish', commishOnly: true,
+    { tab: null,       page: 'profile.html',    label: '👤 My Profile',
+    title: 'Your franchise — first name, colours, logo and jersey' },
+  { tab: null,       page: 'dashboard.html',  label: '📊 Commish', commishOnly: true,
       title: 'League engagement — who has logged in and who still owes keepers' }
   ];
 
@@ -47,6 +49,7 @@
     var p = (location.pathname || '').toLowerCase();
     if (p.indexOf('draftboard') !== -1) return 'draftboard.html';
     if (p.indexOf('dashboard') !== -1) return 'dashboard.html';
+    if (p.indexOf('profile') !== -1) return 'profile.html';
     return 'index.html';
   }
 

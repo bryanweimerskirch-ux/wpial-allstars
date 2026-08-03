@@ -55,8 +55,11 @@ var WA_PROFILE_HEADERS = ['franchise_id', 'espn_team_id', 'email', 'first_name',
 
    Owner-editable, in the profile UI: first_name, colors, logo, jersey, motto. Not the
    team name. */
-var WA_ESPN_LEAGUE_ID = '11564022';        // Script Property ESPN_LEAGUE_ID overrides
-var WA_ESPN_SEASON = 2026;                 // Script Property ESPN_SEASON overrides
+/* Code.gs already defines ESPN_LEAGUE_ID and ESPN_SEASON and uses them for the
+   espn_schedule and insider feeds. Prefer those so there is one source of truth; these
+   are only the fallback if that ever changes. Script Properties override both. */
+var WA_ESPN_LEAGUE_ID = '11564022';
+var WA_ESPN_SEASON = 2026;
 var WA_ESPN_SYNC_PROP = 'ESPN_NAMES_SYNCED_AT';
 
 var WA_NAMEHIST_TAB = 'NameHistory';
@@ -82,9 +85,19 @@ var WA_FRANCHISES = [
 
 /* ---------------------------------------------------------------- infrastructure */
 
+/** The spreadsheet. This project is NOT container-bound — Code.gs reaches the sheet with
+ *  SpreadsheetApp.openById(SHEET_ID), and getActive() would return null here. Falls back
+ *  to getActive() only so the file stays runnable if it is ever bound. */
+function waProfSS_() {
+  try {
+    if (typeof SHEET_ID === 'string' && SHEET_ID) return SpreadsheetApp.openById(SHEET_ID);
+  } catch (err) {}
+  return SpreadsheetApp.getActive();
+}
+
 /** Get-or-create a tab and guarantee its header row. Local on purpose (see header). */
 function waProfSheet_(name, headers) {
-  var ss = SpreadsheetApp.getActive();
+  var ss = waProfSS_();
   var sh = ss.getSheetByName(name);
   if (!sh) {
     sh = ss.insertSheet(name);
@@ -141,8 +154,10 @@ function waEspnTeams_() {
   var swid = props.getProperty('ESPN_SWID');
   if (!s2 || !swid) return { ok: false, error: 'ESPN_S2 / ESPN_SWID not set' };
 
-  var league = props.getProperty('ESPN_LEAGUE_ID') || WA_ESPN_LEAGUE_ID;
-  var season = props.getProperty('ESPN_SEASON') || WA_ESPN_SEASON;
+  var league = props.getProperty('ESPN_LEAGUE_ID') ||
+               (typeof ESPN_LEAGUE_ID !== 'undefined' ? ESPN_LEAGUE_ID : WA_ESPN_LEAGUE_ID);
+  var season = props.getProperty('ESPN_SEASON') ||
+               (typeof ESPN_SEASON !== 'undefined' ? ESPN_SEASON : WA_ESPN_SEASON);
   var paths = [
     'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/' + season + '/segments/0/leagues/' + league + '?view=mTeam',
     'https://fantasy.espn.com/apis/v3/games/ffl/seasons/' + season + '/segments/0/leagues/' + league + '?view=mTeam'
@@ -254,7 +269,7 @@ function waInstallEspnTrigger_() {
  */
 function setupFranchises() {
   var out = [];
-  var ss = SpreadsheetApp.getActive();
+  var ss = waProfSS_();
   out.push('Spreadsheet: ' + ss.getName());
 
   var osh = ss.getSheetByName('Owners');
@@ -446,6 +461,12 @@ function waProfilesAll_(e) {
   var asked = String((e.parameter || {}).v || '').trim();
   if (asked && asked === String(v)) return waJson_({ ok: true, v: v, unchanged: true });
 
+  return waJson_({ ok: true, v: v, profiles: waProfilesList_() });
+}
+
+/** The ten profiles, built field by field. Shared by profiles_all and profile_save so
+ *  the client's optimistic copy and the server's echo can never drift in shape. */
+function waProfilesList_() {
   var priors = waNameHistoryMap_();
   var sh = waProfSheet_(WA_PROFILE_TAB, WA_PROFILE_HEADERS);
   var idx = waProfIndex_(WA_PROFILE_HEADERS);
@@ -454,7 +475,7 @@ function waProfilesAll_(e) {
 
   var byFid = {};
   rows.forEach(function (r) {
-    var fid = String(r[idx.franchise_id] || '').trim();
+    var fid = String(r[idx.franchise_id] || '').replace(/^\s+|\s+$/g, '');
     if (!fid || byFid[fid]) return;                    // first row wins
     byFid[fid] = r;
   });
@@ -462,9 +483,9 @@ function waProfilesAll_(e) {
   var out = [];
   WA_FRANCHISES.forEach(function (f) {
     var r = byFid[f.fid];
-    var current = r ? (String(r[idx.team_name] || '').trim() || f.canon) : f.canon;
-    /* prior_names is what renders as "Formerly …", so the name they go by right now must
-       not appear in it. History is stored oldest-first, so this order is already correct. */
+    var current = r ? (String(r[idx.team_name] || '').replace(/^\s+|\s+$/g, '') || f.canon) : f.canon;
+    /* prior_names renders as "Formerly ...", so the name they go by right now must not
+       appear in it. History is stored oldest-first, so this order is already correct. */
     var chain = (priors[f.fid] || f.priors.slice()).filter(function (n) {
       return waProfNorm_(n) !== waProfNorm_(current);
     });
@@ -477,19 +498,19 @@ function waProfilesAll_(e) {
       first_name: r ? String(r[idx.first_name] || '') : '',
       team_name: current,
       prior_names: chain,
-      logo_kind: r ? (String(r[idx.logo_kind] || '').trim() || 'default') : 'default',
+      logo_kind: r ? (String(r[idx.logo_kind] || '').replace(/^\s+|\s+$/g, '') || 'default') : 'default',
       logo_data: r ? String(r[idx.logo_data] || '') : '',
       colors: {
-        primary: r ? (String(r[idx.color_primary] || '').trim() || f.p) : f.p,
-        secondary: r ? (String(r[idx.color_secondary] || '').trim() || f.s) : f.s,
-        accent: r ? (String(r[idx.color_accent] || '').trim() || f.a) : f.a
+        primary: r ? (String(r[idx.color_primary] || '').replace(/^\s+|\s+$/g, '') || f.p) : f.p,
+        secondary: r ? (String(r[idx.color_secondary] || '').replace(/^\s+|\s+$/g, '') || f.s) : f.s,
+        accent: r ? (String(r[idx.color_accent] || '').replace(/^\s+|\s+$/g, '') || f.a) : f.a
       },
       jersey: r ? waProfParse_(r[idx.jersey_json]) : null,
       motto: r ? String(r[idx.motto] || '') : ''
     });
   });
+  return out;
 
-  return waJson_({ ok: true, v: v, profiles: out });
 }
 
 function waProfParse_(s) {
@@ -530,7 +551,7 @@ function waNameHistoryMap_() {
 /* ---------------------------------------------------------------- ops helpers */
 
 function previewFranchises() {
-  var ss = SpreadsheetApp.getActive();
+  var ss = waProfSS_();
   var osh = ss.getSheetByName('Owners');
   if (!osh) { Logger.log('No Owners tab.'); return; }
   var header = osh.getRange(1, 1, 1, osh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
@@ -547,7 +568,7 @@ function previewFranchises() {
 }
 
 function previewProfiles() {
-  var sh = SpreadsheetApp.getActive().getSheetByName(WA_PROFILE_TAB);
+  var sh = waProfSS_().getSheetByName(WA_PROFILE_TAB);
   if (!sh) { Logger.log('No Profiles tab yet — run setupFranchises().'); return; }
   var idx = waProfIndex_(WA_PROFILE_HEADERS);
   var last = sh.getLastRow();
@@ -587,4 +608,172 @@ function previewEspnTeams() {
   var lines = ['ESPN currently reports ' + Object.keys(r.teams).length + ' teams:'];
   Object.keys(r.teams).forEach(function (id) { lines.push('  ' + id + '  ' + r.teams[id]); });
   Logger.log(lines.join('\n'));
+}
+
+/* ---------------------------------------------------------------- profile_save */
+
+/**
+ * profile_save — the owner-editable half of a profile.
+ *
+ * WRITABLE: first_name, color_primary, color_secondary, color_accent, logo_kind,
+ *           logo_data, jersey_json, motto, logo_prompt.
+ * NOT WRITABLE, and rejected if sent: team_name and espn_team_id (names come from
+ *           ESPN), franchise_id, email, and anything on the Owners tab except `name`,
+ *           which is mirrored so the commish dashboard keeps showing the right person.
+ *
+ * Partial updates: an absent key means "leave it alone", so the UI can autosave one
+ * field at a time without shipping the whole object.
+ */
+function waProfileSave_(e) {
+  var p = e.parameter || {};
+  var claim = waVerifyToken_(p.token);
+  if (!claim) return waErr_('Session expired — log in again.', 'bad_token');
+  var me = waFindOwner_(claim.e);
+  if (!me) return waErr_('Account not found.', 'not_member');
+
+  var isCommish = waTruthy_(me.rec.is_commish);
+  var fid = String(p.fid || '').trim();
+  if (fid && !isCommish) return waErr_('You can only edit your own profile.', 'forbidden');
+  if (!fid) fid = String(me.rec.franchise_id || '').trim();
+  if (!fid) return waErr_('No franchise on your account — text the commish.', 'no_team');
+  if (!waFranchiseByName_(fid)) return waErr_('Unknown franchise.', 'bad_payload');
+
+  /* Sent-but-forbidden is an error, not a silent ignore. If a client thinks it can
+     rename a team we want to hear about it, not quietly drop it on the floor. */
+  if (p.team_name != null) return waErr_('Team names come from ESPN — rename your team in the ESPN app and the site follows.', 'read_only');
+  if (p.espn_team_id != null || p.franchise_id != null) return waErr_('That field is not editable.', 'read_only');
+
+  var patch = {}, hist = [];
+
+  if (p.first_name != null) {
+    var fn = String(p.first_name).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+    if (!fn) return waErr_('First name cannot be empty.', 'bad_payload');
+    if (fn.length > 16) return waErr_('First name is a bit long — 16 characters max.', 'bad_payload');
+    /* Rhino has no unicode property escapes, so this is a plain class rather than \p{L}. */
+    if (!/^[A-Za-zÀ-ɏ .'\-]+$/.test(fn)) return waErr_('Letters, spaces, hyphens and apostrophes only in a first name.', 'bad_payload');
+    patch.first_name = fn;
+  }
+
+  var COLS = ['color_primary', 'color_secondary', 'color_accent'];
+  for (var c = 0; c < COLS.length; c++) {
+    var k = COLS[c];
+    if (p[k] == null) continue;
+    var hex = String(p[k]).replace(/^\s+|\s+$/g, '');
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return waErr_('Colors must look like #RRGGBB.', 'bad_payload');
+    patch[k] = hex.toUpperCase();
+  }
+
+  if (p.logo_kind != null) {
+    var kind = String(p.logo_kind).replace(/^\s+|\s+$/g, '');
+    if (['default', 'builder', 'upload', 'ai'].indexOf(kind) < 0) return waErr_('Unknown logo type.', 'bad_payload');
+    patch.logo_kind = kind;
+  }
+
+  if (p.logo_data != null) {
+    var ld = String(p.logo_data);
+    if (ld.length > 32000) {
+      return waErr_('That logo is too big even after resizing — try a simpler image, or use the builder.', 'too_big');
+    }
+    if (ld) {
+      var looksBuilder = ld.charAt(0) === '{';
+      /* SVG is deliberately NOT accepted: an uploaded logo renders on nine other
+         people's screens, and SVG executes script. The builder covers the vector case. */
+      var looksImage = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(ld);
+      if (!looksBuilder && !looksImage) return waErr_('That image format is not supported — PNG, JPEG or WebP.', 'bad_payload');
+      if (looksBuilder) { try { JSON.parse(ld); } catch (err) { return waErr_('Logo spec was not readable.', 'bad_payload'); } }
+    }
+    patch.logo_data = ld;
+  }
+
+  if (p.jersey_json != null) {
+    var jj = String(p.jersey_json);
+    if (jj.length > 400) return waErr_('Jersey settings are too large.', 'bad_payload');
+    if (jj) { try { JSON.parse(jj); } catch (err2) { return waErr_('Jersey settings were not readable.', 'bad_payload'); } }
+    patch.jersey_json = jj;
+  }
+
+  if (p.motto != null) {
+    var mo = String(p.motto).replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+    if (mo.length > 60) return waErr_('Motto is 60 characters max.', 'bad_payload');
+    patch.motto = mo;
+  }
+
+  if (p.logo_prompt != null) {
+    patch.logo_prompt = String(p.logo_prompt).slice(0, 200);
+  }
+
+  if (!waHasKeys_(patch)) return waErr_('Nothing to save.', 'bad_payload');
+
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(8000); } catch (err3) { return waErr_('Busy — try again.', 'locked'); }
+  try {
+    var sh = waProfSheet_(WA_PROFILE_TAB, WA_PROFILE_HEADERS);
+    var idx = waProfIndex_(WA_PROFILE_HEADERS);
+    var last = sh.getLastRow();
+    var rowNum = 0, cur = null;
+    if (last > 1) {
+      var vals = sh.getRange(2, 1, last - 1, WA_PROFILE_HEADERS.length).getValues();
+      for (var i = 0; i < vals.length; i++) {
+        if (String(vals[i][idx.franchise_id] || '').replace(/^\s+|\s+$/g, '') === fid) { rowNum = i + 2; cur = vals[i]; break; }
+      }
+    }
+    if (!rowNum) return waErr_('No profile row — run setupFranchises().', 'no_team');
+
+    if (patch.first_name != null) {
+      var was = String(cur[idx.first_name] || '').replace(/^\s+|\s+$/g, '');
+      if (was !== patch.first_name) hist.push([fid, 'first_name', was, patch.first_name, new Date(), waNormEmail_(claim.e)]);
+    }
+
+    var now = new Date();
+    for (var key in patch) {
+      if (!Object.prototype.hasOwnProperty.call(patch, key)) continue;
+      if (idx[key] == null) continue;
+      sh.getRange(rowNum, idx[key] + 1).setValue(patch[key]);
+    }
+    sh.getRange(rowNum, idx.updated_at + 1).setValue(now);
+    sh.getRange(rowNum, idx.updated_by + 1).setValue(waNormEmail_(claim.e));
+
+    if (hist.length) {
+      var nsh = waProfSheet_(WA_NAMEHIST_TAB, WA_NAMEHIST_HEADERS);
+      for (var h = 0; h < hist.length; h++) nsh.appendRow(hist[h]);
+    }
+
+    /* Mirror the first name onto Owners.name — dashboard.html and schedule.gs read it. */
+    if (patch.first_name != null) waProfMirrorName_(fid, patch.first_name);
+
+    waBumpProfilesVersion_();
+  } finally {
+    try { lock.releaseLock(); } catch (err4) {}
+  }
+
+  return waJson_({ ok: true, v: waProfilesVersion_(), profile: waProfileOne_(fid) });
+}
+
+function waHasKeys_(o) { for (var k in o) { if (Object.prototype.hasOwnProperty.call(o, k)) return true; } return false; }
+
+/** Keep Owners.name in step with the profile's first name. */
+function waProfMirrorName_(fid, firstName) {
+  var osh = waProfSS_().getSheetByName('Owners');
+  if (!osh) return;
+  var header = osh.getRange(1, 1, 1, osh.getLastColumn()).getValues()[0];
+  var cFid = 0, cName = 0;
+  for (var i = 0; i < header.length; i++) {
+    var h = String(header[i]).replace(/^\s+|\s+$/g, '');
+    if (h === 'franchise_id') cFid = i + 1;
+    if (h === 'name') cName = i + 1;
+  }
+  if (!cFid || !cName) return;
+  var last = osh.getLastRow();
+  if (last < 2) return;
+  var col = osh.getRange(2, cFid, last - 1, 1).getValues();
+  for (var r = 0; r < col.length; r++) {
+    if (String(col[r][0] || '').replace(/^\s+|\s+$/g, '') === fid) { osh.getRange(r + 2, cName).setValue(firstName); return; }
+  }
+}
+
+/** One profile in the same shape profiles_all returns, so the client can trust the echo. */
+function waProfileOne_(fid) {
+  var all = waProfilesList_();
+  for (var i = 0; i < all.length; i++) if (all[i].fid === fid) return all[i];
+  return null;
 }
