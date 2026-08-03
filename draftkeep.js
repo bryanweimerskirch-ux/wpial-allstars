@@ -143,7 +143,7 @@
     var rows = list.querySelectorAll('.ba');
     var isKeepList = list.querySelector('.ba .kpr');
     if (!rows.length || !isKeepList) return;
-    if (!isLive()) return;                        // MOCK keeps its own behaviour
+    if (!isLive()) return;                        // MOCK keeps its own behavior
 
     var team = currentTeam();
     if (!canEdit(team)) return;
