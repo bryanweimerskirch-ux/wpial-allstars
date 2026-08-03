@@ -1,7 +1,7 @@
 /**
  * profile.js — the owner profile editor.
  *
- * WHAT AN OWNER CONTROLS: first name, motto, three team colours, their logo (builder or
+ * WHAT AN OWNER CONTROLS: first name, motto, three team colors, their logo (builder or
  * upload) and their jersey. NOT the team name — that comes from ESPN, hourly, so
  * there is no field for it and no way for the site and ESPN to disagree.
  *
@@ -21,11 +21,11 @@
  * One status indicator, never two. The previous build could show "Saved" and "Unsaved
  * changes" at the same time.
  *
- * CONTRAST is warn, never block. Telling somebody their team colours are illegal is the
+ * CONTRAST is warn, never block. Telling somebody their team colors are illegal is the
  * wrong product. The rule is on text PLACEMENT: --fx-ink is whichever of dark/light
- * actually wins, and where even the winner loses we stop putting text on that colour.
+ * actually wins, and where even the winner loses we stop putting text on that color.
  *
- * Everything renders through WPIAL_FX so the logo and colours an owner picks here show
+ * Everything renders through WPIAL_FX so the logo and colors an owner picks here show
  * up identically on the roster grid, the draft board and every chip on the site.
  */
 (function () {
@@ -62,7 +62,7 @@
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  /* ---------- save state: glyph AND word, never colour alone ---------- */
+  /* ---------- save state: glyph AND word, never color alone ---------- */
   var SAVE_UI = {
     saved:   ['✓', 'Saved'],
     saving:  ['↻', 'Saving…'],
@@ -97,7 +97,7 @@
     } else {
       box.className = 'contrast warn';
       txt.innerHTML = '<b>Low contrast</b> — best available is ' + r.toFixed(1) +
-        ':1, under the 4.5:1 bar. Your colour is kept; the site just stops putting text on ' +
+        ':1, under the 4.5:1 bar. Your color is kept; the site just stops putting text on ' +
         'it and uses it as a bar and a ring instead.';
     }
   }
@@ -268,7 +268,7 @@
     paintActions();
   }
 
-  /** Back to what the league gave you: default logo, franchise colours, no motto,
+  /** Back to what the league gave you: default logo, franchise colors, no motto,
    *  stock jersey. Pushed onto the undo stack first, so it is not a one-way door. */
   function resetToDefaults() {
     if (!FX) return;
@@ -544,7 +544,7 @@
   else document.addEventListener('wpial-auth', function (e) { start(e.detail); });
   /** FX.ready() fires as soon as the registry is USABLE — baked-in defaults plus cache.
    *  The token-gated profiles_all response lands later, and it is the one carrying first
-   *  names, saved colours and logos. So the real data arrives on 'wpial-profiles', not on
+   *  names, saved colors and logos. So the real data arrives on 'wpial-profiles', not on
    *  ready(), and this is where the page picks it up. */
   document.addEventListener('wpial-profiles', function () {
     if (!st || !FX || !fid) return;
