@@ -97,10 +97,41 @@
     } catch (e) { return false; }
   }
 
+  /* Apps Script under a burst either answers slowly -- 20s+ measured on 2026-08-03 -- or
+     hands back a Google HTML error page instead of JSON. fetch has no timeout of its own,
+     so a slow answer left the sign-in box sitting on "Checking..." with nothing to click
+     and no way to know it had failed. Reported by an owner trying to sign in for the first
+     time, which is the worst possible audience for a dead end.
+
+     So: a real deadline, one retry, and the body is parsed here rather than trusted --
+     r.json() on an HTML error page throws something the caller cannot tell apart from a
+     network failure, and a retry is only possible if you can tell a bad body from a good
+     one. Worst case is now ~24 seconds to a clear message, not an indefinite spinner. */
+  var POST_TIMEOUT = 12000, POST_TRIES = 2;
   function post(params) {
     var body = new URLSearchParams();
     Object.keys(params).forEach(function (k) { body.append(k, params[k]); });
-    return fetch(API, { method: 'POST', body: body }).then(function (r) { return r.json(); });
+    var attempt = 0;
+    function once() {
+      attempt++;
+      var ctl = window.AbortController ? new AbortController() : null;
+      var opts = { method: 'POST', body: body };
+      if (ctl) opts.signal = ctl.signal;
+      var timer = setTimeout(function () { if (ctl) ctl.abort(); }, POST_TIMEOUT);
+      return fetch(API, opts)
+        .then(function (r) { return r.text(); })
+        .then(function (t) {
+          clearTimeout(timer);
+          try { return JSON.parse(t); }
+          catch (e) { throw new Error('backend returned a non-JSON body'); }
+        })
+        .catch(function (err) {
+          clearTimeout(timer);
+          if (attempt < POST_TRIES) return once();
+          throw err;
+        });
+    }
+    return once();
   }
 
   /* ---------- 3. Unlock / lock ---------- */
