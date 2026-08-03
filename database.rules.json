@@ -1,0 +1,85 @@
+{
+  "_comment_1": "WPIAL All Stars — Realtime Database rules. Paste into Firebase console > Realtime Database > Rules.",
+  "_comment_2": "THE MODEL: a pick is committed as a SINGLE multi-path update() writing picks/<overall> and cursor together. Firebase applies multi-path updates atomically and evaluates rules against the pre-write state, so 'picks/<overall> must not already exist' IS the transaction. Ten clients racing for the same slot: one update lands, nine are rejected by the server. No client-side locking, no trust in the client.",
+  "_comment_3": "THE TRUST ANCHOR is /emailToFid. Firebase Auth proves control of an inbox; that map decides which franchise the inbox owns. It is read-only to every client and seeded once by the commissioner. An owner cannot claim another franchise because they cannot write that map.",
+  "_comment_4": "TURN ENFORCEMENT is server-side via /slots. Rules cannot compute a snake order, so the 160 slot->franchise assignments are written once at draft setup and the rule compares against them. The UI hiding the draft button proves nothing; this is what actually stops an out-of-turn pick.",
+
+  "rules": {
+    "emailToFid": {
+      ".read": "auth != null",
+      ".write": false,
+      "_note": "Seeded from the console. Key is the email with dots replaced by commas, value is the fid. Deliberately unwritable by any client, including the commissioner's browser."
+    },
+
+    "commish": {
+      ".read": "auth != null",
+      ".write": false,
+      "_note": "uid -> true. Also console-seeded. Being commissioner is not something a client may assert about itself."
+    },
+
+    "drafts": {
+      "$env": {
+        "$season": {
+          ".read": "auth != null",
+
+          "meta": {
+            ".write": "auth != null && root.child('commish').child(auth.uid).val() === true",
+            ".validate": "newData.hasChildren(['rounds','startedAt'])"
+          },
+
+          "slots": {
+            ".write": "auth != null && root.child('commish').child(auth.uid).val() === true",
+            "$overall": {
+              ".validate": "newData.hasChild('fid')"
+            },
+            "_note": "160 entries, overall -> {fid, round, pickInRound}. Written once at setup. Commissioner only."
+          },
+
+          "cursor": {
+            ".write": "auth != null",
+            ".validate": "newData.isNumber() && (!data.exists() || newData.val() > data.val() || root.child('commish').child(auth.uid).val() === true)",
+            "_note": "Monotonic for everyone except the commissioner, who may rewind it to undo. Monotonicity is what stops a stale client from dragging the draft backwards."
+          },
+
+          "picks": {
+            "$overall": {
+              ".write": "auth != null && !data.exists() && (root.child('commish').child(auth.uid).val() === true || ($overall === root.child('drafts').child($env).child($season).child('cursor').val() + '' && newData.child('fid').val() === root.child('drafts').child($env).child($season).child('slots').child($overall).child('fid').val() && newData.child('fid').val() === root.child('emailToFid').child(auth.token.email.replace('.', ',')).val()))",
+              ".validate": "newData.hasChildren(['fid','name','at','by']) && newData.child('by').val() === auth.uid && newData.child('at').val() === now",
+              "_note_write": "!data.exists() makes a slot write-once — this is the whole concurrency story. Then: the slot must be the one on the clock, the pick must be attributed to the franchise that owns that slot, and that franchise must be the one this signed-in email owns. Commissioner bypasses turn and ownership so they can pick for someone whose phone died, but still cannot overwrite a filled slot.",
+              "_note_validate": "by === auth.uid and at === now are server-stamped identity and time. A client cannot forge who made a pick or when."
+            }
+          },
+
+          "clock": {
+            ".write": "auth != null && root.child('commish').child(auth.uid).val() === true",
+            ".validate": "newData.hasChildren(['deadline','forOverall'])",
+            "_note": "Commissioner-only, and it stores an ABSOLUTE deadline, never a remaining duration. Ten devices counting down their own copy of '90 seconds' will drift apart; ten devices counting down to the same epoch millisecond will not. Clients correct for local clock skew with .info/serverTimeOffset."
+          },
+
+          "firing": {
+            ".read": "auth != null",
+            ".write": "auth != null && root.child('commish').child(auth.uid).val() === true",
+            ".validate": "newData.isNumber()",
+            "_note": "Auto-pick election lock. Today draftclock.js fires auto-pick on any client whose local clock is running (tick() checks liveMode but NOT isCommish), which with shared state would mean ten browsers racing to draft ten different players the instant the deadline passes. A transaction on this node elects exactly one."
+          },
+
+          "presence": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid",
+              ".validate": "newData.hasChildren(['fid','at'])",
+              "_note": "Who is actually connected. Write your own only. Feeds the 'waiting on 3 owners' display and tells the commissioner whose phone dropped before it matters."
+            }
+          },
+
+          "log": {
+            "$entry": {
+              ".write": "auth != null && !data.exists()",
+              ".validate": "newData.child('by').val() === auth.uid && newData.child('at').val() === now",
+              "_note": "Append-only audit trail. Write-once per entry so nobody can rewrite draft history."
+            }
+          }
+        }
+      }
+    }
+  }
+}
