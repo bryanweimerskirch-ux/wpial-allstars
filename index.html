@@ -1396,6 +1396,46 @@ document.querySelectorAll('nav button[data-tab]').forEach(btn => {
 // Only ever touches the "Feed Posts" and "Tips" tabs of the keeper sheet.
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxX-UpCAd7oeWug1KcnMZrSnMJyVuob_qHtSv0z1C7im7MpUMgHYMOtdvOKl98VXy37eA/exec';
 
+/* ---- one throttled, retrying JSON fetch for every feed on this page --------------
+   A homepage load fans out ~16 requests at the same Apps Script deployment. Measured
+   2026-08-03: sixteen at once take 12-17s EACH, and roughly one of them comes back as a
+   Google HTML error page instead of JSON -- so `r.json()` throws, the section lands in
+   its own catch, and prints "unavailable". The feed was never down. It was crowded out,
+   and which section lost was luck of the draw, which is exactly why it looked random.
+
+   Two changes, both small: never have more than WA_MAXCONC in flight, and treat a body
+   that is not JSON as something to retry rather than something to surrender to. Every
+   section keeps its own catch -- that is now the genuine-failure path it was meant to be. */
+var WA_MAXCONC = 4, WA_TRIES = 3;
+var waLive = 0, waWaiting = [];
+function waPump() { while (waLive < WA_MAXCONC && waWaiting.length) { waLive++; waWaiting.shift()(); } }
+function waJSON(url) {
+  return new Promise(function (resolve, reject) {
+    waWaiting.push(function () {
+      var n = 0;
+      (function go() {
+        n++;
+        fetch(url)
+          .then(function (r) { return r.text(); })
+          .then(function (t) {
+            var d;
+            /* A retry only helps if we can tell a bad body from a good one, so parse here
+               rather than handing r.json() to the caller. */
+            try { d = JSON.parse(t); } catch (e) { throw new Error('not JSON: ' + t.slice(0, 60)); }
+            waLive--; waPump(); resolve(d);
+          })
+          .catch(function (err) {
+            /* Hold the slot across retries -- releasing it would let the next burst in
+               and reproduce the crowding this exists to prevent. */
+            if (n < WA_TRIES) { setTimeout(go, 500 * n * n); return; }
+            waLive--; waPump(); reject(err);
+          });
+      })();
+    });
+    waPump();
+  });
+}
+
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str == null ? '' : String(str);
@@ -1575,8 +1615,7 @@ function renderFeedPosts(posts) {
 }
 
 function loadLiveFeed() {
-  fetch(WEB_APP_URL + '?action=feed')
-    .then(r => r.json())
+  waJSON(WEB_APP_URL + '?action=feed')
     .then(data => {
       const posts = (data && data.posts) || [];
       if (!posts.length) return;
@@ -1645,8 +1684,7 @@ function renderInsiderReport(r) {
 }
 
 function loadInsiderReports() {
-  fetch(WEB_APP_URL + '?action=insider_reports')
-    .then(r => r.json())
+  waJSON(WEB_APP_URL + '?action=insider_reports')
     .then(data => {
       const reports = (data && data.reports) || [];
       if (!reports.length) return;
@@ -1672,8 +1710,7 @@ loadInsiderReports();
 // ---- Declared keepers (gold stars on the Rosters tab) ----
 // Reads the "Keepers" tab of the league sheet via the backend.
 function loadKeepers() {
-  fetch(WEB_APP_URL + '?action=keepers')
-    .then(r => r.json())
+  waJSON(WEB_APP_URL + '?action=keepers')
     .then(data => {
       const ks = (data && data.keepers) || [];
       const lockEl = document.getElementById('keeper-lock');
@@ -1709,8 +1746,8 @@ function loadSchedule() {
   const wrap = document.getElementById('schedule-weeks');
   if (!wrap) return;
   Promise.all([
-        fetch(WEB_APP_URL + '?action=espn_schedule').then(r => r.json()),
-        fetch(WEB_APP_URL + '?action=h2h').then(r => r.json()).catch(() => null)
+        waJSON(WEB_APP_URL + '?action=espn_schedule'),
+        waJSON(WEB_APP_URL + '?action=h2h').catch(() => null)
       ])
         .then(([data, h2hData]) => {
           const h2hMap = {};
@@ -1851,7 +1888,7 @@ loadSchedule();
     if (!wrap) return;
     var week = 1; // pre-season default; scoreboard call below corrects it in-season
 
-    var pAssign = fetch(WEB_APP_URL + '?action=schedule_rosters').then(function (r) { return r.json(); }).catch(function () { return null; });
+    var pAssign = waJSON(WEB_APP_URL + '?action=schedule_rosters').catch(function () { return null; });
     var pSched = fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=' + SEASON + '&seasontype=2&week=' + week).then(function (r) { return r.json(); });
     var pPool = fetch('https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/' + SEASON + '/segments/0/leaguedefaults/3?view=kona_player_info',
       { headers: { 'x-fantasy-filter': JSON.stringify({ players: { limit: 400, sortPercOwned: { sortAsc: false, sortPriority: 1 }, filterStatsForSplitTypeIds: { value: [1] } } }) } })
@@ -1987,8 +2024,8 @@ loadSchedule();
         /* Bench points ride along as a garnish, never a dependency. Its own catch means
            a bad or slow bench feed can never take the standings table down with it. */
         Promise.all([
-          fetch(WEB_APP_URL + '?action=espn_schedule').then(r => r.json()),
-          fetch(WEB_APP_URL + '?action=bench_points').then(r => r.json()).catch(() => ({ ok:false, teams:{} }))
+          waJSON(WEB_APP_URL + '?action=espn_schedule'),
+          waJSON(WEB_APP_URL + '?action=bench_points').catch(() => ({ ok:false, teams:{} }))
         ])
           .then(([data, benchFeed]) => {
             if (!data.ok || !data.weeks) { wrap.innerHTML = '<p class="placeholder">Standings unavailable.</p>'; return; }
@@ -2107,8 +2144,7 @@ loadSchedule();
         const card = document.getElementById('gelly-picks-card');
         const wrap = document.getElementById('gelly-picks-body');
         if (!wrap || !card) return;
-        fetch(WEB_APP_URL + '?action=gelly_picks')
-          .then(r => r.json())
+        waJSON(WEB_APP_URL + '?action=gelly_picks')
           .then(data => {
             if (data && data.gated) { card.style.display = ''; wrap.innerHTML = '<p class="placeholder">' + (data.message || "The Gelly Line is locked until the draft.") + '</p>'; return; }
             if (!data.ok || !data.picks || !data.picks.length) { return; }
@@ -2222,7 +2258,7 @@ function loadHistoryTable() {
     'Bindgamer3': 'B+', 'Drake Draaaake?': 'B+', 'Return of The Mac': 'A-',
     'THE Vagitarians': 'B', "Syd Sweeney's Denim Jeans": 'B', 'Mean Machine': 'A-'
   };
-  fetch(WEB_APP_URL + '?action=history').then(r => r.json()).then(data => {
+  waJSON(WEB_APP_URL + '?action=history').then(data => {
     if (!data || !data.ok || !data.franchises || !data.franchises.length) throw new Error('no data');
     body.innerHTML = data.franchises.map(f => {
       const name = (f.name || '').trim();
