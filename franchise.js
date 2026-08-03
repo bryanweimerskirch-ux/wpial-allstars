@@ -274,9 +274,11 @@
     var P = /^#[0-9a-fA-F]{6}$/.test(spec.primary || '') ? spec.primary : '#d8b45c';
     var S = /^#[0-9a-fA-F]{6}$/.test(spec.secondary || '') ? spec.secondary : '#12161d';
     var A = /^#[0-9a-fA-F]{6}$/.test(spec.accent || '') ? spec.accent : '#f4f4f2';
-    var num = String(spec.number == null ? '' : spec.number).replace(/[^0-9]/g, '').slice(0, 2);
+    /* No leading zero on a single digit -- 2 is 2, not 02. Only an unset number falls back
+       to the blank-template 00. Bryan, 2026-08-03: "if single digit dont add 0 first". */
+    var num = String(spec.number == null ? '' : spec.number)
+                .replace(/[^0-9]/g, '').slice(0, 2).replace(/^0+(?=\d)/, '');
     if (num === '') num = '00';
-    if (num.length === 1) num = '0' + num;
     var word = String(spec.wordmark || '').slice(0, 10).toUpperCase();
     var sleeve = ['stripe','solid','none'].indexOf(spec.sleeves) >= 0 ? spec.sleeves : 'stripe';
 
@@ -315,9 +317,14 @@
         '" font-family="Oswald,Impact,sans-serif" font-weight="600" font-size="' + wsize +
         '" letter-spacing="' + wtrack + '">' + esc(word) + '</text>';
     }
-    g += '<text x="32" y="60" text-anchor="middle" fill="' + numFill + '"' +
-      (numStroke === 'none' ? '' : ' stroke="' + numStroke + '" stroke-width="0.9" paint-order="stroke"') +
-      ' font-family="Oswald,Impact,sans-serif" font-weight="700" font-size="20">' + num + '</text>';
+    /* The shirt body is 24 units wide (x 20-44). At font-size 20 a two-digit number ran
+       about 22 of those 24 and read as a billboard rather than a jersey. Size by digit
+       count so one and two digits occupy roughly the same block, and scale the outline
+       with it so the stroke does not swallow the glyph. */
+    var nsize = num.length === 1 ? 17 : 14;
+    g += '<text x="32" y="62" text-anchor="middle" fill="' + numFill + '"' +
+      (numStroke === 'none' ? '' : ' stroke="' + numStroke + '" stroke-width="' + (nsize / 22).toFixed(2) + '" paint-order="stroke"') +
+      ' font-family="Oswald,Impact,sans-serif" font-weight="700" font-size="' + nsize + '">' + num + '</text>';
     return '<svg viewBox="0 0 64 88" width="100%" height="100%" role="img" aria-hidden="true">' + g + '</svg>';
   }
 
