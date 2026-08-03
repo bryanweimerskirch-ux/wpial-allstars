@@ -43,7 +43,7 @@
 .spotlight-top{font-size:11px;color:var(--muted);margin-top:2px;}
   .spotlight-h2h{font-size:11px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);text-align:center;}
   /* ---- Projected-winner jerseys ----
-     The jersey is the projection: the bigger one is the favourite. Size is a real visual
+     The jersey is the projection: the bigger one is the favorite. Size is a real visual
      channel, but it is never the ONLY channel — the percentage is always printed next to
      it, so the call is readable at a glance and unambiguous when you look. */
   .spot-kits{display:flex;align-items:flex-end;justify-content:center;gap:14px;
@@ -1208,9 +1208,9 @@ function teamDisplayName(name) {
 }
 /* ---- Projected winner ------------------------------------------------------
    Everyone has a jersey from the moment their franchise exists: an owner who has
-   never opened the profile page still gets one built from their franchise colours,
-   with their franchise number on the back. Customising it makes it theirs; not
-   customising it does not make it invisible. */
+   never opened the profile page still gets one built from their franchise colors,
+   with their franchise number on the back. Customizing it makes it theirs; not
+   customizing it does not make it invisible. */
 function jerseyFor(name) {
   if (!window.WPIAL_FX) return '';
   var fid = WPIAL_FX.resolve(name);
@@ -1281,9 +1281,9 @@ function projectWin(awayName, homeName, form, h2hRec) {
   return { p: Math.max(0.05, Math.min(0.95, p)), basis: basis };
 }
 
-/* Favourite gets the bigger kit. 50/50 renders them identical; a lopsided call should be
+/* Favorite gets the bigger kit. 50/50 renders them identical; a lopsided call should be
    obvious from across the room, so the range is deliberately wide — roughly 2.5x from
-   longest shot to heaviest favourite. */
+   longest shot to heaviest favorite. */
 function kitWidth(p) { return Math.round(28 + 48 * Math.max(0, Math.min(1, p))); }
 
 // The stable key for a team name that arrived from OUTSIDE this page — ESPN, the h2h
@@ -1749,7 +1749,7 @@ function loadSchedule() {
           const pA = proj.p, pH = 1 - proj.p;
 
           let sh = '';
-          /* The kits. Unplayed: size is the projection, favourite bigger. Final: the
+          /* The kits. Unplayed: size is the projection, favorite bigger. Final: the
              winner stands full size and the loser fades out — the scoreboard tells you
              who won before you have read a single number. */
           const kitA = jerseyFor(mu.away), kitH = jerseyFor(mu.home);
@@ -2084,7 +2084,7 @@ loadSchedule();
                 + '<td>' + (r.g ? (r.pa/r.g).toFixed(1) : '0.0') + '</td>'
                 + '<td class="' + (diff > 0 ? 'pos' : diff < 0 ? 'neg' : '') + '">' + (diff > 0 ? '+' : '') + diff.toFixed(1) + '</td>'
                 + '<td>' + r.ap + '</td><td>' + (r.hi || '—') + '</td><td>' + r.med + '</td>'
-                /* Glyph + colour, never colour alone — this has to read in greyscale. */
+                /* Glyph + color, never color alone — this has to read in grayscale. */
                 + '<td class="' + (markWorst && r.bench === worstBench ? 'neg' : '') + '">'
                   + (benchLive ? r.bench.toFixed(1) + (markWorst && r.bench === worstBench ? ' <span title="Most points left on the bench in the league">◆</span>' : '') : '—')
                 + '</td></tr>';
