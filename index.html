@@ -1984,10 +1984,21 @@ loadSchedule();
       function loadStandings() {
         const wrap = document.getElementById('standings-body');
         if (!wrap) return;
-        fetch(WEB_APP_URL + '?action=espn_schedule')
-          .then(r => r.json())
-          .then(data => {
+        /* Bench points ride along as a garnish, never a dependency. Its own catch means
+           a bad or slow bench feed can never take the standings table down with it. */
+        Promise.all([
+          fetch(WEB_APP_URL + '?action=espn_schedule').then(r => r.json()),
+          fetch(WEB_APP_URL + '?action=bench_points').then(r => r.json()).catch(() => ({ ok:false, teams:{} }))
+        ])
+          .then(([data, benchFeed]) => {
             if (!data.ok || !data.weeks) { wrap.innerHTML = '<p class="placeholder">Standings unavailable.</p>'; return; }
+            /* Bench totals arrive keyed by the CURRENT ESPN name; canon them like everything
+               else so a mid-season rename cannot orphan a row. */
+            const bench = {};
+            if (benchFeed && benchFeed.ok && benchFeed.teams) {
+              Object.keys(benchFeed.teams).forEach(n => { bench[teamKey(n)] = Number(benchFeed.teams[n]) || 0; });
+            }
+            const benchLive = !!(benchFeed && benchFeed.ok && benchFeed.weeks_counted);
             const rec = {};
             const bump = (name) => { if (!rec[name]) rec[name] = { w:0,l:0,t:0,pf:0,pa:0, games:[] }; return rec[name]; };
             const weekNums = Object.keys(data.weeks).map(Number).sort((a,b)=>a-b);
@@ -2041,8 +2052,14 @@ loadSchedule();
               return { name: name, label: teamDisplayName(name), w:r.w, l:r.l, t:r.t, pf:r.pf, pa:r.pa, g:g,
                        pct: g ? (r.w + 0.5*r.t)/g : 0, streak: streak, last5: last5,
                        ap: (e.apw || e.apl || e.apt) ? fmtRec(e.apw, e.apl, e.apt) : '—',
-                       hi: e.hi, med: (e.mw || e.ml) ? fmtRec(e.mw, e.ml, 0) : '—' };
+                       hi: e.hi, med: (e.mw || e.ml) ? fmtRec(e.mw, e.ml, 0) : '—',
+                       bench: bench[name] || 0 };
             });
+            /* One red number, not ten. The point of the column is a single name to point at. */
+            const worstBench = benchLive ? Math.max.apply(null, rows.map(r => r.bench)) : -1;
+            /* If somehow nobody has benched a point, nobody gets the marker — otherwise a
+               league-wide tie at zero would paint every single row red. */
+            const markWorst = benchLive && worstBench > 0;
             rows.sort((x,y) => y.pct - x.pct || y.pf - x.pf || (y.pf-y.pa) - (x.pf-x.pa) || x.label.localeCompare(y.label));
             if (!rows.length) { wrap.innerHTML = '<p class="placeholder">Standings unavailable.</p>'; return; }
             const leader = rows[0];
@@ -2051,7 +2068,8 @@ loadSchedule();
               + '<th>Strk</th><th>Last 5</th><th>PF/G</th><th>PA/G</th><th>Diff</th>'
               + '<th title="Record if you played every team every week">All-Play<span class="th-sub">(record if you played every team every week)</span></th>'
               + '<th title="Weeks with the league-high score">High Wks</th>'
-              + '<th title="Record vs the weekly median score">vs Median</th></tr></thead><tbody>';
+              + '<th title="Record vs the weekly median score">vs Median</th>'
+              + '<th title="Season total points scored by players you left on your bench">Bench<span class="th-sub">(points left on the bench)</span></th></tr></thead><tbody>';
             rows.forEach((r, i) => {
               const diff = r.pf - r.pa;
               const gb = i === 0 ? '—' : (((leader.w - r.w) + (r.l - leader.l)) / 2).toFixed(1).replace(/\.0$/, '');
@@ -2065,13 +2083,18 @@ loadSchedule();
                 + '<td>' + (r.g ? (r.pf/r.g).toFixed(1) : '0.0') + '</td>'
                 + '<td>' + (r.g ? (r.pa/r.g).toFixed(1) : '0.0') + '</td>'
                 + '<td class="' + (diff > 0 ? 'pos' : diff < 0 ? 'neg' : '') + '">' + (diff > 0 ? '+' : '') + diff.toFixed(1) + '</td>'
-                + '<td>' + r.ap + '</td><td>' + (r.hi || '—') + '</td><td>' + r.med + '</td></tr>';
+                + '<td>' + r.ap + '</td><td>' + (r.hi || '—') + '</td><td>' + r.med + '</td>'
+                /* Glyph + colour, never colour alone — this has to read in greyscale. */
+                + '<td class="' + (markWorst && r.bench === worstBench ? 'neg' : '') + '">'
+                  + (benchLive ? r.bench.toFixed(1) + (markWorst && r.bench === worstBench ? ' <span title="Most points left on the bench in the league">◆</span>' : '') : '—')
+                + '</td></tr>';
             });
             out += '</tbody></table></div>'
               + '<div class="standings-legend">'
               + '<span><b>All-Play</b> &mdash; your record if you played every team, every week. The schedule-luck detector.</span>'
               + '<span><b>High Wks</b> &mdash; weeks you posted the league\'s highest score outright.</span>'
               + '<span><b>vs Median</b> &mdash; your record against each week\'s median score. Above .500 here but not in Record? You\'ve been robbed.</span>'
+              + '<span><b>Bench</b> &mdash; season total scored by players you sat. Every other column measures your roster; this one measures your decisions. <span class="neg">◆</span> is the league leader, which is not a compliment.</span>'
               + '</div>';
             wrap.innerHTML = out;
           })
