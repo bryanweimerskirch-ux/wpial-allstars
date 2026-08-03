@@ -71,9 +71,22 @@
     return fetch(API, { method: 'POST', body: body }).then(function (r) { return r.json(); });
   }
 
+  /* Identity comparison, not string comparison. `user.team` is whatever the session was
+     minted with; once the server starts sending `fid` this keeps working unchanged, and
+     it keeps working today because canon never changes. Falls back to the old string
+     compare when the registry has not loaded or the name is unknown to it. */
+  function sameFranchise(a, b) {
+    if (window.WPIAL_FX) {
+      var ra = WPIAL_FX.resolve(a), rb = WPIAL_FX.resolve(b);
+      if (ra && rb) return ra === rb;
+    }
+    return String(a == null ? '' : a).trim() === String(b == null ? '' : b).trim();
+  }
+
   function canEdit(team) {
     if (!user) return false;
-    return !!user.is_commish || user.team === team;
+    if (user.is_commish) return true;
+    return sameFranchise(user.fid || user.team, team);
   }
   /* Commish may edit past the deadline; everyone else is done at lock. */
   function editableNow(team) {
@@ -96,7 +109,11 @@
     document.querySelectorAll('#rosters .card, .card').forEach(function (card) {
       var nameEl = card.querySelector('.team-name');
       if (!nameEl) return;
-      var team = nameEl.textContent.trim();
+      /* data-canon is the frozen join key. The rendered name is a display string an
+         owner can change, so it must never be what we key on; the textContent fallback
+         only covers a card rendered before franchise.js existed. */
+      var team = (card.dataset && card.dataset.canon) || nameEl.textContent.trim();
+      team = String(team).trim();
       if (!team) return;
       card.querySelectorAll('.row').forEach(function (row) {
         var rEl = row.querySelector('.rnd');

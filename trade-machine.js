@@ -88,7 +88,10 @@ function readRosters() {
   cards.forEach(function (card) {
     var nameEl = $('.team-name', card);
     if (!nameEl) return;
-    var team = nameEl.textContent.trim();
+    /* Frozen key, not the rendered label — pick values, share links and the snake
+       order all hang off this string, and a rename must not move any of them. */
+    var team = String((card.dataset && card.dataset.canon) || nameEl.textContent).trim();
+    if (!team) return;
     teams.push(team); rosters[team] = [];
     $$('.row', card).forEach(function (row) {
       var rndEl = $('.rnd', row);

@@ -53,9 +53,21 @@
     return fetch(API, { method: 'POST', body: body }).then(function (r) { return r.json(); });
   }
 
+  /* See keepers.js — compare franchises, not strings, so a rename can never lock an
+     owner out of their own keepers. Degrades to the old comparison when the registry
+     is unavailable. */
+  function sameFranchise(a, b) {
+    if (window.WPIAL_FX) {
+      var ra = WPIAL_FX.resolve(a), rb = WPIAL_FX.resolve(b);
+      if (ra && rb) return ra === rb;
+    }
+    return String(a == null ? '' : a).trim() === String(b == null ? '' : b).trim();
+  }
+
   function canEdit(team) {
     if (!user || !team) return false;
-    return !!user.is_commish || user.team === team;
+    if (user.is_commish) return true;
+    return sameFranchise(user.fid || user.team, team);
   }
   function editableNow(team) { return canEdit(team) && (!locked || !!user.is_commish); }
   function teamPicks(t) { return picks[t] || (picks[t] = []); }

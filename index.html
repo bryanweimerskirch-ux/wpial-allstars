@@ -223,6 +223,7 @@
 <!-- Cloudflare Web Analytics -->
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d6f258a2e69e49c9ab652c37c8503de2"}'></script>
 <!-- End Cloudflare Web Analytics -->
+<script src="franchise.js"></script>
 <script src="auth.js"></script>
 <script src="keepers.js"></script>
 <script src="sitenav.js"></script>
@@ -1174,27 +1175,48 @@ var TEAM_LOGOS = {
   "Syd Sweeney's Denim Jeans": `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#3B5F8A"/><rect x="30" y="24" width="40" height="54" rx="6" fill="#5B84B5"/><path d="M38 40 Q50 46 62 40" stroke="#28405E" stroke-width="2.5" fill="none"/><circle cx="50" cy="34" r="2.5" fill="#D9C24A"/><rect x="38" y="52" width="24" height="18" rx="3" fill="#4A729E" stroke="#28405E" stroke-width="1.5"/></svg>`,
   'Mean Machine': `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#5A5A5A"/><rect x="30" y="34" width="40" height="36" rx="8" fill="#CFCFCF"/><rect x="46" y="18" width="8" height="14" fill="#8A8A8A"/><circle cx="50" cy="18" r="4" fill="#E63946"/><rect x="36" y="44" width="10" height="10" rx="2" fill="#2EC4F5"/><rect x="54" y="44" width="10" height="10" rx="2" fill="#2EC4F5"/><rect x="38" y="60" width="24" height="5" rx="2" fill="#8A8A8A"/><rect x="38" y="52" width="24" height="4" rx="2" fill="#8A8A8A"/></svg>`
 };
-// Rename alias: ESPN/backend may still send the old name during the transition.
+// The alias map this comment used to ask for now exists: franchise.js resolves any
+// historical or ESPN-drifted name back to a franchise. TEAM_LOGOS above is kept only as
+// the pre-registry fallback — franchise.js is the single consumer of logo data.
 function teamLogoHTML(name) {
+  if (window.WPIAL_FX) return WPIAL_FX.logoHTML(name, 30);
   var svg = TEAM_LOGOS[String(name || '').trim()];
   return svg ? '<span class="team-logo-badge">' + svg + '</span>' : '';
+}
+// Display name for a team, resolved through the registry. Falls back to the raw string
+// so every call site is safe before franchise.js loads or for an unknown name.
+function teamDisplayName(name) {
+  return (window.WPIAL_FX && WPIAL_FX.name(name)) || String(name == null ? '' : name);
+}
+// The stable key for a team name that arrived from OUTSIDE this page — ESPN, the h2h
+// feed, the history feed. Team names in those feeds drift the moment somebody renames
+// their team in the ESPN app, and matching them by string is what produced an 11-row
+// standings table and a silently missing all-time series line. Resolve to canon instead.
+function teamKey(name) {
+  return (window.WPIAL_FX && WPIAL_FX.canon(name)) || String(name == null ? '' : name).trim();
 }
 
 const grid = document.getElementById('teamGrid');
 Object.entries(ROSTERS).forEach(([team, info]) => {
   const card = document.createElement('div');
   card.className = 'card';
+  /* Identity lives on the card, not in the rendered text. keepers.js and
+     trade-machine.js used to scrape .team-name and use it as the join key, which made
+     the display string load-bearing — the exact thing that breaks the moment an owner
+     renames their team. They read data-canon now; .team-name is free to be a label. */
+  card.dataset.canon = team;
+  card.dataset.fid = (window.WPIAL_FX && WPIAL_FX.resolve(team)) || '';
   const h3 = document.createElement('h3');
   h3.style.display = 'flex';
   h3.style.alignItems = 'center';
   h3.style.justifyContent = 'space-between';
-  const logoSpan = document.createElement('span');
-  logoSpan.className = 'team-logo-badge';
-  logoSpan.innerHTML = TEAM_LOGOS[team] || '';
-  h3.appendChild(logoSpan);
+  /* Was `logoSpan.innerHTML = TEAM_LOGOS[team]` — a direct map read that bypassed
+     teamLogoHTML() entirely, so the registry shim alone would not have reached the
+     roster grid, which is the most visible logo surface on the site. */
+  h3.insertAdjacentHTML('beforeend', teamLogoHTML(team));
   const nameSpan = document.createElement('span');
   nameSpan.className = 'team-name';
-  nameSpan.textContent = team;
+  nameSpan.textContent = teamDisplayName(team);
   h3.appendChild(nameSpan);
   const seasonBadge = document.createElement('span');
   seasonBadge.className = 'badge';
@@ -1240,6 +1262,27 @@ Object.entries(ROSTERS).forEach(([team, info]) => {
   });
   grid.appendChild(card);
 });
+
+/* Identity arrives async — the registry paints defaults immediately and then upgrades
+   when the token-gated profile data lands. Repaint only the header bits (logo, display
+   name); the rows below are never touched, because other features parse them. */
+function refreshTeamCardIdentity() {
+  if (!window.WPIAL_FX) return;
+  document.querySelectorAll('#teamGrid .card').forEach(card => {
+    const canon = card.dataset.canon;
+    if (!canon) return;
+    if (!card.dataset.fid) card.dataset.fid = WPIAL_FX.resolve(canon) || '';
+    const badge = card.querySelector('h3 .team-logo-badge');
+    if (badge) {
+      const next = WPIAL_FX.logoHTML(canon, 30);
+      if (next && badge.outerHTML !== next) badge.outerHTML = next;
+    }
+    const nameSpan = card.querySelector('h3 .team-name');
+    const display = WPIAL_FX.name(canon);
+    if (nameSpan && display && nameSpan.textContent !== display) nameSpan.textContent = display;
+  });
+}
+document.addEventListener('wpial-profiles', refreshTeamCardIdentity);
 
 document.querySelectorAll('nav button[data-tab]').forEach(btn => {
   btn.onclick = () => {
@@ -1547,7 +1590,10 @@ function loadKeepers() {
       document.querySelectorAll('#teamGrid .card').forEach(card => {
         const h3span = card.querySelector('h3 .team-name');
         if (!h3span) return;
-        const names = map[h3span.textContent.trim().toLowerCase()];
+        /* Match on the frozen key, not on what the header happens to say. The keeper
+           feed sends canon names; the header may show a renamed one. */
+        const key = (card.dataset.canon || h3span.textContent).trim().toLowerCase();
+        const names = map[key];
         if (!names) return;
         card.querySelectorAll('.player').forEach(sp => {
           const txt = sp.textContent.toLowerCase();
@@ -1572,7 +1618,10 @@ function loadSchedule() {
           const h2hMap = {};
           if (h2hData && h2hData.ok && h2hData.matchups) {
             h2hData.matchups.forEach(m => {
-              const key = [m.teamA, m.teamB].sort().join('|');
+              /* Canon both sides. The h2h feed and the ESPN schedule are two independent
+                 name spaces that only agree by luck; .sort() on the raw names also
+                 reorders the pair on a rename, breaking the key even when they do agree. */
+              const key = [teamKey(m.teamA), teamKey(m.teamB)].sort().join('|');
               h2hMap[key] = m;
             });
           }
@@ -1597,12 +1646,12 @@ function loadSchedule() {
           const awayWon = scored && mu.winner === 'AWAY';
           const homeWon = scored && mu.winner === 'HOME';
           let sh = '';
-          sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.away) + mu.away + (awayWon ? ' ✓' : '') + '</span><span class="sc">' + awayScore + '</span></div>';
+          sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.away) + teamDisplayName(mu.away) + (awayWon ? ' ✓' : '') + '</span><span class="sc">' + awayScore + '</span></div>';
           if (mu.awayTopScorer) sh += '<div class="spotlight-top">Top: ' + mu.awayTopScorer.name + ' — ' + mu.awayTopScorer.points + '</div>';
           sh += '<div class="spotlight-vs">vs</div>';
-          sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.home) + mu.home + (homeWon ? ' ✓' : '') + '</span><span class="sc">' + homeScore + '</span></div>';
+          sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.home) + teamDisplayName(mu.home) + (homeWon ? ' ✓' : '') + '</span><span class="sc">' + homeScore + '</span></div>';
           if (mu.homeTopScorer) sh += '<div class="spotlight-top">Top: ' + mu.homeTopScorer.name + ' — ' + mu.homeTopScorer.points + '</div>';
-          const h2hKey = [mu.away, mu.home].sort().join('|');
+          const h2hKey = [teamKey(mu.away), teamKey(mu.home)].sort().join('|');
           const h2hRec = h2hMap[h2hKey];
           if (h2hRec) {
             let h2hText;
@@ -1824,7 +1873,7 @@ loadSchedule();
             const weekScores = {};   // week -> [{name, pts}]
             weekNums.forEach(wk => {
               (data.weeks[wk] || []).forEach(mu => {
-                const a = bump(mu.away), h = bump(mu.home);   // seed every team
+                const a = bump(teamKey(mu.away)), h = bump(teamKey(mu.home));   // seed every team
                 const scored = (mu.awayScore > 0 || mu.homeScore > 0 || mu.winner !== 'UNDECIDED');
                 if (!scored) return;
                 const as = Number(mu.awayScore) || 0, hs = Number(mu.homeScore) || 0;
@@ -1834,7 +1883,9 @@ loadSchedule();
                 else if (mu.winner === 'HOME') { h.w++; a.l++; hr='W'; ar='L'; }
                 else { a.t++; h.t++; }
                 a.games.push({ wk: wk, res: ar }); h.games.push({ wk: wk, res: hr });
-                (weekScores[wk] = weekScores[wk] || []).push({ name: mu.away, pts: as }, { name: mu.home, pts: hs });
+                /* Canon here too: `extra` below is keyed off Object.keys(rec), so a raw
+                   drifted name would make extra[r.name] undefined and throw on e.apw++. */
+                (weekScores[wk] = weekScores[wk] || []).push({ name: teamKey(mu.away), pts: as }, { name: teamKey(mu.home), pts: hs });
               });
             });
             // all-play, weekly highs, vs-median
@@ -1865,12 +1916,13 @@ loadSchedule();
               }
               const l5 = sorted.slice(-5);
               const last5 = l5.length ? fmtRec(l5.filter(x=>x.res==='W').length, l5.filter(x=>x.res==='L').length, l5.filter(x=>x.res==='T').length) : '—';
-              return { name: name, w:r.w, l:r.l, t:r.t, pf:r.pf, pa:r.pa, g:g,
+              /* name = the canon key (stable). label = what the reader sees. */
+              return { name: name, label: teamDisplayName(name), w:r.w, l:r.l, t:r.t, pf:r.pf, pa:r.pa, g:g,
                        pct: g ? (r.w + 0.5*r.t)/g : 0, streak: streak, last5: last5,
                        ap: (e.apw || e.apl || e.apt) ? fmtRec(e.apw, e.apl, e.apt) : '—',
                        hi: e.hi, med: (e.mw || e.ml) ? fmtRec(e.mw, e.ml, 0) : '—' };
             });
-            rows.sort((x,y) => y.pct - x.pct || y.pf - x.pf || (y.pf-y.pa) - (x.pf-x.pa) || x.name.localeCompare(y.name));
+            rows.sort((x,y) => y.pct - x.pct || y.pf - x.pf || (y.pf-y.pa) - (x.pf-x.pa) || x.label.localeCompare(y.label));
             if (!rows.length) { wrap.innerHTML = '<p class="placeholder">Standings unavailable.</p>'; return; }
             const leader = rows[0];
             let out = '<div class="standings-scroll"><table class="standings-table"><thead><tr>'
@@ -1883,7 +1935,7 @@ loadSchedule();
               const diff = r.pf - r.pa;
               const gb = i === 0 ? '—' : (((leader.w - r.w) + (r.l - leader.l)) / 2).toFixed(1).replace(/\.0$/, '');
               out += '<tr><td class="rk">' + (i+1) + '</td>'
-                + '<td class="tm">' + teamLogoHTML(r.name) + r.name + '</td>'
+                + '<td class="tm">' + teamLogoHTML(r.name) + r.label + '</td>'
                 + '<td>' + fmtRec(r.w, r.l, r.t) + '</td>'
                 + '<td>' + r.pct.toFixed(3).replace(/^0/, '') + '</td>'
                 + '<td>' + gb + '</td>'
