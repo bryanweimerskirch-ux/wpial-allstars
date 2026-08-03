@@ -38,7 +38,7 @@
     { tab: null,       page: 'draftboard.html', label: '🏈 Draftboard',
       title: 'Interactive keeper draftboard — mock drafts, keeper decisions, and a full season simulator' },
     { tab: null,       page: 'profile.html',    label: '👤 My Profile',
-    title: 'Your franchise — first name, colours, logo and jersey' },
+    title: 'Your franchise — first name, colors, logo and jersey' },
   { tab: null,       page: 'dashboard.html',  label: '📊 Commish', commishOnly: true,
       title: 'League engagement — who has logged in and who still owes keepers' }
   ];
