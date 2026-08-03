@@ -267,7 +267,7 @@
     return '<svg viewBox="0 0 64 64" width="100%" height="100%" role="img" aria-hidden="true">' + body + '</svg>';
   }
 
-  /** The four jersey templates, driven by the same three colour slots. */
+  /** The four jersey templates, driven by the same three color slots. */
   function jerseySVG(spec) {
     spec = spec || {};
     var tpl = ['classic','throwback','colorrush','pinstripe'].indexOf(spec.template) >= 0 ? spec.template : 'classic';
@@ -286,7 +286,7 @@
     var sleeveFill = tpl === 'colorrush' ? P : S;
     var inkOnBody = ink(bodyFill);
     /* The number carries the identity, so it is the one element that must stay legible
-       whatever three colours somebody picks. It renders in the accent with an outline in
+       whatever three colors somebody picks. It renders in the accent with an outline in
        the ink that actually wins against the body — Design's Classic template did this and
        Color Rush did not, which is why Color Rush washed out at 1.94:1. */
     var numFill = tpl === 'pinstripe' ? P : A;
@@ -358,7 +358,7 @@
   /* ---------- hydration ----------
      Same shape as auth.js boot(): paint from cache, verify in the background, and stay
      quiet when offline. profiles_all does not exist server-side yet; an unknown action
-     just leaves the defaults in place, which is the correct behaviour either way. */
+     just leaves the defaults in place, which is the correct behavior either way. */
   function applyProfiles(list) {
     if (!list || !list.length) return false;
     var touched = false;
