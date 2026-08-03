@@ -43,6 +43,7 @@
     '.dk-bar b{color:var(--text,#e6edf3);}' +
     '.dk-bar.done b{color:#3fb950;}' +
     '.dk-bar .dk-msg{color:#ff9f4d;}' +
+    '.dk-bar .dk-cap{color:#9aa4b2;font-weight:400;}' +
     /* our pill states it — don't also show the list's own "⭐ kept" chip */
     '.ba.dk-done .pill.ok{display:none !important;}';
   document.head.appendChild(css);
@@ -157,10 +158,11 @@
         bar.className = 'dk-bar';
         list.insertBefore(bar, list.firstChild);
       }
-      bar.className = 'dk-bar' + (n === MAX ? ' done' : '');
+      /* Ceiling, not a quota: three keepers is a finished decision. */
+      bar.className = 'dk-bar' + (n ? ' done' : '');
       bar.innerHTML = '';
       var lbl = document.createElement('span');
-      lbl.innerHTML = 'Keepers for <b>' + team + '</b>: <b>' + n + ' / ' + MAX + '</b>';
+      lbl.innerHTML = 'Keepers for <b>' + team + '</b>: <b>' + n + '</b> <span class="dk-cap">(up to ' + MAX + ')</span>';
       bar.appendChild(lbl);
       var note = document.createElement('span');
       if (locked && !user.is_commish) note.textContent = '· locked';
