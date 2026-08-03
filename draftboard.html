@@ -34,6 +34,25 @@ body.theme-light{
   --otc:#a8842c;
   --cellbg:#ffffff; --cellfill:#f4efe2;
 }
+/* ---- Colorblind mode (design handoff item 2) ------------------------------
+   Ported from index.html so the setting finally reaches the draft board — the
+   highest-stakes screen in the product previously had no colorblind support at
+   all. Preference is the SAME localStorage key as the homepage ('wpial-cb-mode')
+   and both pages are same-origin, so toggling either one carries across.
+   Positions use the Okabe-Ito palette specified in the handoff.
+
+   --danger lands on the same vermillion as --qb, and --accent on the same sky
+   blue as --wr. That is safe *because of* the fill/outline law: positions are
+   only ever solid fills, statuses only ever outlines, so no glance compares
+   like with like. If that law is ever broken, these pairs are where it bites. */
+body.colorblind{
+  --accent:#56B4E9; --accent2:#F0E442; --otc:#F0E442; --muted:#b9c4d1;
+  --danger:#D55E00; --ok:#009E73;
+  --qb:#D55E00; --rb:#009E73; --wr:#56B4E9; --te:#E69F00; --k:#CC79A7; --def:#8a93a0;
+}
+body.colorblind a{text-decoration:underline;}
+#cbToggle.on{background:var(--accent2);border-color:var(--accent2);color:#04121f;font-weight:700;}
+
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:'Barlow',-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;}
 h1,h2,h3,.oswald{font-family:'Oswald',sans-serif;letter-spacing:.5px;}
@@ -144,9 +163,46 @@ table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width
 .bye{font-family:'Oswald';font-size:9.5px;letter-spacing:.4px;color:var(--muted);
      border:1px solid var(--line);border-radius:7px;padding:0 4px;line-height:14px;
      white-space:nowrap;flex:none;}
+/* ▲N is the colorblind-safe channel — severity survives with every hue removed.
+   Outline weight and the wash are backups; neither is ever the only signal. */
+.bye .byct{font-weight:700;font-size:9px;letter-spacing:0;}
 .bye.warn{color:var(--accent);border-color:var(--accent);}
-.bye.clash{color:var(--danger);border-color:var(--danger);font-weight:700;}
-#board td .meta .bye{border:none;padding:0 0 0 3px;line-height:normal;font-size:9px;opacity:.75;}
+/* 2+ is deliberately a wash, NOT a solid fill — see the note on byeChip(). A solid
+   --danger chip is the same hue as a --qb position chip and the fill/outline law
+   exists to stop exactly that collision. */
+.bye.clash{color:var(--danger);border-color:var(--danger);font-weight:700;
+           background:rgba(224,100,79,.14);}
+.bye[data-bye]{cursor:pointer;}
+.bye[data-bye]:hover,.bye[data-bye]:focus-visible{filter:brightness(1.25);outline:none;}
+@media (pointer:coarse){ .bye[data-bye]{padding:2px 7px;line-height:16px;} }
+/* Board-cell chips only render when they collide (byeChip ctx 'cell'), so unlike
+   before they must keep their outline — they are a warning now, not reference data. */
+#board td .meta .bye{margin-left:3px;font-size:9px;padding:0 3px;line-height:13px;}
+
+/* tap-for-details toast */
+#byeToast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,14px);z-index:400;
+  max-width:min(460px,92vw);background:var(--panel);color:var(--text);
+  border:1px solid var(--danger);border-left:4px solid var(--danger);border-radius:8px;
+  padding:9px 14px;font-size:12.5px;line-height:1.4;box-shadow:0 8px 24px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;}
+#byeToast.show{opacity:1;transform:translate(-50%,0);}
+
+/* ---------- board legend ---------- */
+/* The handoff asked for the bye legend "next to the existing position legend".
+   There wasn't one — position colours have never been explained anywhere in the
+   UI. Both are built here. */
+/* Sticky to the bottom edge of the board pane. Parked at the natural end of the
+   document it sat below sixteen rounds of scroll, which is the same as not
+   existing — a legend you have to go looking for explains nothing. */
+#boardlegend{position:sticky;bottom:-12px;z-index:25;
+  display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;
+  margin:6px -12px -12px;padding:7px 12px 8px;font-size:11px;color:var(--muted);
+  background:var(--bg);border-top:1px solid var(--line);}
+@media (max-width:900px){ #boardlegend{font-size:10px;gap:4px 10px;} }
+#boardlegend .lgroup{display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
+#boardlegend .lglabel{font-family:'Oswald';font-size:9.5px;letter-spacing:.6px;
+  text-transform:uppercase;color:var(--muted);margin-right:1px;}
+#boardlegend .bye{cursor:default;}
 /* The histogram. One bar per week any starter is off; height is fixed, the count
    carries the signal, colour carries the severity. */
 #byeBars{margin:0 0 8px;}
@@ -294,6 +350,8 @@ footer{padding:10px 16px;color:var(--muted);font-size:11px;border-top:1px solid 
       <option value="chalk">Chalkboard</option>
       <option value="light">Print / Light</option>
     </select>
+    <button id="cbToggle" class="small" aria-pressed="false"
+      title="Colorblind-safe palette (Okabe-Ito). Shared with the homepage setting.">👓 Colorblind</button>
     <button id="undoBtn" class="small" title="Undo last pick">↩ Undo</button>
     <button id="resetBtn" class="small" title="Clear this mode's draft">Reset</button>
     <button id="commishBtn" class="small">🔐 Commish</button>
@@ -316,7 +374,16 @@ footer{padding:10px 16px;color:var(--muted);font-size:11px;border-top:1px solid 
 </div>
 
 <div id="layout">
-  <div id="boardwrap"><table id="board"></table></div>
+  <div id="boardwrap"><table id="board"></table>
+    <div id="boardlegend">
+      <span class="lgroup"><span class="lglabel">Pos</span>
+        <span class="poschip QB">QB</span><span class="poschip RB">RB</span><span class="poschip WR">WR</span><span class="poschip TE">TE</span><span class="poschip K">K</span><span class="poschip DEF">DEF</span></span>
+      <span class="lgroup"><span class="lglabel">Bye</span>
+        <span class="bye warn">B7 <b class="byct">▲1</b></span>
+        <span class="bye clash">B7 <b class="byct">▲2</b></span>
+        <span>▲ = your starters already off that week · ▲1 one · ▲2 pile-up · tap any chip for details</span></span>
+    </div>
+  </div>
 
   <div id="sidebar">
     <div class="side-section" id="mockPanel" style="display:none;">
@@ -2291,6 +2358,11 @@ function render(){
 function renderBoard(){
   const km=keeperMap();
   const dSet=draftedNorms();
+  /* One collision report for all 160 cells. Board chips are relative to the team
+     the panels are showing (on the clock in live, your team in mock) — the same
+     "you" the pool and roster panel use, so the three never disagree. */
+  const bctx=ctxTeam(), brep=bctx?byeReport(bctx):{};
+  const bclash=t=>{ const w=byeOf(t); return w?(brep[w]||[]).length:0; };
   const keepTot={}; if(mode==='mock') TEAMS.forEach(t=>keepTot[t]=teamKeepState(t).total);
   const tbl=$('#board');
   let html='<thead><tr><th class="rdcol">RD</th>';
@@ -2308,7 +2380,7 @@ function renderBoard(){
       const pkLabel=r+'.'+String(s.pickInRound).padStart(2,'0');
       if(p){
         cls.push('filled','pos-'+p.pos); if(p.keeper)cls.push('keeper');
-        inner='<span class="pk">'+pkLabel+'</span><span class="nm">'+esc(p.name)+'</span><span class="meta"><span class="poschip '+p.pos+'">'+p.pos+'</span>'+esc(p.team||'')+byeChip(p.team,0)+'</span>';
+        inner='<span class="pk">'+pkLabel+'</span><span class="nm">'+esc(p.name)+'</span><span class="meta"><span class="poschip '+p.pos+'">'+p.pos+'</span>'+esc(p.team||'')+byeChip(p.team,t===bctx?bclash(p.team):0,'cell')+'</span>';
       } else if(k){
         const isMockK = k.source==='mock';
         cls.push('keeper','pos-'+(k.pos||''));
@@ -2371,7 +2443,7 @@ function renderBA(){
   const ct=ctxTeam(), rep=ct?byeReport(ct):{};
   const clashOf=t=>{ const w=byeOf(t); return w?(rep[w]||[]).length:0; };
   $('#balist').innerHTML=list.map(p=>
-    '<div class="ba" data-id="'+p.id+'"><span class="rk">'+p.r+'</span><span class="nm">'+esc(p.n)+(p.rk?' <span title="rookie">🐣</span>':'')+'</span><span class="poschip '+p.p+'">'+p.p+'</span><span class="batm">'+esc(p.t)+'</span>'+byeChip(p.t,clashOf(p.t))+'<span class="pt">'+(p.pts?p.pts+' pts':'')+(p.adp?' · '+p.adp:'')+'</span></div>'
+    '<div class="ba" data-id="'+p.id+'"><span class="rk">'+p.r+'</span><span class="nm">'+esc(p.n)+(p.rk?' <span title="rookie">🐣</span>':'')+'</span><span class="poschip '+p.p+'">'+p.p+'</span><span class="batm">'+esc(p.t)+'</span>'+byeChip(p.t,clashOf(p.t),'pool')+'<span class="pt">'+(p.pts?p.pts+' pts':'')+(p.adp?' · '+p.adp:'')+'</span></div>'
   ).join('') || (posFilter==='ROOK'&&!POOL.some(p=>p.rk)?'<div class="hint">No rookie flags in the current data source — the live league feed provides them (embedded snapshot doesn’t).</div>':'<div class="hint">No players left at this position.</div>');
 }
 function keepViewTeam(){
@@ -2414,7 +2486,7 @@ function renderKeepable(){
     else if(it.drafted) status='<span class="pill">drafted</span>';
     else if(canKeep) status='<button class="kpbtn" data-t="'+esc(team)+'" data-r="'+it.round+'" data-n="'+esc(it.name)+'" data-pos="'+it.pos+'">⭐ Keep R'+it.round+'</button>';
     return '<div class="ba'+(canDraft?'':' dim')+'"'+(canDraft?' data-id="'+it.pp.id+'"':'')+' title="'+(canDraft?'Click to draft to '+esc(team):'')+'">'
-      +'<span class="kpr">R'+it.round+'</span><span class="nm">'+esc(it.name)+'</span><span class="poschip '+it.pos+'">'+it.pos+'</span>'+(it.pp?byeChip(it.pp.t,0):'')
+      +'<span class="kpr">R'+it.round+'</span><span class="nm">'+esc(it.name)+'</span><span class="poschip '+it.pos+'">'+it.pos+'</span>'+(it.pp?byeChip(it.pp.t,0,'pool'):'')
       +'<span class="pt" style="color:'+(it.good?'var(--ok)':'var(--muted)')+'">'+(it.pp?'rank '+it.pp.r:'unranked')+'</span>'+status+'</div>';
   }).join('');
   $('#balist').innerHTML=html;
@@ -2464,17 +2536,45 @@ function byeReport(team){
   startersOf(team).forEach(p=>{ if(p.bye){ (weeks[p.bye]=weeks[p.bye]||[]).push(p); } });
   return weeks;
 }
+/* THE one sentence describing a week's collisions. The roster-panel warning line,
+   the chip tooltip and the tap-toast all call this, so the three cannot drift
+   apart — which is what "same string, no new copy" in the design handoff actually
+   requires. Returns '' when nobody is off that week. */
+function byeSentence(team,week){
+  const list=(byeReport(team)||{})[week]||[];
+  if(!list.length) return '';
+  const who=list.map(p=>p.name+' ('+p.pos+')').join(', ');
+  if(list.length===1) return '1 starter off in Week '+week+' — '+who+'.';
+  return list.length+' starters off in Week '+week+' — '+who
+       + (list.length>=3?" — you'll be streaming that week.":'.');
+}
 /* clash = how many starters the viewing team ALREADY has off that week. Callers
    pass it in rather than having this look it up, so a list of N rows costs one
-   byeReport(), not N. Pass 0 where the context team is irrelevant (board cells,
-   the roster list itself). */
-function byeChip(nflTeam,clash){
+   byeReport(), not N.
+
+   ctx picks the render per the design handoff:
+     'cell'  — board cells: NO chip at zero collisions. Most cells go quiet, which
+               is also what the phone cell diet (item 5) was asking for.
+     'pool' / 'roster' — quiet grey chip at zero; it's reference data there.
+
+   The ▲count is the colorblind-safe channel: severity is legible with every hue
+   stripped out. Fill-weight and outline are backups, never the only signal.
+
+   DEVIATION FROM THE HANDOFF, deliberate: item 2 asks for danger-red *filled* at
+   2+, but the fill/outline law three lines below it says a status is never a solid
+   chip — and --danger and --qb are the SAME hue (#e0644f), so a solid red bye chip
+   is pixel-identical to a QB position chip at 9px. That is exactly the confusion
+   the law exists to prevent. 2+ therefore gets red outline + bold + a 12% wash,
+   matching .byebar.bad in the histogram so the two surfaces agree. */
+function byeChip(nflTeam,clash,ctx){
   const w=byeOf(nflTeam); if(!w) return '';
   const c=clash||0;
+  if(c===0 && ctx==='cell') return '';
   const cls='bye'+(c>=2?' clash':(c===1?' warn':''));
-  const tip=c>=2 ? 'Bye week '+w+' — you already start '+c+' players that week'
-          : (c===1 ? 'Bye week '+w+' — 1 starter already off that week' : 'Bye week '+w);
-  return '<span class="'+cls+'" title="'+esc(tip)+'">B'+w+'</span>';
+  const mark=c>0?' <b class="byct">▲'+c+'</b>':'';
+  const tip=c>0 ? byeSentence(ctxTeam(),w) : 'Bye week '+w;
+  return '<span class="'+cls+'"'+(c>0?' data-bye="'+w+'" role="button" tabindex="0"':'')
+       + ' title="'+esc(tip)+'">B'+w+mark+'</span>';
 }
 /* League lineup minimums (Constitution Art. V): 1 QB, 2 RB, 2 WR, 1 TE, 2 FLEX (RB/WR/TE), 1 D/ST, 1 K + 6 bench */
 function teamNeeds(team){
@@ -2501,11 +2601,40 @@ function renderByes(team){
   });
   html+='</div>';
   if(worst>=3){
-    const bad=weeks.filter(w=>rep[w].length>=3);
-    html+='<div class="byewarn">⚠ '+bad.map(w=>rep[w].length+' starters off in Week '+w).join(' · ')+' — you\'ll be streaming that week.</div>';
+    html+='<div class="byewarn">'+weeks.filter(w=>rep[w].length>=3)
+      .map(w=>'⚠ '+esc(byeSentence(team,w))).join('<br>')+'</div>';
   }
   el.innerHTML=html;
 }
+/* Tap a ▲ chip -> the same sentence, as an inline toast. Tooltips don't exist on
+   touch, and the handoff calls the chip out as tappable. Delegated from document
+   so it survives every re-render of the board, pool and roster list — none of
+   which we want to attach listeners inside (renderBA alone rebuilds 18 rows on
+   every pick). */
+function showByeToast(week){
+  const msg=byeSentence(ctxTeam(),week); if(!msg) return;
+  let t=$('#byeToast');
+  if(!t){ t=document.createElement('div'); t.id='byeToast'; document.body.appendChild(t); }
+  t.textContent='⚠ '+msg;
+  t.classList.add('show');
+  clearTimeout(showByeToast._t);
+  showByeToast._t=setTimeout(()=>t.classList.remove('show'),4200);
+}
+document.addEventListener('click',function(e){
+  const chip=e.target.closest&&e.target.closest('.bye[data-bye]');
+  if(!chip) return;
+  /* Bye chips live inside .ba rows and board cells, both of which treat a click as
+     "draft this player". Same trap as gotcha 22 — stop it here. */
+  e.preventDefault(); e.stopPropagation();
+  showByeToast(Number(chip.getAttribute('data-bye')));
+},true);
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter'&&e.key!==' ') return;
+  const chip=e.target.closest&&e.target.closest('.bye[data-bye]');
+  if(!chip) return;
+  e.preventDefault(); e.stopPropagation();
+  showByeToast(Number(chip.getAttribute('data-bye')));
+},true);
 function renderRoster(){
   const wrap=$('#myRosterWrap');
   const team = ctxTeam();
@@ -2532,7 +2661,7 @@ function renderRoster(){
   const rep=byeReport(team), hot=new Set();
   Object.keys(rep).forEach(w=>{ if(rep[w].length>=3) rep[w].forEach(p=>hot.add(p.overall)); });
   const rows=[];
-  SLOTS.forEach(s=>{ if(s.team===team){ const p=picks[s.overall]; rows.push('<div class="rr'+(p&&hot.has(s.overall)?' byehot':'')+'"><span class="rd">R'+s.round+'</span>'+(p?(esc(p.name)+' <span class="poschip '+p.pos+'">'+p.pos+'</span><span class="hint">'+esc(p.team||'')+'</span>'+byeChip(p.team,0)+(p.keeper?' ⭐':'')):'<span class="hint">—</span>')+'</div>'); }});
+  SLOTS.forEach(s=>{ if(s.team===team){ const p=picks[s.overall]; rows.push('<div class="rr'+(p&&hot.has(s.overall)?' byehot':'')+'"><span class="rd">R'+s.round+'</span>'+(p?(esc(p.name)+' <span class="poschip '+p.pos+'">'+p.pos+'</span><span class="hint">'+esc(p.team||'')+'</span>'+byeChip(p.team,0,'roster')+(p.keeper?' ⭐':'')):'<span class="hint">—</span>')+'</div>'); }});
   $('#myroster').innerHTML=rows.join('');
 }
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -2626,7 +2755,29 @@ function setMode(m){
 }
 $('#modeLive').onclick=()=>setMode('live');
 $('#modeMock').onclick=()=>setMode('mock');
-$('#themeSel').onchange=e=>{ document.body.className='theme-'+e.target.value; store.set('wpial_theme',e.target.value); };
+/* NB: this used to be `body.className='theme-'+v`, which silently wiped the
+   `colorblind` class — changing theme would turn colorblind mode off. Themes and
+   the accessibility palette are independent, so they're set independently. */
+$('#themeSel').onchange=e=>{
+  document.body.classList.remove('theme-broadcast','theme-chalk','theme-light');
+  document.body.classList.add('theme-'+e.target.value);
+  store.set('wpial_theme',e.target.value);
+};
+/* ---- Colorblind mode ----
+   CB_KEY is the homepage's key, verbatim, and the two pages are same-origin, so
+   the preference is genuinely shared rather than duplicated. The homepage owns the
+   toggle ceremony; here it's just a switch. */
+const CB_KEY='wpial-cb-mode';
+function setCbMode(on){
+  document.body.classList.toggle('colorblind',on);
+  const b=$('#cbToggle');
+  if(b){ b.classList.toggle('on',on); b.setAttribute('aria-pressed',on?'true':'false');
+         b.textContent=on?'👓 Colorblind: ON':'👓 Colorblind'; }
+  try{ localStorage.setItem(CB_KEY,on?'1':'0'); }catch(e){}
+}
+if($('#cbToggle')) $('#cbToggle').onclick=()=>setCbMode(!document.body.classList.contains('colorblind'));
+/* Toggled in another tab (e.g. on the homepage) — follow it live. */
+window.addEventListener('storage',e=>{ if(e.key===CB_KEY) setCbMode(e.newValue==='1'); });
 $('#undoBtn').onclick=undo;
 $('#resetBtn').onclick=()=>confirmBox('Reset '+mode+' draft?','This clears every pick on the '+mode+' board (keepers stay locked).',()=>{ picks={};cursor=0;undoStack=[];stopMock(); saveState(); render(); });
 $('#mockGo').onclick=startMock;
@@ -3164,6 +3315,8 @@ function fetchLivePool(){
 (function init(){
   document.body.className='theme-'+store.get('wpial_theme','broadcast');
   $('#themeSel').value=store.get('wpial_theme','broadcast');
+  /* After the theme class is set, never before — className= above clobbers it. */
+  try{ setCbMode(localStorage.getItem(CB_KEY)==='1'); }catch(e){}
   myTeamSel.value=myTeam;
   loadKeepersFromList(KEEPERS_SNAPSHOT,'live');            // embedded fallback
   const manual=store.get('wpial_keepers_v1',[]);
