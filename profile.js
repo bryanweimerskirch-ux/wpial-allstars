@@ -284,7 +284,8 @@
       },
       logo_kind: 'default', logo_data: '',
       shape: 'shield', icon: 'football', mono: '', useMono: false,
-      jersey: { template: 'classic', number: fid.replace(/[^0-9]/g, ''), wordmark: '', sleeves: 'stripe' }
+      /* f01 -> 1, not 01: the number field is a jersey number, not a franchise id. */
+      jersey: { template: 'classic', number: fid.replace(/[^0-9]/g, '').replace(/^0+(?=\d)/, ''), wordmark: '', sleeves: 'stripe' }
     }, 'Reset…');
     baseline = snap();
     lastKey = null;
