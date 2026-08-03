@@ -13,7 +13,7 @@
   --text:#e8eaee; --muted:#9aa3b0; --accent:#d8b45c; --accent2:#f0d488;
   --ok:#57b26a; --warn:#e0644f; --none:#8a93a0;
   --hdr-h:96px;
-  /* Owner colours are SCOPED. They never reassign --accent/--text/--bg, which carry
+  /* Owner colors are SCOPED. They never reassign --accent/--text/--bg, which carry
      site meaning (on-the-clock, conflict, keeper gold). One owner picking a bad orange
      must not repaint what every other page means. --fx-ink is derived, never chosen. */
   --fx-primary:#d8b45c; --fx-secondary:#12161d; --fx-accent:#f0d488; --fx-ink:#0d1117;
@@ -73,7 +73,7 @@ main{max-width:1180px;margin:0 auto;padding:20px 14px 80px;}
 .lineage li.now{color:var(--text);font-weight:600;}
 .lineage li.now::before{content:'●';color:var(--fx-primary);font-size:9px;top:4px;}
 
-/* ---- colours ---- */
+/* ---- colors ---- */
 .swatchRow{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
 .swatchRow input[type=color]{width:40px;height:34px;padding:2px;border-radius:7px;flex:0 0 auto;cursor:pointer;}
 .swatchRow .nm{font-size:10.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);width:78px;flex:0 0 auto;}
@@ -137,7 +137,7 @@ main{max-width:1180px;margin:0 auto;padding:20px 14px 80px;}
 .dbHead b{display:block;font-family:'Oswald';font-size:12px;letter-spacing:.4px;}
 .dbHead span{display:block;font-size:10px;color:var(--muted);}
 
-/* ---- save state: glyph AND word, never colour alone ---- */
+/* ---- save state: glyph AND word, never color alone ---- */
 .savebar{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 35%);
      padding:16px 0 8px;margin-top:6px;z-index:40;}
 .saverow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
@@ -223,9 +223,9 @@ main{max-width:1180px;margin:0 auto;padding:20px 14px 80px;}
         </div>
       </section>
 
-      <!-- COLOURS -->
+      <!-- COLORS -->
       <section class="card">
-        <span class="lab">Team colours</span>
+        <span class="lab">Team colors</span>
         <div class="swatchRow">
           <span class="nm">Primary</span><input type="color" id="cP"><span class="hex" id="hP"></span>
         </div>
@@ -294,9 +294,9 @@ main{max-width:1180px;margin:0 auto;padding:20px 14px 80px;}
             <select id="fSleeve"><option value="stripe">Stripe</option><option value="solid">Solid</option><option value="none">None</option></select>
           </div>
         </div>
-        <p class="sub">Colour slots: primary is the body, secondary the sleeves and collar,
+        <p class="sub">Color slots: primary is the body, secondary the sleeves and collar,
           accent the number and stripes. The number gets an outline automatically when it
-          would otherwise wash out against your body colour.</p>
+          would otherwise wash out against your body color.</p>
       </section>
 
     </div>
