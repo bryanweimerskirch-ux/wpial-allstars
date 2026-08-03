@@ -5,7 +5,7 @@
  * owner can declare their 5 keepers. Requires auth.js (uses WPIAL_AUTH / WPIAL_USER).
  * Deliberately NOT a ⭐ — the site already uses ⭐ for "declared 2026 keeper".
  *
- * DESIGN RULE (important): the existing click-to-signal-interest behaviour on
+ * DESIGN RULE (important): the existing click-to-signal-interest behavior on
  * `span.player` is left COMPLETELY alone. Interest is the whole point of the Gelly
  * feed. Keeper selection gets its OWN button, a separate click target, and calls
  * stopPropagation so the two can never be confused.
