@@ -5,9 +5,19 @@
  * upload) and their jersey. NOT the team name — that comes from ESPN, hourly, so
  * there is no field for it and no way for the site and ESPN to disagree.
  *
- * SAVING is ambient: 900ms after the last change, one PATCH of only the fields that
- * actually changed. Optimistic, with snapshot-and-rollback on failure, preferring the
- * server's echo over the local copy — the same shape keepers.js uses.
+ * SAVING IS EXPLICIT, not ambient. An owner picks colours and shapes by trying things,
+ * and autosave turns "let me see what purple looks like" into a committed change they
+ * then have to reverse from memory. So: edit freely, the page shows what it would look
+ * like, and nothing reaches the league until Save is pressed. Discard puts it back.
+ *
+ * THREE LAYERS PROTECT UNSAVED WORK, in order of how much they can be trusted:
+ *   1. The local draft. Every keystroke is mirrored to localStorage, so navigating away
+ *      and coming back restores the edit with a Save / Discard prompt. This is the one
+ *      that actually cannot lose work, and it is the only one that works on a phone.
+ *   2. In-page navigation is intercepted while dirty — clicking a nav link asks first.
+ *   3. beforeunload, as a backstop. Browsers show their own generic wording and MOBILE
+ *      SAFARI AND CHROME OFTEN SKIP IT ENTIRELY, which is exactly why it is layer three
+ *      and not the plan.
  *
  * CONTRAST is warn, never block. Telling somebody their team colours are illegal is the
  * wrong product. The rule is on text PLACEMENT: --fx-ink is whichever of dark/light
@@ -20,7 +30,6 @@
   'use strict';
 
   var API = 'https://script.google.com/macros/s/AKfycbxX-UpCAd7oeWug1KcnMZrSnMJyVuob_qHtSv0z1C7im7MpUMgHYMOtdvOKl98VXy37eA/exec';
-  var SAVE_DELAY = 900;
   var DRAFT_KEY = 'wpial_profile_draft_v1';
   var UPLOAD_PX = 256;
   var TARGET_CHARS = 20000;     // aim under this
@@ -30,7 +39,7 @@
   var FX = null, me = null, fid = null;
   var st = null;                 // working copy
   var saved = null;              // last known server copy
-  var saveTimer = null, pending = {}, busy = false;
+  var pending = {}, busy = false;
 
   function post(params) {
     var b = new URLSearchParams();
@@ -49,6 +58,7 @@
   var SAVE_UI = {
     saved:   ['✓', 'Saved'],
     saving:  ['↻', 'Saving…'],
+    dirty:   ['●', 'Not saved yet'],
     offline: ['⌁', 'Offline — kept on this device'],
     error:   ['!', '']
   };
@@ -182,21 +192,33 @@
   }
 
   /* ---------- change plumbing ---------- */
-  function touch(patch) {
+  function isDirty() { return !!Object.keys(pending).length; }
+
+  /** Record a change locally. Nothing goes to the server until Save. */
+  function mark(patch) {
     Object.keys(patch).forEach(function (k) { pending[k] = patch[k]; });
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(st)); } catch (e) {}
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ fid: fid, st: st, pending: pending })); } catch (e) {}
     paint();
-    setSave('saving');
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(flush, SAVE_DELAY);
+    setSave('dirty');
+    paintActions();
   }
 
-  function flush() {
-    if (busy) { clearTimeout(saveTimer); saveTimer = setTimeout(flush, 250); return; }
-    var body = pending; pending = {};
-    if (!Object.keys(body).length) { setSave('saved'); return; }
+  function paintActions() {
+    var d = isDirty();
+    $('#saveBtn').hidden = !d;
+    $('#discardBtn').hidden = !d;
+    $('#dirtyNote').hidden = !d;
+    $('#saveBtn').disabled = busy;
+  }
+
+  function save() {
+    if (busy || !isDirty()) return;
+    var body = {}, keys = Object.keys(pending);
+    keys.forEach(function (k) { body[k] = pending[k]; });
     var snapshot = JSON.parse(JSON.stringify(saved));
     busy = true;
+    setSave('saving');
+    paintActions();
     body.action = 'profile_save';
     body.token = token();
     if (me && me.is_commish && fid !== (me.fid || '')) body.fid = fid;
@@ -204,23 +226,40 @@
     post(body).then(function (r) {
       busy = false;
       if (r && r.ok && r.profile) {
+        /* Only clear the keys we actually sent — anything changed while the request was
+           in flight stays dirty rather than being silently dropped. */
+        keys.forEach(function (k) { delete pending[k]; });
         saved = r.profile;                       // prefer the server's echo
-        /* ...but only let it drive the UI when nothing newer is already queued. A fast
-           second edit must not be reverted by the echo of the first one. */
-        if (!Object.keys(pending).length) adopt(saved, true);
-        setSave('saved');
-        try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+        if (!isDirty()) {
+          adopt(saved, true);
+          setSave('saved');
+          try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+        } else {
+          setSave('dirty');
+        }
       } else {
-        /* Server prose, rendered raw — name_taken, throttled, bad_payload, forbidden,
-           read_only, too_big all arrive as sentences written for a human. */
-        if (r && r.code === 'bad_token') { setSave('error', 'Session expired — reloading.'); setTimeout(function () { location.reload(); }, 1200); return; }
-        saved = snapshot; adopt(saved, true);
-        setSave('error', (r && r.error) || 'Could not save.');
+        /* Server prose, rendered raw — bad_payload, forbidden, read_only, too_big all
+           arrive as sentences written for a human. Edits are KEPT so nothing is lost. */
+        if (r && r.code === 'bad_token') { setSave('error', 'Session expired — reloading.'); setTimeout(function () { location.reload(); }, 1400); return; }
+        saved = snapshot;
+        setSave('error', (r && r.error) || 'Could not save — your changes are still here.');
       }
+      paintActions();
     }).catch(function () {
       busy = false;
-      setSave('offline');                        // kept locally; the draft key survives
+      setSave('offline');                        // kept locally; the draft survives
+      paintActions();
     });
+  }
+
+  /** Put everything back to what the league currently sees. */
+  function discard() {
+    pending = {};
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+    adopt(saved, false);
+    setSave('saved');
+    paintActions();
+    $('#restoreBar').hidden = true;
   }
 
   /** Load a server profile into the working copy. */
@@ -265,11 +304,11 @@
 
   function saveLogo() {
     if (st.logo_kind === 'builder') {
-      touch({ logo_kind: 'builder', logo_data: JSON.stringify({
+      mark({ logo_kind: 'builder', logo_data: JSON.stringify({
         shape: st.shape, icon: st.icon, mono: st.mono, useMono: st.useMono }) });
     }
   }
-  function saveJersey() { touch({ jersey_json: JSON.stringify(st.jersey) }); }
+  function saveJersey() { mark({ jersey_json: JSON.stringify(st.jersey) }); }
 
   /* ---------- upload: raster only, downscaled in the browser ---------- */
   function shrink(file) {
@@ -331,7 +370,7 @@
       var p = FX.presets()[+b.dataset.i];
       st.colors = { primary: p.p, secondary: p.s, accent: p.a };
       syncInputs();
-      touch({ color_primary: p.p, color_secondary: p.s, color_accent: p.a });
+      mark({ color_primary: p.p, color_secondary: p.s, color_accent: p.a });
     };
 
     $('#fillRow').innerHTML =
@@ -348,14 +387,14 @@
   }
 
   function wire() {
-    $('#fFirst').oninput = function () { st.first_name = this.value; touch({ first_name: this.value }); };
-    $('#fMotto').oninput = function () { st.motto = this.value; touch({ motto: this.value }); };
+    $('#fFirst').oninput = function () { st.first_name = this.value; mark({ first_name: this.value }); };
+    $('#fMotto').oninput = function () { st.motto = this.value; mark({ motto: this.value }); };
     ['P', 'S', 'A'].forEach(function (k) {
       var key = k === 'P' ? 'primary' : (k === 'S' ? 'secondary' : 'accent');
       $('#c' + k).oninput = function () {
         st.colors[key] = this.value;
         var patch = {}; patch['color_' + key] = this.value;
-        touch(patch);
+        mark(patch);
       };
     });
     $('#fMono').oninput = function () {
@@ -371,6 +410,40 @@
     $('#fWord').oninput = function () { st.jersey.wordmark = this.value.toUpperCase(); saveJersey(); };
     $('#fSleeve').onchange = function () { st.jersey.sleeves = this.value; saveJersey(); };
 
+    $('#saveBtn').onclick = save;
+    $('#discardBtn').onclick = discard;
+    $('#restoreSave').onclick = function () { $('#restoreBar').hidden = true; save(); };
+    $('#restoreDiscard').onclick = discard;
+
+    /* Layer 2 — in-page navigation. The nav strip and the injected links are ordinary
+       same-origin navigations, so catch them while dirty and ask rather than letting the
+       browser's generic dialog (or nothing at all, on a phone) handle it. */
+    document.addEventListener('click', function (e) {
+      if (!isDirty()) return;
+      var a = e.target.closest('a[href], button[id^="sn-"], #snDash');
+      if (!a) return;
+      if (a.closest('#savebar') || a.closest('#restoreBar')) return;
+      var href = a.getAttribute && a.getAttribute('href');
+      if (href && (href.charAt(0) === '#' || /^(mailto:|tel:)/.test(href))) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var go = function () {
+        if (href) window.location.href = href;
+        else a.click();
+      };
+      askBeforeLeaving(go);
+    }, true);
+
+    /* Layer 3 — the backstop. Browsers substitute their own wording, and mobile Safari
+       and Chrome frequently ignore this entirely. It is here to catch a desktop tab
+       close, nothing more; the local draft is what actually keeps the work. */
+    window.addEventListener('beforeunload', function (e) {
+      if (!isDirty()) return;
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    });
+
     $('#logoTabs').onclick = function (e) {
       var b = e.target.closest('button[data-pane]'); if (!b || b.disabled) return;
       document.querySelectorAll('#logoTabs button').forEach(function (x) { x.classList.toggle('on', x === b); });
@@ -384,13 +457,45 @@
         st.logo_kind = 'upload'; st.logo_data = durl;
         $('#uPreview').innerHTML = '<img alt="" src="' + durl + '" style="width:64px;height:64px;border-radius:50%;display:block">';
         $('#uNote').textContent = 'Resized to ' + UPLOAD_PX + '×' + UPLOAD_PX + ' — ' + Math.round(durl.length / 1024) + ' KB.';
-        touch({ logo_kind: 'upload', logo_data: durl });
+        mark({ logo_kind: 'upload', logo_data: durl });
       }).catch(function (err) {
         $('#uNote').textContent = err.message;
         setSave('error', err.message);
       });
     };
 
+  }
+
+  /** Inline "you have unsaved changes" prompt. Deliberately not window.confirm: the site
+   *  has never used blocking dialogs, and a native confirm cannot say what Save will do. */
+  function askBeforeLeaving(proceed) {
+    var bar = $('#restoreBar');
+    bar.hidden = false;
+    bar.innerHTML =
+      '<b>Unsaved changes.</b><span>Save them before you go, or leave them behind?</span>' +
+      '<span class="rspacer"></span>' +
+      '<button type="button" id="leaveStay">Stay here</button>' +
+      '<button type="button" id="leaveDiscard">Leave without saving</button>' +
+      '<button type="button" class="primary" id="leaveSave">Save and go</button>';
+    bar.scrollIntoView({ block: 'nearest' });
+    $('#leaveStay').onclick = function () { bar.hidden = true; };
+    $('#leaveDiscard').onclick = function () {
+      pending = {};
+      try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+      proceed();
+    };
+    $('#leaveSave').onclick = function () {
+      bar.hidden = true;
+      var wasDirty = isDirty();
+      save();
+      if (!wasDirty) return proceed();
+      var waited = 0;
+      var poll = setInterval(function () {
+        waited += 120;
+        if (!busy && !isDirty()) { clearInterval(poll); proceed(); }
+        else if (waited > 8000) { clearInterval(poll); }   // save failed; stay put
+      }, 120);
+    };
   }
 
   /* ---------- boot ---------- */
@@ -415,16 +520,24 @@
       };
       adopt(saved, false);
 
-      /* An unsaved edit that never reached the server survives a refresh. */
-      try {
-        var d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
-        if (d && d.fid === fid) { st = d; syncInputs(); paint(); setSave('offline'); }
-      } catch (e) {}
-
       buildChips(); wire(); paint();
       $('#gate').hidden = true;
       $('#app').hidden = false;
       setSave('saved');
+      paintActions();
+
+      /* Layer 1 — the one that actually cannot lose work. An edit that never reached the
+         server survives a refresh, a closed tab, or a phone that killed the page. */
+      try {
+        var d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+        if (d && d.fid === fid && d.pending && Object.keys(d.pending).length) {
+          st = d.st; pending = d.pending;
+          syncInputs(); paint();
+          setSave('dirty');
+          paintActions();
+          $('#restoreBar').hidden = false;
+        }
+      } catch (e) {}
     });
   }
 
