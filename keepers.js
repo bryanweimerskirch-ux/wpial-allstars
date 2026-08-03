@@ -48,6 +48,7 @@
     '.wk-bar.done b{color:#3fb950;}' +
     '.wk-bar .wk-msg{color:#ff9f4d;}' +
     '.wk-bar .wk-lock{color:#9aa4b2;}' +
+    '.wk-bar .wk-cap{color:#9aa4b2;font-weight:400;}' +
 
     /* One player per line, never wrapping mid-name. The board was laid out as a
        wrapping flex row; adding a pill pushed long names onto a second line. */
@@ -148,10 +149,12 @@
     if (!canEdit(team)) return;
     var b = bar(card, team);
     var n = teamPicks(team).length;
-    b.className = 'wk-bar' + (n === MAX ? ' done' : '');
+    /* Five is a CEILING, not a quota -- an owner who keeps three is finished, not behind.
+       So no 'incomplete' styling below MAX and no progress framing in the label. */
+    b.className = 'wk-bar' + (n ? ' done' : '');
     b.textContent = '';
     var lbl = document.createElement('span');
-    lbl.innerHTML = 'Keepers: <b>' + n + ' / ' + MAX + '</b>';
+    lbl.innerHTML = 'Keepers: <b>' + n + '</b> <span class="wk-cap">(up to ' + MAX + ')</span>';
     b.appendChild(lbl);
 
     var note = document.createElement('span');
