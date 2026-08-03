@@ -75,9 +75,16 @@ table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width
 #board th.rdcol,#board td.rdcol{width:34px;min-width:34px;max-width:34px;font-family:'Oswald';color:var(--muted);font-size:12px;text-align:center;position:sticky;left:-12px;background:var(--bg);z-index:10;}
 #board thead th.rdcol{z-index:30;top:-12px;left:-12px;}
 #board td{background:var(--cellbg);border:1px solid var(--line);border-radius:6px;padding:4px 6px;height:44px;vertical-align:top;font-size:11.5px;line-height:1.25;position:relative;}
-#board td .pk{position:absolute;top:2px;right:5px;font-size:9px;color:var(--muted);opacity:.8;}
+/* The pick label used to be absolutely positioned in the cell's top-right corner. On a
+   phone the columns are ~106px, names wrap, and the first line ran straight THROUGH the
+   label -- "Jahmyr Gibbs" over "1.02". It is emitted before the name, so floating it
+   keeps it in the same corner while the name wraps AROUND it instead of under it. */
+#board td .pk{float:right;margin-left:5px;font-size:9px;color:var(--muted);opacity:.8;}
 #board td .nm{font-weight:600;display:block;margin-top:1px;word-break:break-word;}
 #board td .meta{font-size:9.5px;color:var(--muted);}
+/* The remove-mock-keeper x is pinned bottom-right; without this reservation the meta
+   line runs underneath it ("KEEPER . mock" with the x sitting on "mock"). */
+#board td.keeper .meta{display:block;padding-right:20px;}
 #board td.filled{background:var(--cellfill);}
 #board td.pos-QB{border-left:4px solid var(--qb);}
 #board td.pos-RB{border-left:4px solid var(--rb);}
@@ -91,7 +98,7 @@ table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width
 #board td.otc .nm{color:var(--accent2);font-family:'Oswald';letter-spacing:1px;font-size:10px;text-transform:uppercase;}
 #board td.userteam-col{outline:1px dashed rgba(216,180,92,.25);}
 
-.poschip{display:inline-block;font-size:8.5px;font-weight:700;border-radius:3px;padding:0 4px;color:#fff;margin-right:3px;vertical-align:1px;}
+.poschip{white-space:nowrap;display:inline-block;font-size:8.5px;font-weight:700;border-radius:3px;padding:0 4px;color:#fff;margin-right:3px;vertical-align:1px;}
 .poschip.QB{background:var(--qb);} .poschip.RB{background:var(--rb);} .poschip.WR{background:var(--wr);}
 .poschip.TE{background:var(--te);} .poschip.K{background:var(--k);} .poschip.DEF{background:var(--def);}
 
@@ -145,7 +152,11 @@ table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width
 .src-live{color:var(--ok);} .src-manual{color:var(--accent);}
 /* ---------- keeper decision cells ---------- */
 #board td.cand{border-style:dashed;border-color:var(--accent);background:transparent;}
-#board td.cand .cnm{display:flex;gap:3px;align-items:center;font-weight:600;font-size:10px;margin-top:1px;word-break:break-word;}
+/* clear:right puts the keeper row below the floated pick label rather than beside it;
+   flex-wrap lets the chip and name drop to their own line instead of being crushed
+   ('Keep' was breaking to 'Ke/ep' in a 106px column). */
+#board td.cand .cnm{display:flex;gap:3px;align-items:center;font-weight:600;font-size:10px;margin-top:1px;word-break:break-word;clear:right;flex-wrap:wrap;}
+#board td.cand .cnm .kp{white-space:nowrap;flex:0 0 auto;}
 #board td.cand .cnm:first-of-type{margin-top:10px;}
 #board td.cand .cnm .kp{font-size:9px;padding:0 4px;border-radius:7px;border-color:var(--accent);color:var(--accent);line-height:1.5;}
 #board td.cand .cnm .kp:hover{background:var(--accent);color:#14110a;}
@@ -2304,7 +2315,7 @@ function renderBA(){
 function keepViewTeam(){
   /* The ⭐ Keep pool is about YOUR keepers, not whoever is on the clock.
      Commish can point it at any team via the picker. Falls back to the old
-     on-the-clock behaviour only when nobody is logged in. */
+     on-the-clock behavior only when nobody is logged in. */
   const me = window.WPIAL_USER || {};
   if(me.is_commish && window.__keepTeam && ROSTERS[window.__keepTeam]) return window.__keepTeam;
   if(me.team && ROSTERS[me.team]) return me.team;
