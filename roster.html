@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WPIAL All Stars — Roster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Same draft-board palette as matchup.html — this page is its single-team sibling and the
+   two must not drift apart visually any more than their row grammar does. */
+:root{
+  --bg:#0b0e13; --panel:#12161d; --panel2:#0f1319; --line:#232a35;
+  --text:#e8eaee; --muted:#9aa3b0; --accent:#d8b45c; --accent2:#f0d488;
+  --danger:#e0644f; --ok:#57b26a;
+  --qb:#e0644f; --rb:#57b26a; --wr:#5b9bd5; --te:#e39b3b; --k:#a97fd1; --def:#8a93a0;
+  --hdr-h:96px;
+  --fx-primary:#d8b45c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-size:14px;
+     font-family:'Barlow',-apple-system,Segoe UI,Roboto,sans-serif;}
+h1,h2,h3,.oswald{font-family:'Oswald',sans-serif;letter-spacing:.5px;margin:0;}
+a{color:var(--accent2);}
+button{font-family:'Barlow',sans-serif;cursor:pointer;border-radius:6px;border:1px solid var(--line);
+       background:var(--panel);color:var(--text);padding:6px 12px;font-size:13px;}
+button:hover{border-color:var(--accent);}
+button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent2);outline-offset:2px;}
+select{font-family:'Barlow',sans-serif;background:var(--panel2);color:var(--text);
+       border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:12.5px;max-width:220px;}
+
+header{display:flex;align-items:center;gap:16px;padding:10px 16px;border-bottom:2px solid var(--accent);
+       background:var(--panel2);position:sticky;top:0;z-index:50;flex-wrap:wrap;}
+.logo{display:flex;flex-direction:column;line-height:1.05;}
+.logo b{font-family:'Oswald';font-size:20px;color:var(--accent);letter-spacing:1.5px;}
+.logo span{font-size:10px;color:var(--muted);letter-spacing:2.5px;text-transform:uppercase;}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+main{max-width:760px;margin:0 auto;padding:12px 12px 60px;}
+footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font-size:11px;text-align:center;}
+
+.topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.back{font-size:12.5px;text-decoration:none;color:var(--muted);}
+.back:hover{color:var(--accent2);}
+
+/* identity block — the page is useful even with no box score behind it */
+.hero{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);
+      border-left:4px solid var(--fx-primary);border-radius:12px;padding:12px 14px;}
+.hero .kit{flex:0 0 auto;width:64px;}
+.hero .kit svg{display:block;width:100%;height:auto;}
+.hero .who{min-width:0;flex:1 1 auto;}
+.hero h2{font-size:20px;line-height:1.15;}
+.hero .meta{font-family:'Barlow Semi Condensed';font-size:11px;letter-spacing:1.2px;
+      text-transform:uppercase;color:var(--muted);margin-top:4px;}
+.hero .vs{margin-top:6px;font-size:12px;}
+
+.sect{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;}
+.sect-t{font-family:'Oswald';font-size:10.5px;letter-spacing:2px;color:var(--muted);margin:2px 0 6px;}
+.note{color:var(--muted);font-size:12.5px;line-height:1.6;}
+.note b{color:var(--text);font-weight:600;}
+.stale{display:inline-block;font-family:'Barlow Semi Condensed';font-size:10px;letter-spacing:1.2px;
+      text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;
+      padding:2px 8px;margin-left:6px;}
+.skel{display:block;height:44px;border-radius:8px;margin:6px 0;
+      background:linear-gradient(90deg,var(--panel2),var(--line),var(--panel2));animation:sk 1.4s ease-in-out infinite;}
+@keyframes sk{0%,100%{opacity:.55}50%{opacity:.95}}
+@media (prefers-reduced-motion:reduce){.skel{animation:none;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><b>WPIAL ALL STARS</b><span>Team Roster</span></div>
+  <div class="hdr-right"></div>
+</header>
+
+<main>
+  <div class="topbar">
+    <a class="back" id="back" href="index.html#standings">&lsaquo; Standings</a>
+    <label class="back" for="teamSel" style="margin-left:6px;">Team</label>
+    <select id="teamSel" aria-label="Team"></select>
+    <label class="back" for="weekSel">Week</label>
+    <select id="weekSel" aria-label="Week"></select>
+  </div>
+
+  <div class="hero" id="hero"></div>
+
+  <div class="sect">
+    <div class="sect-t" id="lineupT">STARTERS</div>
+    <div id="lineup"><span class="skel"></span><span class="skel"></span><span class="skel"></span></div>
+  </div>
+</main>
+
+<footer>
+  WPIAL All Stars &middot; powered by Wadi Solutions &middot;
+  Read-only &mdash; lineups are set in the ESPN app.
+</footer>
+
+<script src="env.js"></script>
+<script src="franchise.js"></script>
+<script src="auth.js"></script>
+<script src="matchrow.js"></script>
+<script src="sitenav.js"></script>
+<script>
+/**
+ * roster.html — one franchise's week, single column.
+ *
+ * Built to the "minimum bar" in the rosters-view scoping doc, and deliberately to nothing
+ * more than that. It is READ-ONLY: lineups are set in the ESPN app and a manage surface
+ * with no write-back is the trap that doc warned about, so there are no start/sit controls
+ * here and the footer says why.
+ *
+ * It reuses matchrow.js rather than restating the row grammar, which is the whole reason
+ * that file exists — position tag, name, NFL team, injury chip, status dot, opp + clock,
+ * stat line, actual over proj are one implementation shared with matchup.html.
+ *
+ * Two open questions from the scoping doc are answered here by the cheapest defensible
+ * choice, both easy to revisit:
+ *   - "standalone page or a section of a future franchise page?" -> standalone for now, and
+ *     small enough to become a section of one later without rewriting.
+ *   - "season-to-date totals per player, or only the selected week?" -> the selected week.
+ *     matchup_detail is a per-week action; season-to-date would need a new backend action,
+ *     which is not worth cutting a deployment for before the draft.
+ * Bye-collision chips (B7 up-1) are NOT here: they ship with the draft board first (there is
+ * an open `bye-weeks` branch), and this page should reuse them rather than invent a second set.
+ */
+(function () {
+  'use strict';
+  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxX-UpCAd7oeWug1KcnMZrSnMJyVuob_qHtSv0z1C7im7MpUMgHYMOtdvOKl98VXy37eA/exec';
+  var R = window.WPIAL_ROW;
+
+  var MAXCONC = 4, TRIES = 3, live = 0, waiting = [];
+  function pump() { while (live < MAXCONC && waiting.length) { live++; waiting.shift()(); } }
+  function json(url) {
+    return new Promise(function (resolve, reject) {
+      waiting.push(function () {
+        var n = 0;
+        (function go() {
+          n++;
+          fetch(url).then(function (r) { return r.text(); }).then(function (t) {
+            var d;
+            try { d = JSON.parse(t); } catch (e) { throw new Error('not JSON'); }
+            live--; pump(); resolve(d);
+          }).catch(function (err) {
+            if (n < TRIES) { setTimeout(go, 500 * n * n); return; }
+            live--; pump(); reject(err);
+          });
+        })();
+      });
+      pump();
+    });
+  }
+
+  function $(id) { return document.getElementById(id); }
+  function qp(k) {
+    var m = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  function fx() { return window.WPIAL_FX; }
+  function fidOf(n) { return (fx() && fx().resolve(n)) || null; }
+  function nameOf(f) { return (fx() && fx().name(f)) || String(f || ''); }
+
+  var state = { week: null, weeks: null, form: {}, fid: null, detail: 'pending' };
+
+  /* Captured ONCE, at load. syncURL() writes the current team back into the address bar,
+     so re-reading qp('team') later cannot distinguish "the visitor asked for this team"
+     from "we just wrote our own default there" — and the second reading is what made a
+     visitor who signed in a moment after the page settled stay stuck on whichever team
+     happened to be first in the registry. */
+  var URL_NAMED_TEAM = !!qp('team');
+  var userPickedTeam = false;
+
+  function myFid() {
+    var u = window.WPIAL_USER;
+    if (!u) return null;
+    return fidOf(u.fid || u.team);
+  }
+
+  function allFids() {
+    if (!fx()) return [];
+    return fx().all().map(function (f) { return f.fid; });
+  }
+
+  function opponentFor(week, fid) {
+    var list = (state.weeks && state.weeks[week]) || [];
+    for (var i = 0; i < list.length; i++) {
+      var a = fidOf(list[i].away), b = fidOf(list[i].home);
+      if (a === fid) return { opp: b, mu: list[i], home: false };
+      if (b === fid) return { opp: a, mu: list[i], home: true };
+    }
+    return null;
+  }
+
+  function gameState(mu) {
+    if (!mu) return 'pre';
+    if (mu.winner === 'AWAY' || mu.winner === 'HOME') return 'final';
+    if (Number(mu.awayScore) > 0 || Number(mu.homeScore) > 0) return 'live';
+    return 'pre';
+  }
+
+  function paintHero() {
+    var fid = state.fid;
+    var c = (fx() && fx().colors(fid)) || {};
+    var j = (fx() && fx().jersey(fid)) || {};
+    var kit = fx() ? fx().jerseySVG({
+      template: j.template || 'classic',
+      number: j.number || String(fid || '').replace(/[^0-9]/g, ''),
+      wordmark: j.wordmark || '', sleeves: j.sleeves || 'stripe',
+      primary: c.primary, secondary: c.secondary, accent: c.accent
+    }) : '';
+    document.documentElement.style.setProperty('--fx-primary', c.primary || '#d8b45c');
+
+    var f = state.form[R.teamKey(nameOf(fid))];
+    var rec = f && f.g ? (f.w + '-' + f.l + ' · ' + (f.pf / f.g).toFixed(1) + ' pts/gm') : 'no games played yet';
+    var opp = opponentFor(state.week, fid);
+    var vs = '';
+    if (opp && opp.opp) {
+      vs = '<a href="matchup.html?week=' + encodeURIComponent(state.week) +
+           '&a=' + encodeURIComponent(fid) + '&b=' + encodeURIComponent(opp.opp) + '">' +
+           (opp.home ? 'vs ' : 'at ') + R.esc(nameOf(opp.opp)) + ' — box score &rsaquo;</a>';
+    } else {
+      vs = '<span class="note">No opponent scheduled in week ' + R.esc(state.week) + '.</span>';
+    }
+    $('hero').innerHTML =
+      '<span class="kit">' + kit + '</span>' +
+      '<span class="who">' +
+        '<h2>' + R.esc(nameOf(fid)) + '</h2>' +
+        '<div class="meta">' + R.esc(rec) + '</div>' +
+        '<div class="vs">' + vs + '</div>' +
+      '</span>';
+  }
+
+  function sideFor(fid) {
+    if (!state.detail || state.detail === 'pending' || !state.detail.ok || !state.detail.hasRosters) return null;
+    var found = null;
+    state.detail.matchups.forEach(function (m) {
+      if (fidOf(m.away.name) === fid) found = m.away;
+      if (fidOf(m.home.name) === fid) found = m.home;
+    });
+    return found;
+  }
+
+  function paintLineup() {
+    var el = $('lineup');
+    if (state.detail === 'pending') {
+      el.innerHTML = '<span class="skel"></span><span class="skel"></span><span class="skel"></span>';
+      return;
+    }
+    /* Same three distinct claims matchup.html makes. "Not deployed", "ESPN errored" and
+       "no rosters yet" are not the same sentence and must never share one. */
+    if (!state.detail) {
+      el.innerHTML = '<p class="note">Weekly lineups arrive with the <b>matchup_detail</b> backend — ' +
+                     'the record and schedule above are live now.</p>';
+      return;
+    }
+    if (state.detail.ok === false) {
+      el.innerHTML = '<p class="note">ESPN said: ' + R.esc(state.detail.error || 'no detail available') + '</p>';
+      return;
+    }
+    if (!state.detail.hasRosters) {
+      el.innerHTML = '<p class="note">ESPN has nothing to show until the draft is in.</p>';
+      return;
+    }
+    var side = sideFor(state.fid);
+    if (!side) {
+      el.innerHTML = '<p class="note">No lineup for this team in week ' + R.esc(state.week) + '.</p>';
+      return;
+    }
+
+    var opp = opponentFor(state.week, state.fid);
+    var st = gameState(opp && opp.mu);
+    var split = R.splitLineup(side.players);
+    var html = '';
+    split.starters.forEach(function (p) { html += R.soloRow(p, { state: st }); });
+    html += R.totalsBarOne('Starters', R.sum(split.starters, 'actual'), R.sum(split.starters, 'proj'), st);
+    /* Bench is ALWAYS visible — the scoping doc is explicit, and it is the number the
+       standings' bench column is arguing about. */
+    html += '<div class="sect-t" style="margin-top:12px;">BENCH</div>';
+    if (split.bench.length) {
+      split.bench.forEach(function (p) { html += R.soloRow(p, { state: st, bench: true }); });
+      html += R.totalsBarOne('Bench', R.sum(split.bench, 'actual'), R.sum(split.bench, 'proj'), st);
+    } else {
+      html += '<p class="note">No bench players in this week\'s lineup.</p>';
+    }
+    el.innerHTML = html;
+  }
+
+  function syncURL() {
+    try {
+      history.replaceState(null, '',
+        'roster.html?week=' + state.week + '&team=' + state.fid);
+    } catch (e) {}
+  }
+
+  function repaint() {
+    $('teamSel').value = state.fid || '';
+    $('weekSel').value = String(state.week);
+    syncURL();
+    paintHero();
+    paintLineup();
+  }
+
+  function setWeek(w) {
+    state.week = w;
+    state.detail = 'pending';
+    repaint();
+    json(WEB_APP_URL + '?action=matchup_detail&week=' + encodeURIComponent(w))
+      .then(function (d) {
+        if (!d || (d.ok === undefined && d.error)) state.detail = null;
+        else state.detail = R.normalizeWeek(d);
+      })
+      .catch(function () { state.detail = null; })
+      .then(function () { if (state.week === w) paintLineup(); });
+  }
+
+  function buildTeamSelect() {
+    var fids = allFids();
+    $('teamSel').innerHTML = fids.map(function (f) {
+      return '<option value="' + R.esc(f) + '">' + R.esc(nameOf(f)) + '</option>';
+    }).join('');
+  }
+
+  function boot() {
+    buildTeamSelect();
+    var wantTeam = qp('team');
+    /* Defaults to the signed-in owner's franchise — the same "your team first" rule the
+       roster grid on index.html follows, so the two surfaces agree about whose team the
+       site opens on. */
+    state.fid = (fidOf(wantTeam) || myFid() || allFids()[0]) || null;
+
+    json(WEB_APP_URL + '?action=espn_schedule').then(function (data) {
+      if (!data || !data.ok || !data.weeks) throw new Error('no schedule');
+      state.weeks = data.weeks;
+      state.form = R.seasonForm(data.weeks);
+      var nums = Object.keys(data.weeks).map(Number).sort(function (a, b) { return a - b; });
+      $('weekSel').innerHTML = nums.map(function (n) {
+        return '<option value="' + n + '">Week ' + n + (n === data.currentWeek ? ' (current)' : '') + '</option>';
+      }).join('');
+      var wantWeek = parseInt(qp('week'), 10);
+      setWeek(nums.indexOf(wantWeek) !== -1 ? wantWeek : (data.currentWeek || nums[0]));
+    }).catch(function () {
+      /* Feed down: the page still names the franchise and says what is missing. */
+      state.week = parseInt(qp('week'), 10) || 1;
+      $('weekSel').innerHTML = '<option value="' + state.week + '">Week ' + state.week + '</option>';
+      paintHero();
+      $('lineup').innerHTML = '<p class="note">The schedule feed is unavailable right now.' +
+        '<span class="stale">feed down</span></p>';
+    });
+  }
+
+  /* An explicit pick from the dropdown outranks "your team", or signing in would yank the
+     page back off whoever the visitor just chose to look at. */
+  $('teamSel').addEventListener('change', function () {
+    userPickedTeam = true; state.fid = this.value; repaint();
+  });
+  $('weekSel').addEventListener('change', function () { setWeek(parseInt(this.value, 10)); });
+  document.addEventListener('wpial-profiles', function () {
+    buildTeamSelect();
+    if (state.fid) repaint();
+  });
+  /* Signing in mid-visit should land you on your own team if the URL did not name one.
+     Also fires for the reverse case: a visitor who arrives signed in but whose identity
+     resolves after the first paint. */
+  function preferOwnTeam() {
+    if (URL_NAMED_TEAM || userPickedTeam) return;
+    var mine = myFid();
+    if (mine && mine !== state.fid) { state.fid = mine; repaint(); }
+  }
+  document.addEventListener('wpial-auth', preferOwnTeam);
+  document.addEventListener('wpial-auth-refresh', preferOwnTeam);
+
+  boot();
+})();
+</script>
+</body>
+</html>

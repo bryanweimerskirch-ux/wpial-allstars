@@ -45,11 +45,22 @@
 
   var VALID_TABS = ['board', 'rosters', 'history', 'schedule', 'scoreboard', 'standings'];
 
+  /* GOTCHA 33 (matchup-detail build notes): this falls through to index.html for any page
+     it does not recognise, and wireIndex() then binds hash routing to a
+     `nav button[data-tab]` that does not exist there — so the page gets NO nav strip and
+     becomes the exact dead end sitenav was written to prevent. Every new standalone page
+     must be added here on the day it is created.
+
+     matchup.html and roster.html are deliberately absent from NAV itself: you arrive at
+     them from a scoreboard card or a standings row, not from the nav. They still need the
+     strip so there is a way back. */
   function currentPage() {
     var p = (location.pathname || '').toLowerCase();
     if (p.indexOf('draftboard') !== -1) return 'draftboard.html';
     if (p.indexOf('dashboard') !== -1) return 'dashboard.html';
     if (p.indexOf('profile') !== -1) return 'profile.html';
+    if (p.indexOf('matchup') !== -1) return 'matchup.html';
+    if (p.indexOf('roster') !== -1) return 'roster.html';
     return 'index.html';
   }
 

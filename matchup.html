@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WPIAL All Stars — Matchup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Palette translated from the design mock per the handoff's "Palette note — read first":
+   the mock was drawn in draftboard black/#FFB612 gold; this page runs the draft-board
+   palette, so #FFB612 -> --accent, #0a0a0a -> --bg, #141414 -> --panel, #2a2a2a -> --line,
+   #9a9a95 -> --muted. Layout and type are 1:1. */
+:root{
+  --bg:#0b0e13; --panel:#12161d; --panel2:#0f1319; --line:#232a35;
+  --text:#e8eaee; --muted:#9aa3b0; --accent:#d8b45c; --accent2:#f0d488;
+  --danger:#e0644f; --ok:#57b26a;
+  --qb:#e0644f; --rb:#57b26a; --wr:#5b9bd5; --te:#e39b3b; --k:#a97fd1; --def:#8a93a0;
+  --hdr-h:96px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-size:14px;
+     font-family:'Barlow',-apple-system,Segoe UI,Roboto,sans-serif;}
+h1,h2,h3,.oswald{font-family:'Oswald',sans-serif;letter-spacing:.5px;margin:0;}
+a{color:var(--accent2);}
+button{font-family:'Barlow',sans-serif;cursor:pointer;border-radius:6px;border:1px solid var(--line);
+       background:var(--panel);color:var(--text);padding:6px 12px;font-size:13px;}
+button:hover{border-color:var(--accent);}
+button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent2);outline-offset:2px;}
+select{font-family:'Barlow',sans-serif;background:var(--panel2);color:var(--text);
+       border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:12.5px;}
+
+header{display:flex;align-items:center;gap:16px;padding:10px 16px;border-bottom:2px solid var(--accent);
+       background:var(--panel2);position:sticky;top:0;z-index:50;flex-wrap:wrap;}
+.logo{display:flex;flex-direction:column;line-height:1.05;}
+.logo b{font-family:'Oswald';font-size:20px;color:var(--accent);letter-spacing:1.5px;}
+.logo span{font-size:10px;color:var(--muted);letter-spacing:2.5px;text-transform:uppercase;}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+main{max-width:1080px;margin:0 auto;padding:12px 12px 60px;}
+footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font-size:11px;text-align:center;}
+
+/* ---------- 1. top bar ---------- */
+.topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.back{font-size:12.5px;text-decoration:none;color:var(--muted);}
+.back:hover{color:var(--accent2);}
+.switch{margin-left:auto;display:flex;align-items:center;gap:4px;}
+.switch b{font-family:'Barlow Semi Condensed',sans-serif;font-size:11.5px;letter-spacing:1.2px;
+          color:var(--muted);min-width:64px;text-align:center;text-transform:uppercase;}
+.switch button{padding:3px 9px;line-height:1.2;}
+.switch button[disabled]{opacity:.35;cursor:default;}
+
+/* ---------- 2. diagonal split header ----------
+   The slash POSITION encodes win probability; the two color fields are pure identity.
+   That separation is the whole reason this shape was chosen — an owner's color can never
+   end up meaning "favorite". */
+.split{position:relative;height:224px;border-radius:12px;overflow:hidden;border:1px solid var(--line);
+       background:var(--panel);}
+.field{position:absolute;inset:0;}
+.field.l{background:linear-gradient(160deg,var(--al) 0%,var(--al2) 100%);}
+.field.r{background:linear-gradient(200deg,var(--hl) 0%,var(--hl2) 100%);}
+.split .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,14,19,.30),rgba(11,14,19,.86));}
+/* The sides get the TOP of the header and the score pill owns the bottom strip. Laying
+   both out over the same box is what put the pill on top of the team names at 390px. */
+.sides{position:absolute;left:0;right:0;top:0;bottom:96px;display:flex;align-items:flex-start;
+       justify-content:space-between;padding:12px 12px 0;gap:8px;}
+.side{display:flex;flex-direction:column;align-items:center;gap:5px;width:44%;min-width:0;}
+/* The kits are deliberately different sizes — that IS the odds. But the name, record and
+   projection underneath must still line up across the two sides, or the underdog's label
+   rides up and the header reads as broken rather than as lopsided. Fixed-height slot,
+   kit anchored to its bottom. */
+.side .kitwrap{height:58px;display:flex;align-items:flex-end;justify-content:center;width:100%;}
+.side .kit{display:block;}
+.side .kit svg{display:block;width:100%;height:auto;}
+.side .tn{font-family:'Oswald';font-size:13px;line-height:1.1;text-align:center;max-width:100%;
+          overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.side .rec{font-family:'Barlow Semi Condensed';font-size:10.5px;letter-spacing:1.1px;color:var(--muted);
+           text-transform:uppercase;}
+.side .pr{font-family:'Oswald';font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;}
+
+/* center score pill */
+.pill{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:3;
+      background:rgba(11,14,19,.88);border:1px solid var(--line);border-radius:12px;
+      padding:7px 14px;text-align:center;min-width:190px;backdrop-filter:blur(3px);}
+.pill .score{font-family:'Oswald';font-size:27px;line-height:1;font-variant-numeric:tabular-nums;
+      display:flex;align-items:center;justify-content:center;gap:9px;}
+.pill .score i{font-style:normal;font-size:13px;color:var(--muted);}
+.pill .badge{display:inline-block;margin-top:5px;font-family:'Barlow Semi Condensed';font-size:10px;
+      letter-spacing:1.5px;text-transform:uppercase;padding:2px 8px;border-radius:999px;}
+.badge.pre{color:var(--muted);border:1px solid var(--line);}
+.badge.live{background:var(--accent);color:#0b0e13;font-weight:600;}
+.badge.final{background:var(--ok);color:#07140b;font-weight:600;}
+.pill .series{margin-top:5px;font-size:10.5px;color:var(--muted);}
+.basis{text-align:center;font-size:10.5px;color:var(--muted);margin-top:7px;}
+
+/* ---------- 3. status strip ---------- */
+.strip{display:flex;justify-content:space-between;gap:10px;margin:10px 0 4px;
+       font-family:'Barlow Semi Condensed';font-size:11px;letter-spacing:1.1px;
+       text-transform:uppercase;color:var(--muted);}
+
+/* ---------- 4-6. box score ---------- */
+.sect{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;}
+.sect-t{font-family:'Oswald';font-size:10.5px;letter-spacing:2px;color:var(--muted);margin:2px 0 6px;}
+.note{color:var(--muted);font-size:12.5px;line-height:1.6;}
+.note b{color:var(--text);font-weight:600;}
+.skel{display:block;height:44px;border-radius:8px;margin:6px 0;
+      background:linear-gradient(90deg,var(--panel2),var(--line),var(--panel2));animation:sk 1.4s ease-in-out infinite;}
+@keyframes sk{0%,100%{opacity:.55}50%{opacity:.95}}
+@media (prefers-reduced-motion:reduce){.skel{animation:none;}}
+
+@media (min-width:760px){
+  .split{height:248px;}
+  .sides{bottom:88px;padding:14px 14px 0;}
+  .side .kitwrap{height:92px;}
+  .side .tn{font-size:16px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><b>WPIAL ALL STARS</b><span>Matchup</span></div>
+  <div class="hdr-right"></div>
+</header>
+
+<main>
+  <div class="topbar">
+    <a class="back" id="back" href="index.html#scoreboard">&lsaquo; Scoreboard</a>
+    <label class="back" for="weekSel" style="margin-left:6px;">Week</label>
+    <select id="weekSel" aria-label="Week"></select>
+    <div class="switch">
+      <button type="button" id="prev" aria-label="Previous matchup">&lsaquo;</button>
+      <b id="pos">— of —</b>
+      <button type="button" id="next" aria-label="Next matchup">&rsaquo;</button>
+    </div>
+  </div>
+
+  <div class="split" id="split" hidden>
+    <div class="field l" id="fieldL"></div>
+    <div class="field r" id="fieldR"></div>
+    <div class="scrim"></div>
+    <div class="sides">
+      <div class="side" id="sideL"></div>
+      <div class="side" id="sideR"></div>
+    </div>
+    <div class="pill" id="pill"></div>
+  </div>
+  <div class="basis" id="basis"></div>
+
+  <div class="strip" id="strip" hidden><span id="stripL"></span><span id="stripR"></span></div>
+
+  <div id="head-msg"></div>
+
+  <div class="sect" id="boxSect">
+    <div class="sect-t">BOX SCORE</div>
+    <div id="box"><span class="skel"></span><span class="skel"></span><span class="skel"></span></div>
+  </div>
+
+  <div id="series"></div>
+</main>
+
+<footer>WPIAL All Stars &middot; powered by Wadi Solutions</footer>
+
+<script src="env.js"></script>
+<script src="franchise.js"></script>
+<script src="auth.js"></script>
+<script src="matchrow.js"></script>
+<script src="rivalry.js"></script>
+<script src="sitenav.js"></script>
+<script>
+(function () {
+  'use strict';
+  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxX-UpCAd7oeWug1KcnMZrSnMJyVuob_qHtSv0z1C7im7MpUMgHYMOtdvOKl98VXy37eA/exec';
+  var R = window.WPIAL_ROW;
+
+  /* At a final result the slash sits at 100/0 — the verdict, which is the handoff's
+     default. Flip this one constant to freeze it at the closing number instead if the
+     story beats the verdict. Nothing else needs to change. */
+  var FREEZE_CLOSING_ODDS_AT_FINAL = false;
+
+  /* Same throttle discipline as index.html: never more than four calls in flight at this
+     one Apps Script deployment, and a non-JSON body is a retry rather than a surrender.
+     `matchup.html` is a second front door to the same backend; without this it reproduces
+     the stampede documented in backend-stampede-incident.md from a different page. */
+  var MAXCONC = 4, TRIES = 3, live = 0, waiting = [];
+  function pump() { while (live < MAXCONC && waiting.length) { live++; waiting.shift()(); } }
+  function json(url) {
+    return new Promise(function (resolve, reject) {
+      waiting.push(function () {
+        var n = 0;
+        (function go() {
+          n++;
+          fetch(url).then(function (r) { return r.text(); }).then(function (t) {
+            var d;
+            try { d = JSON.parse(t); } catch (e) { throw new Error('not JSON'); }
+            live--; pump(); resolve(d);
+          }).catch(function (err) {
+            if (n < TRIES) { setTimeout(go, 500 * n * n); return; }
+            live--; pump(); reject(err);
+          });
+        })();
+      });
+      pump();
+    });
+  }
+
+  function $(id) { return document.getElementById(id); }
+  function qp(k) {
+    var m = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  function fx() { return window.WPIAL_FX; }
+  function fidOf(name) { return (fx() && fx().resolve(name)) || null; }
+  function nameOf(fid) { return (fx() && fx().name(fid)) || String(fid || ''); }
+
+  var state = { week: null, weeks: null, list: [], idx: 0, form: {}, h2h: null, history: null, detail: null };
+
+  /* ---------- the header ---------- */
+
+  function kitFor(fid, widthPx, number) {
+    if (!fx()) return '';
+    var c = fx().colors(fid) || {};
+    var j = fx().jersey(fid) || {};
+    var svg = fx().jerseySVG({
+      template: j.template || 'classic',
+      /* The win-probability number IS the jersey number — the handoff's idea, and the
+         reason the kit can carry the odds without a second label. */
+      number: number != null ? String(number) : (j.number || String(fid).replace(/[^0-9]/g, '')),
+      wordmark: j.wordmark || '',
+      sleeves: j.sleeves || 'stripe',
+      primary: c.primary, secondary: c.secondary, accent: c.accent
+    });
+    return '<span class="kitwrap"><span class="kit" style="width:' + widthPx + 'px">' + svg + '</span></span>';
+  }
+
+  function recordOf(fid) {
+    var f = state.form[R.teamKey(nameOf(fid))];
+    if (!f || !f.g) return 'no games yet';
+    return f.w + '-' + f.l + (f.g !== f.w + f.l ? '' : '');
+  }
+
+  function gameState(mu) {
+    if (!mu) return 'pre';
+    if (mu.winner === 'AWAY' || mu.winner === 'HOME') return 'final';
+    if (Number(mu.awayScore) > 0 || Number(mu.homeScore) > 0) return 'live';
+    return 'pre';
+  }
+
+  function seriesLine() {
+    var rec = window.WPIAL_SERIES && WPIAL_SERIES._calc.h2hRecord(state.h2h, state.fidA, state.fidB);
+    if (!rec) return '';
+    if (rec.a === rec.b) return 'All-time: series tied ' + rec.a + '–' + rec.b;
+    var lead = rec.a > rec.b ? state.fidA : state.fidB;
+    return 'All-time: ' + nameOf(lead) + ' leads ' +
+           Math.max(rec.a, rec.b) + '–' + Math.min(rec.a, rec.b);
+  }
+
+  function paintHeader(mu) {
+    var st = gameState(mu);
+    var h2hRec = null;
+    if (window.WPIAL_SERIES) {
+      var r = WPIAL_SERIES._calc.h2hRecord(state.h2h, state.fidA, state.fidB);
+      if (r) h2hRec = { teamA: nameOf(state.fidA), winsA: r.a, teamB: nameOf(state.fidB), winsB: r.b };
+    }
+    var proj = R.projectWin(mu.away, mu.home, state.form, h2hRec);
+    var pA = proj.p;
+    if (st === 'final' && !FREEZE_CLOSING_ODDS_AT_FINAL) pA = (mu.winner === 'AWAY') ? 1 : 0;
+
+    var pct = Math.round(pA * 100);
+    /* Slash at the win-probability position, +/- 6% of slope. Geometry carries the state. */
+    var x = Math.max(12, Math.min(88, pct)), s = 6;
+    $('fieldL').style.clipPath = 'polygon(0 0, ' + (x + s) + '% 0, ' + (x - s) + '% 100%, 0 100%)';
+    $('fieldR').style.clipPath = 'polygon(' + (x + s) + '% 0, 100% 0, 100% 100%, ' + (x - s) + '% 100%)';
+
+    var cA = (fx() && fx().colors(state.fidA)) || {}, cB = (fx() && fx().colors(state.fidB)) || {};
+    var sp = $('split');
+    sp.style.setProperty('--al', cA.primary || '#2a3140');
+    sp.style.setProperty('--al2', cA.secondary || '#12161d');
+    sp.style.setProperty('--hl', cB.primary || '#2a3140');
+    sp.style.setProperty('--hl2', cB.secondary || '#12161d');
+    sp.hidden = false;
+
+    var wA = Math.round(46 + pct * 0.55), wB = Math.round(46 + (100 - pct) * 0.55);
+    var detail = currentDetail();
+    var projA = detail ? R.sum(detail.away.players.filter(function (p) { return p.starter; }), 'proj') : null;
+    var projB = detail ? R.sum(detail.home.players.filter(function (p) { return p.starter; }), 'proj') : null;
+
+    $('sideL').innerHTML = kitFor(state.fidA, wA, st === 'final' ? null : pct) +
+      '<span class="tn">' + R.esc(nameOf(state.fidA)) + '</span>' +
+      '<span class="rec">' + R.esc(recordOf(state.fidA)) + '</span>' +
+      (projA != null ? '<span class="pr">' + R.pts(projA) + ' proj</span>' : '');
+    $('sideR').innerHTML = kitFor(state.fidB, wB, st === 'final' ? null : (100 - pct)) +
+      '<span class="tn">' + R.esc(nameOf(state.fidB)) + '</span>' +
+      '<span class="rec">' + R.esc(recordOf(state.fidB)) + '</span>' +
+      (projB != null ? '<span class="pr">' + R.pts(projB) + ' proj</span>' : '');
+
+    /* Pre-game the projections ARE the big numbers; actuals only once they mean something. */
+    var bigA, bigB;
+    if (st === 'pre') { bigA = projA != null ? R.pts(projA) : '—'; bigB = projB != null ? R.pts(projB) : '—'; }
+    else { bigA = R.pts(mu.awayScore); bigB = R.pts(mu.homeScore); }
+
+    var badge = st === 'live' ? '<span class="badge live">Live</span>'
+              : st === 'final' ? '<span class="badge final">Final</span>'
+              /* No kickoff time is in this feed. An invented one is worse than none. */
+              : '<span class="badge pre">Pregame</span>';
+    var series = seriesLine();
+    $('pill').innerHTML =
+      '<div class="score">' + bigA + '<i>' + (st === 'pre' ? 'proj' : '–') + '</i>' + bigB + '</div>' +
+      badge + (series ? '<div class="series">' + R.esc(series) + '</div>' : '');
+
+    $('basis').textContent = st === 'pre' || st === 'live'
+      ? Math.round(pA * 100) + '% ' + nameOf(state.fidA) + ' — ' + proj.basis
+      : '';
+  }
+
+  /* ---------- status strip ---------- */
+  function paintStrip(detail) {
+    var el = $('strip');
+    if (!detail) { el.hidden = true; return; }
+    var count = function (side) {
+      var st = side.players.filter(function (p) { return p.starter; });
+      var liveN = st.filter(function (p) { return p.state === 'live'; }).length;
+      var toPlay = st.filter(function (p) { return p.state !== 'live' && p.state !== 'final'; }).length;
+      var bits = [];
+      if (liveN) bits.push(liveN + ' live');
+      if (toPlay) bits.push(toPlay + ' to play');
+      if (!bits.length) bits.push('all final');
+      return bits.join(' · ');
+    };
+    $('stripL').textContent = count(detail.away);
+    $('stripR').textContent = count(detail.home);
+    el.hidden = false;
+  }
+
+  /* ---------- box score ---------- */
+
+  function currentDetail() {
+    if (!state.detail || !state.detail.ok || !state.detail.hasRosters) return null;
+    var want = [state.fidA, state.fidB].sort().join('|'), found = null;
+    state.detail.matchups.forEach(function (m) {
+      var a = fidOf(m.away.name), b = fidOf(m.home.name);
+      if (a && b && [a, b].sort().join('|') === want) {
+        /* Orient to the page, not to ESPN's home/away, so the left column is always the
+           team in the `a` parameter no matter which side ESPN calls home. */
+        found = (a === state.fidA) ? m : { away: m.home, home: m.away };
+      }
+    });
+    return found;
+  }
+
+  /* The three "no box score" cases are three different claims and get three different
+     sentences. Collapsing them is how a page tells an owner their roster is empty when the
+     backend simply was never deployed. */
+  function paintBox(mu) {
+    var box = $('box');
+    var st = gameState(mu);
+
+    if (state.detail === 'pending') {
+      box.innerHTML = '<span class="skel"></span><span class="skel"></span><span class="skel"></span>';
+      return;
+    }
+    if (!state.detail) {
+      box.innerHTML = '<p class="note">Box scores arrive with the <b>matchup_detail</b> backend — ' +
+                      'everything above is live now.</p>';
+      return;
+    }
+    if (state.detail.ok === false) {
+      box.innerHTML = '<p class="note">ESPN said: ' + R.esc(state.detail.error || 'no detail available') + '</p>';
+      return;
+    }
+    if (!state.detail.hasRosters) {
+      box.innerHTML = '<p class="note">ESPN has nothing to show until the draft is in.</p>';
+      return;
+    }
+    var d = currentDetail();
+    if (!d) {
+      box.innerHTML = '<p class="note">No box score for this pairing in week ' + R.esc(state.week) + '.</p>';
+      return;
+    }
+
+    var cA = (fx() && fx().colors(state.fidA)) || {}, cB = (fx() && fx().colors(state.fidB)) || {};
+    var pairs = R.pairLineups(d.away.players, d.home.players);
+    var opt = { state: st, colorLeft: cA.primary || 'var(--line)', colorRight: cB.primary || 'var(--line)' };
+
+    var html = '';
+    pairs.starters.forEach(function (row) {
+      html += R.faceoffRow(row.l, row.r, {
+        state: st, slot: (row.l && row.l.slot) || (row.r && row.r.slot),
+        colorLeft: opt.colorLeft, colorRight: opt.colorRight
+      });
+    });
+
+    var sA = d.away.players.filter(function (p) { return p.starter; });
+    var sB = d.home.players.filter(function (p) { return p.starter; });
+    html += R.totalsBar('Starters', R.sum(sA, 'actual'), R.sum(sA, 'proj'),
+                                    R.sum(sB, 'actual'), R.sum(sB, 'proj'), st);
+
+    if (pairs.bench.length) {
+      html += '<div class="sect-t" style="margin-top:10px;">BENCH</div>';
+      pairs.bench.forEach(function (row) {
+        html += R.faceoffRow(row.l, row.r, {
+          state: st, bench: true, slot: (row.l && row.l.slot) || (row.r && row.r.slot),
+          colorLeft: opt.colorLeft, colorRight: opt.colorRight
+        });
+      });
+      var bA = d.away.players.filter(function (p) { return !p.starter; });
+      var bB = d.home.players.filter(function (p) { return !p.starter; });
+      html += R.totalsBar('Bench', R.sum(bA, 'actual'), R.sum(bA, 'proj'),
+                                   R.sum(bB, 'actual'), R.sum(bB, 'proj'), st);
+    }
+    box.innerHTML = html;
+    paintStrip(d);
+  }
+
+  /* ---------- the series panel (phase 2, additive) ---------- */
+  function paintSeries() {
+    if (!window.WPIAL_SERIES) return;
+    WPIAL_SERIES.render($('series'), {
+      fidA: state.fidA, fidB: state.fidB,
+      log: state.log, h2h: state.h2h, history: state.history,
+      onRetry: function () { WPIAL_SERIES.skeleton($('series')); loadSeries(); }
+    });
+  }
+
+  /* ---------- navigation ---------- */
+
+  function matchupsForWeek(w) {
+    var list = (state.weeks && state.weeks[w]) || [];
+    return list.filter(function (mu) { return fidOf(mu.away) && fidOf(mu.home); });
+  }
+
+  function syncURL() {
+    var u = 'matchup.html?week=' + state.week + '&a=' + state.fidA + '&b=' + state.fidB;
+    try { history.replaceState(null, '', u); } catch (e) {}
+    $('back').href = 'index.html?week=' + state.week + '#scoreboard';
+  }
+
+  function selectIndex(i) {
+    var list = state.list;
+    if (!list.length) return;
+    state.idx = Math.max(0, Math.min(list.length - 1, i));
+    var mu = list[state.idx];
+    state.fidA = fidOf(mu.away);
+    state.fidB = fidOf(mu.home);
+    $('pos').textContent = (state.idx + 1) + ' of ' + list.length;
+    $('prev').disabled = state.idx === 0;
+    $('next').disabled = state.idx === list.length - 1;
+    syncURL();
+    paintHeader(mu);
+    paintBox(mu);
+    paintSeries();
+  }
+
+  function setWeek(w, preferA, preferB) {
+    state.week = w;
+    state.list = matchupsForWeek(w);
+    $('weekSel').value = String(w);
+    if (!state.list.length) {
+      $('split').hidden = true;
+      $('head-msg').innerHTML = '<p class="note">No matchups scheduled for week ' + R.esc(w) + '.</p>';
+      $('box').innerHTML = '';
+      $('series').innerHTML = '';
+      $('pos').textContent = '— of —';
+      return;
+    }
+    $('head-msg').innerHTML = '';
+    /* One side is enough to find the matchup, so a half-remembered link still lands on the
+       right game rather than on an error. */
+    var idx = 0;
+    for (var i = 0; i < state.list.length; i++) {
+      var a = fidOf(state.list[i].away), b = fidOf(state.list[i].home);
+      var hit = (preferA && (a === preferA || b === preferA)) ||
+                (preferB && (a === preferB || b === preferB));
+      if (hit) { idx = i; break; }
+    }
+    state.detail = 'pending';
+    selectIndex(idx);
+    loadDetail(w);
+  }
+
+  /* ---------- feeds ---------- */
+
+  function loadDetail(w) {
+    json(WEB_APP_URL + '?action=matchup_detail&week=' + encodeURIComponent(w))
+      .then(function (d) {
+        /* An undeployed action answers {"error":"Unknown action"} — valid JSON, no ok.
+           That is "absent", not "failed", and it has its own sentence. */
+        if (!d || (d.ok === undefined && d.error)) { state.detail = null; }
+        else { state.detail = R.normalizeWeek(d); }
+      })
+      .catch(function () { state.detail = null; })
+      .then(function () {
+        if (state.week === w && state.list.length) { paintBox(state.list[state.idx]); paintHeader(state.list[state.idx]); }
+      });
+  }
+
+  function loadSeries() {
+    /* Both carry their own catch. A missing series can never take the header, the odds or
+       the box score down — the same rule bench points follow in the standings. */
+    var pLog = json(WEB_APP_URL + '?action=h2h_log').catch(function () { return null; });
+    var pH2h = json(WEB_APP_URL + '?action=h2h').catch(function () { return null; });
+    var pHis = json(WEB_APP_URL + '?action=history').catch(function () { return null; });
+    return Promise.all([pLog, pH2h, pHis]).then(function (r) {
+      var log = r[0];
+      /* h2hlog.gs is not built; the action answers "Unknown action". Treat that as absent
+         so the panel falls back to the aggregate rather than claiming a broken feed. */
+      state.log = (log && log.ok === undefined && log.error) ? null : log;
+      state.h2h = r[1];
+      state.history = r[2];
+      paintSeries();
+      if (state.list.length) paintHeader(state.list[state.idx]);
+    });
+  }
+
+  function boot() {
+    if (window.WPIAL_SERIES) WPIAL_SERIES.skeleton($('series'));
+    var wantWeek = parseInt(qp('week'), 10);
+    var wantA = qp('a'), wantB = qp('b');
+
+    json(WEB_APP_URL + '?action=espn_schedule').then(function (data) {
+      if (!data || !data.ok || !data.weeks) throw new Error('no schedule');
+      state.weeks = data.weeks;
+      state.form = R.seasonForm(data.weeks);
+      var nums = Object.keys(data.weeks).map(Number).sort(function (a, b) { return a - b; });
+      $('weekSel').innerHTML = nums.map(function (n) {
+        return '<option value="' + n + '">Week ' + n + (n === data.currentWeek ? ' (current)' : '') + '</option>';
+      }).join('');
+      var w = nums.indexOf(wantWeek) !== -1 ? wantWeek : (data.currentWeek || nums[0]);
+      setWeek(w, wantA, wantB);
+    }).catch(function () {
+      $('head-msg').innerHTML = '<p class="note">The schedule feed is unavailable, so this ' +
+        'matchup can\'t be looked up right now.</p>';
+      $('box').innerHTML = '';
+      if (window.WPIAL_SERIES) $('series').innerHTML = '';
+    });
+
+    loadSeries();
+  }
+
+  $('prev').addEventListener('click', function () { selectIndex(state.idx - 1); });
+  $('next').addEventListener('click', function () { selectIndex(state.idx + 1); });
+  $('weekSel').addEventListener('change', function () { setWeek(parseInt(this.value, 10)); });
+  /* Identity can land after the first paint; repaint names, kits and colors when it does. */
+  document.addEventListener('wpial-profiles', function () {
+    if (state.list.length) { paintHeader(state.list[state.idx]); paintSeries(); }
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>

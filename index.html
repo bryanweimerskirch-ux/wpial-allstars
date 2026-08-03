@@ -24,6 +24,15 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
   .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
   .card h3{margin:0 0 10px;font-size:16px;border-bottom:1px solid var(--line);padding-bottom:8px;}
+  /* The signed-in owner's roster card. --mine-accent is set per card from the franchise
+     accent when it clears 3:1 against the card, and falls back to the site accent when it
+     does not, so this can never render as an unreadable chip. The word "Your team" — not
+     the ring — is what says whose card it is; color never carries meaning alone here. */
+  .card.mine{border-color:var(--mine-accent,var(--accent));box-shadow:inset 0 0 0 1px var(--mine-accent,var(--accent));}
+  .mine-strip{display:flex;align-items:center;gap:8px;margin:0 0 10px;}
+  .mine-chip{flex:0 0 auto;font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;
+    padding:2px 8px;border-radius:999px;background:var(--mine-accent,var(--accent));color:var(--mine-ink,#1a0e04);}
+  .mine-rule{flex:1 1 auto;height:1px;background:var(--mine-accent,var(--accent));opacity:0.4;}
   .row{display:flex;gap:8px;padding:5px 0;font-size:13px;border-bottom:1px solid #1d232b;}
   .row:last-child{border-bottom:none;}
   .rnd{color:var(--muted);width:26px;flex-shrink:0;}
@@ -42,6 +51,15 @@
 .spotlight-vs{text-align:center;color:var(--muted);font-size:11px;margin:2px 0;}
 .spotlight-top{font-size:11px;color:var(--muted);margin-top:2px;}
   .spotlight-h2h{font-size:11px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);text-align:center;}
+  /* GOTCHA 32: an <a class="spotlight"> inherits `a{color:var(--accent2)}` and repaints
+     every team name gold, which reads as "these are all links" and fights the ✓ winner
+     mark. Reset the inherited link paint and carry the affordance on the hover border
+     plus the caption below instead. */
+  a.spotlight-link{display:block;color:inherit;text-decoration:none;transition:border-color .12s ease;}
+  a.spotlight-link:hover{border-color:var(--accent);}
+  a.spotlight-link:focus-visible{outline:2px solid var(--accent2);outline-offset:2px;}
+  .spotlight-go{margin-top:7px;padding-top:6px;border-top:1px dashed var(--line);
+    text-align:center;font-size:10.5px;letter-spacing:.6px;color:var(--accent2);}
   /* ---- Projected-winner jerseys ----
      The jersey is the projection: the bigger one is the favorite. Size is a real visual
      channel, but it is never the ONLY channel — the percentage is always printed next to
@@ -229,6 +247,11 @@
   .standings-table td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;}
   .standings-table tr:last-child td{border-bottom:none;}
   .standings-table .tm{text-align:left;font-weight:600;}
+  /* Same reasoning as the scoreboard card: the team name must stay --text so the column
+     does not read as ten gold links. The underline on hover is the affordance. */
+  .standings-table .tm-link{color:inherit;text-decoration:none;}
+  .standings-table .tm-link:hover{text-decoration:underline;text-decoration-color:var(--accent2);}
+  .standings-table .tm-link:focus-visible{outline:2px solid var(--accent2);outline-offset:2px;}
   .standings-table .rk{text-align:right;color:var(--muted);width:26px;}
   .standings-table td.pos{color:#3fb950;}
   .standings-table td.neg{color:#f85149;}
@@ -242,6 +265,7 @@
 <!-- End Cloudflare Web Analytics -->
 <script src="env.js"></script>
 <script src="franchise.js"></script>
+<script src="matchrow.js"></script>
 <script src="auth.js"></script>
 <script src="keepers.js"></script>
 <script src="sitenav.js"></script>
@@ -1226,73 +1250,24 @@ function jerseyFor(name) {
   });
 }
 
-/* Season form from every completed game in the feed: points scored and allowed per
-   game. Before a ball is thrown these are all empty, which is the normal state for
-   most of the offseason — the projection falls back to all-time head-to-head, which
-   is the more entertaining answer anyway. */
-function seasonForm(weeks) {
-  var f = {};
-  var touch = function (k) { return f[k] || (f[k] = { g: 0, pf: 0, pa: 0, w: 0, l: 0 }); };
-  Object.keys(weeks || {}).forEach(function (w) {
-    (weeks[w] || []).forEach(function (mu) {
-      var scored = (mu.awayScore > 0 || mu.homeScore > 0 || mu.winner !== 'UNDECIDED');
-      if (!scored) return;
-      var a = touch(teamKey(mu.away)), h = touch(teamKey(mu.home));
-      var as = Number(mu.awayScore) || 0, hs = Number(mu.homeScore) || 0;
-      a.g++; h.g++; a.pf += as; a.pa += hs; h.pf += hs; h.pa += as;
-      if (mu.winner === 'AWAY') { a.w++; h.l++; } else if (mu.winner === 'HOME') { h.w++; a.l++; }
-    });
-  });
-  return f;
-}
+/* ---- Shared with matchup.html and roster.html via matchrow.js -----------------
+   These four used to be defined here in full, and the matchup page carried a verbatim
+   copy because this script is inline and cannot be imported — recorded as gotcha 35 and
+   carried in the backlog as "if one changes, change both". A third consumer (roster.html)
+   is where that stops being a shortcut, so the implementations now live in matchrow.js
+   and these are the local names the rest of this file already calls.
 
-/* Win probability for the away side. Expected margin from scoring form, squashed
-   through a logistic; s=11 is roughly a fantasy week's standard deviation, so a
-   projected 11-point edge lands near 73%. Head-to-head history nudges it a few
-   points either way — it is lore, not signal, so it is capped. */
+   Kept as function declarations, not const aliases, purely for hoisting: this file calls
+   them from a lot of places and a `const` here would change when they become available. */
+function teamKey(name) { return WPIAL_ROW.teamKey(name); }
+function seasonForm(weeks) { return WPIAL_ROW.seasonForm(weeks); }
 function projectWin(awayName, homeName, form, h2hRec) {
-  var a = form[teamKey(awayName)], h = form[teamKey(homeName)];
-  var p = 0.5, basis = 'even money — no games played yet';
-
-  if (a && h && a.g >= 2 && h.g >= 2) {
-    /* Expected margin: what each side usually scores, blended with what the other
-       side usually gives up. */
-    var margin = ((a.pf / a.g) + (h.pa / h.g)) / 2 - ((h.pf / h.g) + (a.pa / a.g)) / 2;
-    p = 1 / (1 + Math.exp(-margin / 11));
-    basis = 'projected on scoring form';
-  }
-
-  if (h2hRec && (h2hRec.winsA || h2hRec.winsB)) {
-    var awayIsA = teamKey(h2hRec.teamA) === teamKey(awayName);
-    var wAway = awayIsA ? h2hRec.winsA : h2hRec.winsB;
-    var wHome = awayIsA ? h2hRec.winsB : h2hRec.winsA;
-    var tot = wAway + wHome;
-    if (tot) {
-      var edge = (wAway / tot) - 0.5;
-      if (basis.indexOf('no games') === 0 || basis.indexOf('even') === 0) {
-        p = 0.5 + edge * 0.6;                       // preseason: history is all we have
-        basis = 'on all-time head-to-head';
-      } else {
-        p = Math.max(0.02, Math.min(0.98, p + edge * 0.12));
-        basis = 'scoring form + head-to-head';
-      }
-    }
-  }
-  return { p: Math.max(0.05, Math.min(0.95, p)), basis: basis };
+  return WPIAL_ROW.projectWin(awayName, homeName, form, h2hRec);
 }
-
-/* Favorite gets the bigger kit. 50/50 renders them identical; a lopsided call should be
-   obvious from across the room, so the range is deliberately wide — roughly 2.5x from
-   longest shot to heaviest favorite. */
-function kitWidth(p) { return Math.round(28 + 48 * Math.max(0, Math.min(1, p))); }
-
-// The stable key for a team name that arrived from OUTSIDE this page — ESPN, the h2h
-// feed, the history feed. Team names in those feeds drift the moment somebody renames
-// their team in the ESPN app, and matching them by string is what produced an 11-row
-// standings table and a silently missing all-time series line. Resolve to canon instead.
-function teamKey(name) {
-  return (window.WPIAL_FX && WPIAL_FX.canon(name)) || String(name == null ? '' : name).trim();
-}
+function kitWidth(p) { return WPIAL_ROW.kitWidth(p); }
+/* Stable franchise id for a name, or null. Every cross-page link on this site travels as a
+   fid rather than a name, so a rename in the ESPN app cannot break a URL somebody shared. */
+function fidFor(name) { return (window.WPIAL_FX && WPIAL_FX.resolve(name)) || null; }
 
 const grid = document.getElementById('teamGrid');
 Object.entries(ROSTERS).forEach(([team, info]) => {
@@ -1381,6 +1356,88 @@ function refreshTeamCardIdentity() {
   });
 }
 document.addEventListener('wpial-profiles', refreshTeamCardIdentity);
+
+/* ---- Your team first -------------------------------------------------------
+   The grid is authored in ROSTERS order, which is nobody's order in particular. A
+   signed-in owner almost always came here to look at their own roster first, so their
+   card moves to slot one and says so. The other nine keep the order they have always
+   had, and a logged-out visitor sees exactly the board they saw before.
+
+   This MOVES a node, it never rebuilds one. By the time identity lands, keepers.js has
+   already hung KEEP pills and a per-team bar off these cards, and every player span
+   carries its own interest click handler; insertBefore preserves both, where re-rendering
+   the card would silently drop them. Nothing inside .row is read, written or reordered —
+   keepers.js and trade-machine.js parse that shape.
+
+   Identity is resolved through the registry, not compared as a string, for the same
+   reason canEdit() is: `user.team` is whatever the session was minted with, and an ESPN
+   rename must not quietly stop matching. */
+function myFranchiseId() {
+  const u = window.WPIAL_USER;
+  if (!u) return '';
+  const id = u.fid || u.team;
+  if (!id) return '';
+  return (window.WPIAL_FX && WPIAL_FX.resolve(id)) || String(id).trim();
+}
+
+/* The franchise accent is used only if it is legible on the card; otherwise the site
+   accent, whose contrast is already known good. A team whose accent happens to be near
+   #161b22 gets a visible chip anyway. */
+function mineAccent(canon) {
+  if (!window.WPIAL_FX) return null;
+  const a = (WPIAL_FX.colors(canon) || {}).accent;
+  if (!a || !WPIAL_FX.contrast) return null;
+  if (WPIAL_FX.contrast.ratio(a, '#161b22') < 3) return null;
+  return { bg: a, ink: WPIAL_FX.contrast.ink(a) };
+}
+
+function placeOwnCardFirst() {
+  if (!grid) return;
+  const mine = myFranchiseId();
+  let mineCard = null;
+  grid.querySelectorAll('.card').forEach(card => {
+    const canon = card.dataset.canon || '';
+    const fid = (window.WPIAL_FX && WPIAL_FX.resolve(canon)) || canon;
+    if (fid && !card.dataset.fid) card.dataset.fid = fid;
+    const isMine = !!mine && !!fid && fid === mine;
+    card.classList.toggle('mine', isMine);
+    let strip = card.querySelector(':scope > .mine-strip');
+    if (isMine) {
+      mineCard = card;
+      const c = mineAccent(canon);
+      if (c) { card.style.setProperty('--mine-accent', c.bg); card.style.setProperty('--mine-ink', c.ink); }
+      else { card.style.removeProperty('--mine-accent'); card.style.removeProperty('--mine-ink'); }
+      /* Prepended ABOVE the h3, deliberately. keepers.js parks its .wk-bar at
+         h3.nextSibling on every repaint, so anything inserted there fights it for the
+         slot on each render. Above the header nothing else claims the position. */
+      if (!strip) {
+        strip = document.createElement('div');
+        strip.className = 'mine-strip';
+        const chip = document.createElement('span');
+        chip.className = 'mine-chip';
+        chip.textContent = 'Your team';
+        const rule = document.createElement('span');
+        rule.className = 'mine-rule';
+        strip.appendChild(chip);
+        strip.appendChild(rule);
+        card.insertBefore(strip, card.firstChild);
+      }
+    } else {
+      /* Commish switching identity, or a sign-out, has to be able to take the mark off. */
+      if (strip) strip.remove();
+      card.style.removeProperty('--mine-accent');
+      card.style.removeProperty('--mine-ink');
+    }
+  });
+  if (mineCard && grid.firstElementChild !== mineCard) grid.insertBefore(mineCard, grid.firstElementChild);
+}
+
+placeOwnCardFirst();
+if (window.WPIAL_AUTH && WPIAL_AUTH.ready) WPIAL_AUTH.ready(placeOwnCardFirst);
+document.addEventListener('wpial-auth', placeOwnCardFirst);
+document.addEventListener('wpial-auth-refresh', placeOwnCardFirst);
+/* Colors and the canon→fid map can both land after auth does. */
+document.addEventListener('wpial-profiles', placeOwnCardFirst);
 
 document.querySelectorAll('nav button[data-tab]').forEach(btn => {
   btn.onclick = () => {
@@ -1775,8 +1832,24 @@ function loadSchedule() {
         grid.className = 'spotlight-grid';
         data.weeks[w].forEach(mu => {
           const scored = (mu.awayScore > 0 || mu.homeScore > 0 || mu.winner !== 'UNDECIDED');
-          const spot = document.createElement('div');
-          spot.className = 'spotlight';
+          /* The card is an <a>, not a click handler: middle-click, long-press,
+             open-in-new-tab and the keyboard all work for free, and the back button
+             restores scroll position. Identity travels as FIDS, never names, so a rename
+             cannot break a link somebody pasted into the group text.
+
+             Falls back to a plain <div> when the registry cannot resolve both sides — a
+             link to a matchup nobody can look up is worse than no link. */
+          const fidA = (window.WPIAL_FX && WPIAL_FX.resolve(mu.away)) || null;
+          const fidB = (window.WPIAL_FX && WPIAL_FX.resolve(mu.home)) || null;
+          const linkable = !!(fidA && fidB);
+          const spot = document.createElement(linkable ? 'a' : 'div');
+          spot.className = 'spotlight' + (linkable ? ' spotlight-link' : '');
+          if (linkable) {
+            spot.href = 'matchup.html?week=' + w + '&a=' + encodeURIComponent(fidA) +
+                        '&b=' + encodeURIComponent(fidB);
+            spot.setAttribute('aria-label',
+              'Box score and head-to-head: ' + teamDisplayName(mu.away) + ' vs ' + teamDisplayName(mu.home));
+          }
           const awayScore = scored ? Number(mu.awayScore).toFixed(1) : '—';
           const homeScore = scored ? Number(mu.homeScore).toFixed(1) : '—';
           const awayWon = scored && mu.winner === 'AWAY';
@@ -1823,6 +1896,7 @@ function loadSchedule() {
             }
             sh += '<div class="spotlight-h2h">' + h2hText + '</div>';
           }
+          if (linkable) sh += '<div class="spotlight-go">Box score &amp; head-to-head &rsaquo;</div>';
           spot.innerHTML = sh;
           grid.appendChild(spot);
         });
@@ -2111,7 +2185,15 @@ loadSchedule();
               const diff = r.pf - r.pa;
               const gb = i === 0 ? '—' : (((leader.w - r.w) + (r.l - leader.l)) / 2).toFixed(1).replace(/\.0$/, '');
               out += '<tr><td class="rk">' + (i+1) + '</td>'
-                + '<td class="tm">' + teamLogoHTML(r.name) + r.label + '</td>'
+                /* The rosters-view handoff asked for entry from the standings. Same rules
+                   as the scoreboard card: a real <a>, identity as a fid, and a plain label
+                   when the registry cannot resolve the row. */
+                + '<td class="tm">' + teamLogoHTML(r.name) +
+                  (fidFor(r.name)
+                    ? '<a class="tm-link" href="roster.html?team=' + escapeAttr(fidFor(r.name)) +
+                      '" title="' + escapeAttr(r.label + ' — full roster') + '">' + r.label + '</a>'
+                    : r.label) +
+                  '</td>'
                 + '<td>' + fmtRec(r.w, r.l, r.t) + '</td>'
                 + '<td>' + r.pct.toFixed(3).replace(/^0/, '') + '</td>'
                 + '<td>' + gb + '</td>'
