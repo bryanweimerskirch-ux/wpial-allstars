@@ -273,15 +273,19 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
       var seen = (o.last_login && esc(ago(o.last_login))) ||
                  '<span class="st never"><span class="g">·</span>never</span>';
 
+      /* Five is the CAP, not the target. An owner who keeps three is rebuilding, not
+         behind, so anything above zero reads as declared -- the only real signal left
+         in this column is nobody-has-touched-it. The meter shows slots used against
+         the cap; it no longer implies a shortfall. */
       var pct = Math.min(100, (o.keepers / 5) * 100);
-      var full = o.keepers >= 5;
+      var any = o.keepers > 0;
       var keepCell =
-        '<span class="meter" title="' + o.keepers + ' of 5 declared">' +
-          '<i class="' + (full ? 'full' : '') + '" style="width:' + pct + '%"></i>' +
+        '<span class="meter" title="' + o.keepers + ' of up to 5 kept">' +
+          '<i class="' + (any ? 'full' : '') + '" style="width:' + pct + '%"></i>' +
         '</span>' +
-        '<span class="st ' + (full ? 'done' : (o.keepers ? 'part' : 'never')) + '">' +
-          '<span class="g">' + (full ? '✓' : (o.keepers ? '~' : '·')) + '</span>' +
-          (full ? 'All 5' : o.keepers + ' of 5') +
+        '<span class="st ' + (any ? 'done' : 'never') + '">' +
+          '<span class="g">' + (any ? '✓' : '·') + '</span>' +
+          (any ? o.keepers + (o.keepers === 1 ? ' keeper' : ' keepers') : 'none') +
         '</span>';
 
       return '<tr>' +
