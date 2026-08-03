@@ -55,29 +55,42 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
    The slash POSITION encodes win probability; the two color fields are pure identity.
    That separation is the whole reason this shape was chosen — an owner's color can never
    end up meaning "favorite". */
-.split{position:relative;height:224px;border-radius:12px;overflow:hidden;border:1px solid var(--line);
-       background:var(--panel);}
+/* HEIGHT IS NOT FIXED. It was, and the kit slot then had to be tall enough for the largest
+   jersey the odds could ever produce — which left ~55px of dead air above every kit that
+   was not a 95% favorite. The sides sit in normal flow now and the header is as tall as
+   whatever it is holding; the padding-bottom reserves the score pill's strip. */
+.split{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);
+       background:var(--panel);min-height:210px;}
 .field{position:absolute;inset:0;}
 .field.l{background:linear-gradient(160deg,var(--al) 0%,var(--al2) 100%);}
 .field.r{background:linear-gradient(200deg,var(--hl) 0%,var(--hl2) 100%);}
 .split .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,14,19,.30),rgba(11,14,19,.86));}
 /* The sides get the TOP of the header and the score pill owns the bottom strip. Laying
-   both out over the same box is what put the pill on top of the team names at 390px. */
-.sides{position:absolute;left:0;right:0;top:0;bottom:96px;display:flex;align-items:flex-start;
-       justify-content:space-between;padding:12px 12px 0;gap:8px;}
+   both out over the same box is what put the pill on top of the team names at 390px — the
+   padding-bottom here is what keeps them apart now that the height is fluid. */
+.sides{position:relative;z-index:2;display:flex;align-items:flex-start;
+       justify-content:space-between;padding:12px 12px 96px;gap:8px;}
 .side{display:flex;flex-direction:column;align-items:center;gap:5px;width:44%;min-width:0;}
-/* The kits are deliberately different sizes — that IS the odds. But the name, record and
-   projection underneath must still line up across the two sides, or the underdog's label
-   rides up and the header reads as broken rather than as lopsided. Fixed-height slot,
-   kit anchored to its bottom. */
-.side .kitwrap{height:58px;display:flex;align-items:flex-end;justify-content:center;width:100%;}
+/* The kits are deliberately different sizes — that IS the odds. But the name and meta
+   underneath must still line up across the two sides, or the underdog's label rides up and
+   the header reads as broken rather than as lopsided. Fixed-height slot, kit anchored to
+   its bottom.
+
+   The slot must be at least as tall as the LARGEST kit will render. The jersey viewBox is
+   64x88, so a kit W px wide is W*1.375 tall; sizing this slot off the width alone is what
+   had the 95%-favorite's shirt clipped against the top of the header. */
+/* Height is set inline, per render, to the TALLER of the two kits — so both sides share one
+   slot (the labels still line up, which is why the slot exists) and neither carries padding
+   for a jersey that is not on screen. */
+.side .kitwrap{display:flex;align-items:flex-end;justify-content:center;width:100%;}
 .side .kit{display:block;}
 .side .kit svg{display:block;width:100%;height:auto;}
 .side .tn{font-family:'Oswald';font-size:13px;line-height:1.1;text-align:center;max-width:100%;
           overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-.side .rec{font-family:'Barlow Semi Condensed';font-size:10.5px;letter-spacing:1.1px;color:var(--muted);
-           text-transform:uppercase;}
-.side .pr{font-family:'Oswald';font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;}
+/* Record and projection share ONE line. They were two, which cost ~19px of vertical the
+   jersey wanted more than they did, and they read better together anyway. */
+.side .rec{font-family:'Barlow Semi Condensed';font-size:11px;letter-spacing:1.1px;color:var(--muted);
+           text-transform:uppercase;font-variant-numeric:tabular-nums;}
 
 /* center score pill */
 .pill{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:3;
@@ -110,10 +123,10 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 @media (prefers-reduced-motion:reduce){.skel{animation:none;}}
 
 @media (min-width:760px){
-  .split{height:248px;}
-  .sides{bottom:88px;padding:14px 14px 0;}
-  .side .kitwrap{height:92px;}
-  .side .tn{font-size:16px;}
+  .split{min-height:260px;}
+  .sides{padding:16px 14px 92px;}
+  .side .tn{font-size:17px;}
+  .side .rec{font-size:12px;}
 }
 </style>
 </head>
@@ -218,7 +231,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 
   /* ---------- the header ---------- */
 
-  function kitFor(fid, widthPx, number) {
+  function kitFor(fid, widthPx, number, slotHeight) {
     if (!fx()) return '';
     var c = fx().colors(fid) || {};
     var j = fx().jersey(fid) || {};
@@ -231,7 +244,26 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
       sleeves: j.sleeves || 'stripe',
       primary: c.primary, secondary: c.secondary, accent: c.accent
     });
-    return '<span class="kitwrap"><span class="kit" style="width:' + widthPx + 'px">' + svg + '</span></span>';
+    return '<span class="kitwrap" style="height:' + slotHeight + 'px">' +
+           '<span class="kit" style="width:' + widthPx + 'px">' + svg + '</span></span>';
+  }
+
+  /* The handoff's `width = 46 + wp*0.55` was drawn against a 390px phone, where 46-101px is
+     most of the column. On a 1080px page that same shirt is a postage stamp — the wordmark
+     and the win-prob number both stop being legible without zooming. So the SPREAD is what
+     the design actually specifies (the favorite is ~2x the longshot, and size is never the
+     only channel because the number is printed on the shirt), and the base scales with the
+     room available. Ratio here is 2.04x on desktop and 1.82x on a phone.
+
+     Ceilings are set by what fits: each side is 44% of the content width, and the kit slot
+     is 1.375x the width in height. */
+  function kitSize() {
+    var wide = window.innerWidth >= 760;
+    var base = wide ? 70 : 52, span = wide ? 0.85 : 0.5;
+    var cap = Math.floor(Math.min(window.innerWidth * 0.44, 1080 * 0.44) * 0.92);
+    return function (pct) {
+      return Math.max(44, Math.min(cap, Math.round(base + pct * span)));
+    };
   }
 
   function recordOf(fid) {
@@ -281,19 +313,22 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     sp.style.setProperty('--hl2', cB.secondary || '#12161d');
     sp.hidden = false;
 
-    var wA = Math.round(46 + pct * 0.55), wB = Math.round(46 + (100 - pct) * 0.55);
+    var kw = kitSize(), wA = kw(pct), wB = kw(100 - pct);
+    /* 64x88 viewBox: a kit W wide renders W*1.375 tall. Both slots take the taller one. */
+    var slotH = Math.ceil(Math.max(wA, wB) * 88 / 64);
     var detail = currentDetail();
     var projA = detail ? R.sum(detail.away.players.filter(function (p) { return p.starter; }), 'proj') : null;
     var projB = detail ? R.sum(detail.home.players.filter(function (p) { return p.starter; }), 'proj') : null;
 
-    $('sideL').innerHTML = kitFor(state.fidA, wA, st === 'final' ? null : pct) +
+    var metaFor = function (rec, proj) {
+      return R.esc(rec) + (proj != null ? ' · ' + R.pts(proj) + ' proj' : '');
+    };
+    $('sideL').innerHTML = kitFor(state.fidA, wA, st === 'final' ? null : pct, slotH) +
       '<span class="tn">' + R.esc(nameOf(state.fidA)) + '</span>' +
-      '<span class="rec">' + R.esc(recordOf(state.fidA)) + '</span>' +
-      (projA != null ? '<span class="pr">' + R.pts(projA) + ' proj</span>' : '');
-    $('sideR').innerHTML = kitFor(state.fidB, wB, st === 'final' ? null : (100 - pct)) +
+      '<span class="rec">' + metaFor(recordOf(state.fidA), projA) + '</span>';
+    $('sideR').innerHTML = kitFor(state.fidB, wB, st === 'final' ? null : (100 - pct), slotH) +
       '<span class="tn">' + R.esc(nameOf(state.fidB)) + '</span>' +
-      '<span class="rec">' + R.esc(recordOf(state.fidB)) + '</span>' +
-      (projB != null ? '<span class="pr">' + R.pts(projB) + ' proj</span>' : '');
+      '<span class="rec">' + metaFor(recordOf(state.fidB), projB) + '</span>';
 
     /* Pre-game the projections ARE the big numbers; actuals only once they mean something. */
     var bigA, bigB;
@@ -544,6 +579,16 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
   /* Identity can land after the first paint; repaint names, kits and colors when it does. */
   document.addEventListener('wpial-profiles', function () {
     if (state.list.length) { paintHeader(state.list[state.idx]); paintSeries(); }
+  });
+  /* Kit size is a function of the viewport, so it has to be recomputed when that changes —
+     a phone rotating to landscape crosses the 760px breakpoint. Debounced; the header is
+     the only thing repainted, never the rows. */
+  var rzT = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(rzT);
+    rzT = setTimeout(function () {
+      if (state.list.length) paintHeader(state.list[state.idx]);
+    }, 150);
   });
 
   boot();
