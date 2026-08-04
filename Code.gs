@@ -702,6 +702,71 @@ function listRules_(e) {
 }
 
 
+/**
+ * Extracts the publishable answer text from a Gemini generateContent response.
+ * Returns '' when the response is unusable, so every caller can fail closed.
+ *
+ * Two things disqualify a response:
+ *
+ *   1. finishReason other than STOP. gemini-flash-latest is a THINKING model,
+ *      thinking cannot be disabled on it (thinkingBudget:0 returns HTTP 400),
+ *      and thinking tokens count against maxOutputTokens. A long prompt can
+ *      therefore burn the whole budget reasoning and get cut off mid-thought.
+ *      When that happens the trailing partial part comes back WITHOUT
+ *      thought:true, so the p.thought filter below does NOT catch it and the
+ *      reasoning gets published as the post. That is the 2026-08-04 bug: two
+ *      of the three posts on the feed were the model's own scratchpad.
+ *
+ *   2. a thought part. Filtered explicitly. This half already worked.
+ *
+ * Every Gemini call site in this project routes through here. Before this,
+ * generateGellyPost_ and generateOffseasonReportPost_ each had their own copy
+ * of the parsing (which drifted), and generateGellyPicksPost_ took
+ * parts[0].text unconditionally - i.e. the reasoning part whenever the model
+ * thought first.
+ */
+function gellyText_(data) {
+  var c = data && data.candidates && data.candidates[0];
+  if (!c) return '';
+  if (c.finishReason && c.finishReason !== 'STOP') {
+    console.error('gellyText_: rejecting response, finishReason=' + c.finishReason);
+    return '';
+  }
+  var parts = (c.content && c.content.parts) || [];
+  var text = parts.filter(function (p) { return p && p.text && !p.thought; })
+                  .map(function (p) { return p.text; }).join(' ');
+  return String(text || '').replace(/^\s+|\s+$/g, '');
+}
+
+/**
+ * Last line of defence before any Gelly text reaches a member. Every pattern
+ * here is a shape observed in a leaked reasoning trace or a raw prompt, and
+ * none of them can occur in a real post.
+ *
+ * This is the tmDegraded_ equivalent for every path. tmDegraded_ only ever
+ * guarded the trade machine, which is why the feed had no protection at all.
+ */
+var GELLY_REJECT_ = [
+  /URL\s*#\s*\d/i,               // prompt enumeration
+  /\(\s*\d{2,4}\s*chars?\s*\)/i,  // the model counting characters out loud
+  /Headlines?\s+used\s*:/i,       // self-verification checklist
+  /No fabricated/i,
+  /Under\s+\d+\s+characters/i,   // the model reciting its own constraints
+  /news\.google\.com\/rss/i,     // a source URL is never the post itself
+  /^[\s,.;:)\-]/,                 // starts mid-sentence -> truncated tail
+  /[A-Za-z0-9_-]{40,}/            // long opaque token / base64 run
+];
+function gellySane_(t) {
+  if (!t || t.length < 20) return false;
+  for (var i = 0; i < GELLY_REJECT_.length; i++) {
+    if (GELLY_REJECT_[i].test(t)) {
+      console.error('gellySane_: rejecting text on rule ' + i + ': ' + String(t).slice(0, 120));
+      return false;
+    }
+  }
+  return true;
+}
+
 function generateGellyPost_(rawText) {
   try {
     var apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
@@ -791,16 +856,14 @@ function generateGellyPost_(rawText) {
     }
 
     var data = JSON.parse(resp.getContentText());
-    // gemini-flash-latest is a THINKING model: parts[0] can be a reasoning part,
-    // and reasoning tokens count against maxOutputTokens. Take every non-thought
-    // part, not just the first, so a thought summary never gets returned as the post.
-    var parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content &&
-                 data.candidates[0].content.parts) || [];
-    var text = parts.filter(function (p) { return p && p.text && !p.thought; })
-                    .map(function (p) { return p.text; }).join(' ');
-    text = (text || '').trim();
+    var text = gellyText_(data);
 
-    return text || (TIP_PREFIX + rawText);
+    // Anything that fails the gate degrades to the existing behaviour: the tip's
+    // own text behind TIP_PREFIX. tmDegraded_() already recognises that shape, so
+    // the trade machine keeps falling back to tmFallback_ exactly as before.
+    if (!gellySane_(text)) return TIP_PREFIX + rawText;
+
+    return text;
   } catch (err) {
     console.error('generateGellyPost_ failed: ' + err);
     return TIP_PREFIX + rawText;
@@ -889,7 +952,7 @@ function fetchOffseasonHeadlines_() {
     var doc = XmlService.parse(resp.getContentText());
     var items = doc.getRootElement().getChild('channel').getChildren('item');
     var out = [];
-    for (var i = 0; i < items.length && out.length < 12; i++) {
+    for (var i = 0; i < items.length && out.length < 8; i++) {
       var it = items[i];
       var title = (it.getChildText('title') || '').trim();
       var link = (it.getChildText('link') || '').trim();
@@ -925,8 +988,10 @@ function generateOffseasonReportPost_() {
     return false;
   }
 
+  // Titles only. The links stay server-side and are appended by this function
+  // after the model has answered - see the SOURCE marker below.
   var headlineBlock = headlines.map(function (h, i) {
-    return (i + 1) + '. ' + h.title + ' (' + h.link + ')';
+    return (i + 1) + '. ' + h.title;
   }).join('\n');
 
   var systemPrompt = GELLY_PERSONA_ + '\n\n' +
@@ -942,9 +1007,10 @@ function generateOffseasonReportPost_() {
     '(injury, dispute, suspension, etc.) must come from the headlines ' +
     'given. Do not invent facts, stats, or events beyond what the ' +
     'headlines say. Do not invent player names beyond who is named in ' +
-    'the headlines. Keep it under 500 characters. Include at least one ' +
-    'of the article URLs from the list verbatim, character-for-' +
-    'character, so it stays a working link. No hashtags, no ' +
+    'the headlines. Keep it under 500 characters. Do NOT include any ' +
+    'URLs - the link is added for you. End with a final line of exactly ' +
+    '"SOURCE: N", where N is the number of the headline you leaned on ' +
+    'most, and write nothing after it. No hashtags, no ' +
     'surrounding quotation marks, no markdown.\n\n' +
     GELLY_CONDUCT_POLICY_ + '\n\n' +
     'Output ONLY the finished post text - no preamble, no explanation, no labels.';
@@ -952,7 +1018,7 @@ function generateOffseasonReportPost_() {
   var payload = {
     contents: [{ parts: [{ text: 'Real current NFL headlines:\n\n' + headlineBlock }] }],
     systemInstruction: { parts: [{ text: systemPrompt }] },
-    generationConfig: { temperature: 0.9, maxOutputTokens: 2000 }
+    generationConfig: { temperature: 0.9, maxOutputTokens: 3000 }
   };
 
   var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL +
@@ -978,19 +1044,25 @@ function generateOffseasonReportPost_() {
   }
 
   var data = JSON.parse(resp.getContentText());
-    // gemini-flash-latest is a THINKING model: parts[0] can be a reasoning part,
-    // and reasoning tokens count against maxOutputTokens. Take every non-thought
-    // part, not just the first, so a thought summary never gets returned as the post.
-    var parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content &&
-                 data.candidates[0].content.parts) || [];
-    var text = parts.filter(function (p) { return p && p.text && !p.thought; })
-                    .map(function (p) { return p.text; }).join(' ');
-    text = (text || '').trim();
+  var text = gellyText_(data);
 
-  if (!text) {
-    console.error('generateOffseasonReportPost_: empty Gemini response, skipping post.');
+  // The model names its lead headline as a trailing "SOURCE: N" line. Strip the
+  // marker, gate the prose, then append the real link from the server-side list.
+  var pick = -1;
+  var mark = text.match(/\s*SOURCE:\s*(\d{1,2})\s*$/i);
+  if (mark) {
+    pick = parseInt(mark[1], 10) - 1;
+    text = text.slice(0, mark.index).replace(/^\s+|\s+$/g, '');
+  }
+
+  // Fails closed, exactly as this function's contract already promised: posting
+  // nothing is always better than posting the model's scratchpad.
+  if (!gellySane_(text)) {
+    console.error('generateOffseasonReportPost_: unusable Gemini response, skipping post.');
     return false;
   }
+
+  if (pick >= 0 && pick < headlines.length) text += '\n\n' + headlines[pick].link;
 
   var feedSheet = getTab_(FEED_SHEET);
   appendFeedPost_(feedSheet, text);
@@ -1401,8 +1473,7 @@ function generateGellyPicksPost_() {
     });
     if (resp.getResponseCode() === 200) {
       var data = JSON.parse(resp.getContentText());
-      var t = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
-        data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+      var t = gellyText_(data);
       if (t) {
         t = t.trim().replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
         var parsed = JSON.parse(t);
