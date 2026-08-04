@@ -461,6 +461,35 @@ function check(name, cond, detail) {
   }
 
 
+  /* The scoreboard card wears both franchises. The scrim over them is contrast-critical:
+     if it ever thins out, --muted stops clearing 4.5:1 over a bright primary. */
+  {
+    const { page, errs } = await newPage(browser, { state: 'pre' });
+    await page.goto(BASE + 'index.html', { waitUntil: 'domcontentloaded' });
+    await ungate(page);
+    await page.waitForTimeout(1200);
+    const r = await page.evaluate(() => {
+      const card = document.querySelector('.spotlight');
+      const ca = card.style.getPropertyValue('--ca'), cb = card.style.getPropertyValue('--cb');
+      const bg = getComputedStyle(card).backgroundImage;
+      /* worst case: the lightest scrim stop over every real franchise primary */
+      const rgb = h => { h = h.replace('#',''); return [0,2,4].map(i => parseInt(h.substr(i,2),16)); };
+      const hex = a => '#' + a.map(v => ('0'+Math.round(v).toString(16)).slice(-2)).join('');
+      const worst = Math.min(...WPIAL_FX.all().map(f => {
+        const c = rgb(backdropSafe(WPIAL_FX.colors(f.fid).primary));
+        return WPIAL_FX.contrast.ratio('#9aa4b2', hex(c.map((v,k) => 0.78*[13,17,23][k] + 0.22*v)));
+      }));
+      return { ca, cb, twoLayers: (bg.match(/linear-gradient/g) || []).length, worst: +worst.toFixed(2),
+               guardDarkensWhite: backdropSafe('#ffffff') !== '#ffffff' };
+    });
+    check('scoreboard card carries both franchise colors', /^#/.test(r.ca) && /^#/.test(r.cb) && r.ca !== r.cb, r.ca + ' / ' + r.cb);
+    check('card backdrop is colour + scrim, two layers', r.twoLayers === 2, String(r.twoLayers));
+    check('every franchise primary keeps --muted >= 4.5:1 behind the card', r.worst >= 4.5, String(r.worst));
+    check('backdropSafe guards a near-white custom colour', r.guardDarkensWhite);
+    check('card backdrop: no page errors', errs.length === 0, errs.join(' ;; '));
+    await page.close();
+  }
+
   /* Colorblind mode underlines links so colour is never the only cue. A card-sized <a> turns
      that into every word in the card being underlined — which is what happened live. */
   {

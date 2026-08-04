@@ -43,7 +43,16 @@
   .player.pinged{background:var(--accent);color:#1a0e04;font-weight:600;}
   .empty{color:#4a525c;font-style:italic;}
 .spotlight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px;}
-.spotlight{background:#11151b;border:1px solid var(--line);border-radius:8px;padding:10px 12px;}
+/* The card wears the two franchises. Two stacked background images: the owners' colors
+   split underneath, a scrim over the top. The scrim is not decoration — it is what holds
+   --text and --muted at their designed contrast no matter which two colors collide here, so
+   a pale gold and a near-black can share a card without either washing the score out.
+   Bryan's call to let identity take the backdrop; see the build doc on memo 5.3, which
+   lists card backgrounds as a never. */
+.spotlight{border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+  background-image:
+    linear-gradient(180deg,rgba(13,17,23,.78),rgba(13,17,23,.91)),
+    linear-gradient(100deg,var(--ca,#11151b) 0 42%,var(--cb,#11151b) 58% 100%);}
 .spotlight-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:3px 0;gap:8px;}
 .spotlight-row .nm{font-weight:600;}
 .spotlight-row .sc{color:var(--muted);font-variant-numeric:tabular-nums;}
@@ -64,16 +73,16 @@
      The jersey is the projection: the bigger one is the favorite. Size is a real visual
      channel, but it is never the ONLY channel — the percentage is always printed next to
      it, so the call is readable at a glance and unambiguous when you look. */
-  .spot-kits{display:flex;align-items:flex-end;justify-content:center;gap:22px;
-             margin:2px 0 6px;min-height:70px;}
-  .spot-kit{display:flex;flex-direction:column;align-items:center;gap:3px;width:56px;}
+  .spot-kits{display:flex;align-items:flex-end;justify-content:center;gap:26px;
+             margin:2px 0 8px;min-height:86px;}
+  .spot-kit{display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;}
   .spot-kit .kit{display:block;}
   .spot-kit.lost{opacity:.4;filter:saturate(.3);}
   /* Compact field — the same object as the matchup header, at card scale. End zones are the
      owners' colors (identity); the ball is the probability (state). Nothing here is
      color-only: the percentage and the team are printed underneath. */
   .spot-field{display:flex;height:20px;border-radius:5px;overflow:hidden;
-              border:1px solid var(--line);margin:0 0 5px;}
+              border:1px solid rgba(255,255,255,.16);margin:0 0 5px;}
   .sez{flex:0 0 12%;min-width:13px;background:var(--sc,#2a3140);}
   .sturf{flex:1 1 auto;position:relative;min-width:0;
          background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),
@@ -1315,6 +1324,40 @@ function fidFor(name) { return (window.WPIAL_FX && WPIAL_FX.resolve(name)) || nu
    the meeting log. Two guards: a name that is already short stays whole, and a last token
    that is not a real word ("G. O. A. T." -> "T.") falls back to the full name rather than
    inventing a nickname nobody uses. */
+/* A franchise primary is safe to paint behind card text only if the scrim can still hold
+   --muted at 4.5:1 over it. The ten current colors all clear it (worst is Drake's #F4C430 at
+   4.86), but an owner can pick any color on their profile, and a near-white primary drops
+   muted to ~4.1. So the backdrop color is DERIVED, not taken: blend toward the page
+   background until it passes, then stop. Same principle as --fx-ink — contrast is computed,
+   never chosen. Returns the color unchanged in the overwhelming majority of cases. */
+function backdropSafe(hex) {
+  var FX = window.WPIAL_FX;
+  if (!FX || !FX.contrast || !/^#[0-9a-fA-F]{6}$/.test(String(hex || ''))) return hex || '#11151b';
+  var toRGB = function (h) {
+    h = h.replace('#', '');
+    return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)];
+  };
+  var toHex = function (a) {
+    return '#' + a.map(function (v) { return ('0' + Math.round(v).toString(16)).slice(-2); }).join('');
+  };
+  var BASE = [13, 17, 23];                 // the scrim colour, and the page background
+  /* MUST match the lightest stop in .spotlight's CSS. 0.78 is not arbitrary: it is the
+     THINNEST scrim at which all ten current franchise colors still hold --muted at 4.6:1
+     with no adjustment at all. Any thinner and the guard below starts darkening real
+     identities — Drake's #F4C430 becomes olive — and a distorted color is a worse answer
+     than a quiet one. The guard is therefore a safety net for a custom color somebody picks
+     later, not something the current league ever trips. */
+  var SCRIM = 0.78;
+  var c = toRGB(hex);
+  for (var i = 0; i <= 10; i++) {
+    /* SCRIM is the LIGHTEST point of the gradient (top of the card) — the worst case. */
+    var comp = toHex(c.map(function (v, k) { return SCRIM * BASE[k] + (1 - SCRIM) * v; }));
+    if (FX.contrast.ratio('#9aa4b2', comp) >= 4.6) break;
+    c = c.map(function (v, k) { return v + (BASE[k] - v) * 0.18; });   // step toward the page bg
+  }
+  return toHex(c);
+}
+
 var SPOT_BALL = '<svg viewBox="0 0 26 17" aria-hidden="true">' +
   '<ellipse cx="13" cy="8.5" rx="12" ry="7.5" fill="#7a4326" stroke="#f2efe6" stroke-width="1.2"/>' +
   '<path d="M7 8.5h12" stroke="#f2efe6" stroke-width="1.4"/>' +
@@ -1903,6 +1946,10 @@ function loadSchedule() {
           const linkable = !!(fidA && fidB);
           const spot = document.createElement(linkable ? 'a' : 'div');
           spot.className = 'spotlight' + (linkable ? ' spotlight-link' : '');
+          /* Identity on the backdrop. Falls back to the flat panel color when the registry
+             cannot resolve a side, so an unknown team never paints half a card black. */
+          spot.style.setProperty('--ca', backdropSafe((window.WPIAL_FX && fidA && WPIAL_FX.colors(fidA).primary) || '#11151b'));
+          spot.style.setProperty('--cb', backdropSafe((window.WPIAL_FX && fidB && WPIAL_FX.colors(fidB).primary) || '#11151b'));
           if (linkable) {
             spot.href = 'matchup.html?week=' + w + '&a=' + encodeURIComponent(fidA) +
                         '&b=' + encodeURIComponent(fidB);
