@@ -664,7 +664,19 @@ function buildRulesContext_(rawText) {
     var text = '';
     if (key === 'keeper_rules' && rules.keeperRules) {
       label = 'Keeper League Rules';
-      text = asArray_(rules.keeperRules).map(function (r) { return r.n + '. ' + r.text; }).join(' ');
+      // LEAGUE_RULES_JSON nests the rules one level deeper than this line originally
+      // assumed: keeperRules is { title: '...', rules: [{n, text}] }, not the array itself.
+      // asArray_ converted that wrapper just as happily as the real thing, so what Gelly
+      // actually received as the league rules was the literal string
+      // "undefined. undefined undefined. undefined" - from 2026-07-29 until 2026-08-04.
+      // Accept either shape, and complain in the log rather than degrade silently.
+      var kr = rules.keeperRules;
+      var krList = asArray_((kr && !Array.isArray(kr) && kr.rules) ? kr.rules : kr)
+        .filter(function (r) { return r && r.text; });
+      if (!krList.length) {
+        console.error('buildRulesContext_: keeperRules matched no {n,text} entries - check the LEAGUE_RULES_JSON shape in Script Properties');
+      }
+      text = krList.map(function (r) { return (r.n ? r.n + '. ' : '') + r.text; }).join(' ');
     } else if (key.indexOf('article_') === 0 && rules.constitution && rules.constitution.articles) {
       var id = key.replace('article_', '');
       var art = rules.constitution.articles.filter(function (a) { return a.id === id; })[0];
