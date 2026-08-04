@@ -189,6 +189,7 @@ function check(name, cond, detail) {
         ballAria: ball.getAttribute('aria-label') || '',
         yardNums: document.querySelectorAll('.ynum').length,
         basisText: (document.getElementById('basis') || {}).textContent || '',
+        basisEl: !!document.getElementById('basis'),
         endZones: [...document.querySelectorAll('.ez')].map(e => e.textContent.trim()),
         kitNumbers: [...document.querySelectorAll('.side .kit text')].map(t => t.textContent),
         turfNeutral: !!document.querySelector('.turf'),
@@ -209,8 +210,7 @@ function check(name, cond, detail) {
        somewhere on the page and still has to reach a screen reader — the basis line under
        the field carries the first, the ball's aria-label the second. */
     check(`matchup ${state}: ball carries no text label`, r.ballText === '', JSON.stringify(r.ballText));
-    check(`matchup ${state}: probability is still spelled out on the page`,
-      (state === 'final') || /%/.test(r.basisText || ''), r.basisText);
+    check(`matchup ${state}: no methodology line on the page`, r.basisText === '', r.basisText);
     check(`matchup ${state}: probability still reaches a screen reader`, /percent/.test(r.ballAria), r.ballAria);
     check(`matchup ${state}: kits wear the OWNER's number, not the odds`,
       r.kitNumbers.length === 2 && r.kitNumbers.every(n => !/^(4[0-9]|5[0-9])$/.test(n) || true) && r.kitNumbers.every(n => n.length <= 2), JSON.stringify(r.kitNumbers));
@@ -452,7 +452,9 @@ function check(name, cond, detail) {
         tmColor: tmLinks[0] ? getComputedStyle(tmLinks[0]).color : '',
         ownerFirst: (document.querySelector('#teamGrid .card') || {}).dataset ?
           document.querySelector('#teamGrid .card').dataset.canon : '',
-        kits: document.querySelectorAll('.spot-kit').length
+        kits: document.querySelectorAll('.spot-kit').length,
+        odds: document.querySelectorAll('.spot-odds').length,
+        basisLines: document.querySelectorAll('.spot-basis').length
       };
     });
     /* ONE week is rendered now, not all fourteen — 5 cards, not 70. */
@@ -460,6 +462,8 @@ function check(name, cond, detail) {
     check('index: hrefs carry fids on both sides', r.allHaveFids);
     check('index: team names still --text (gotcha 32)', r.nmColor === r.textColor, r.nmColor + ' vs ' + r.textColor);
     check('index: cards carry the go caption', r.goCaptions === 5, String(r.goCaptions));
+    check('index: cards state the call but not the methodology',
+      r.odds === 5 && r.basisLines === 0, r.odds + ' odds / ' + r.basisLines + ' basis');
     check('index: standings rows link to roster.html', r.tmLinks === 10 && /roster\.html\?team=f/.test(r.tmHref), r.tmLinks + ' ' + r.tmHref);
     check('index: standings link is not gold either', r.tmColor === r.textColor, r.tmColor);
     check('index: owner card still first (today\'s change)', r.ownerFirst === 'Bijan Mustard', r.ownerFirst);
@@ -468,6 +472,34 @@ function check(name, cond, detail) {
     await page.close();
   }
 
+
+  /* The tip button feeds Gelly's posts, so it belongs on Gelly's tab and nowhere else. */
+  {
+    const { page, errs } = await newPage(browser, { state: 'final' });
+    await page.goto(BASE + 'index.html', { waitUntil: 'domcontentloaded' });
+    await ungate(page);
+    await page.waitForTimeout(900);
+    const show = () => page.evaluate(() => {
+      const f = document.getElementById('tipFab');
+      return { hidden: f.hidden, display: getComputedStyle(f).display,
+               active: [...document.querySelectorAll('section')].filter(s => s.classList.contains('active')).map(s => s.id) };
+    });
+    const onGelly = await show();
+    await page.evaluate(() => document.querySelector('nav button[data-tab="scoreboard"]').click());
+    await page.waitForTimeout(200);
+    const offGelly = await show();
+    await page.evaluate(() => document.querySelector('nav button[data-tab="board"]').click());
+    await page.waitForTimeout(200);
+    const backOn = await show();
+    check('tip button shows on The Gelly', onGelly.hidden === false && onGelly.display !== 'none',
+      JSON.stringify(onGelly));
+    check('tip button is gone on every other tab', offGelly.hidden === true && offGelly.display === 'none',
+      JSON.stringify(offGelly));
+    check('tip button comes back on The Gelly', backOn.hidden === false && backOn.display !== 'none',
+      JSON.stringify(backOn));
+    check('tip button: no page errors', errs.length === 0, errs.join(' ;; '));
+    await page.close();
+  }
 
   /* Week navigator: one week in the DOM, defaulting to the live week, with a way to move. */
   {

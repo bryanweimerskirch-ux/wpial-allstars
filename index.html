@@ -113,7 +113,6 @@
   .spot-odds{font-size:10.5px;color:var(--muted);text-align:center;margin:0 0 6px;
              font-variant-numeric:tabular-nums;}
   .spot-odds b{color:var(--text);font-weight:700;}
-  .spot-basis{font-size:10px;color:var(--muted);text-align:center;margin:-3px 0 6px;opacity:.8;}
   #history .card{margin-bottom:14px;}
   textarea{width:100%;min-height:140px;background:#0f1319;border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:12px;font-size:13px;font-family:inherit;}
   #board .card{margin-bottom:12px;}
@@ -167,6 +166,8 @@
   .thread-tag.muted{color:var(--muted);}
 
   .tip-fab{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#1a0e04;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.45);z-index:500;display:flex;align-items:center;justify-content:center;transition:transform .15s;}
+  /* [hidden] loses to display:flex, so it has to be said explicitly. */
+  .tip-fab[hidden]{display:none;}
   .tip-fab:hover{transform:scale(1.08);}
   .tip-fab:active{transform:scale(0.96);}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:600;padding:20px;}
@@ -2143,7 +2144,9 @@ function loadSchedule() {
               ? '<b>' + escapeHtml(shortTeam(teamDisplayName(awayWon ? mu.away : mu.home))) + '</b> won'
               : '<b>' + Math.round(Math.max(pA, pH) * 100) + '%</b> ' +
                 escapeHtml(shortTeam(teamDisplayName(pA >= pH ? mu.away : mu.home)))) + '</div>';
-            if (!scored) sh += '<div class="spot-basis">' + escapeHtml(proj.basis) + '</div>';
+            /* The methodology line ("on projected points + head-to-head") is gone here too —
+               same instruction, same reasoning. The card still states the call in words
+               directly above: "45% Mustard". */
           }
           sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.away) + teamDisplayName(mu.away) + (awayWon ? ' ✓' : '') + '</span><span class="sc">' + awayScore + '</span></div>';
           if (mu.awayTopScorer) sh += '<div class="spotlight-top">Top: ' + mu.awayTopScorer.name + ' — ' + mu.awayTopScorer.points + '</div>';
@@ -2590,8 +2593,23 @@ if (tipSubmitBtn) {
 // matter how long the feed gets. Opens/closes via the FAB, the × button,
 // clicking the backdrop, or Escape.
 const tipFab = document.getElementById('tipFab');
+/* The tip button is a Gelly action — it feeds Gelly's posts — so it belongs on Gelly's tab
+   and nowhere else. It was a position:fixed button living outside every section, which meant
+   it floated over the scoreboard, the rosters and the standings offering to take a tip about
+   nothing in particular. Bound to the page's own tab buttons rather than duplicating their
+   routing, and deferred a tick so it reads `.active` AFTER the page's handler has set it. */
+function syncTipFab() {
+  var board = document.getElementById('board');
+  if (tipFab && board) tipFab.hidden = !board.classList.contains('active');
+}
 const tipModal = document.getElementById('tipModal');
 const tipModalClose = document.getElementById('tipModalClose');
+document.querySelectorAll('nav button[data-tab]').forEach(function (b) {
+  b.addEventListener('click', function () { setTimeout(syncTipFab, 0); });
+});
+window.addEventListener('hashchange', function () { setTimeout(syncTipFab, 0); });
+syncTipFab();
+
 function openTipModal() {
   tipModal.classList.add('open');
   const textEl = document.getElementById('tipText');

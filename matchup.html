@@ -115,7 +115,6 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 .badge.live{background:var(--accent);color:#0b0e13;font-weight:600;}
 .badge.final{background:var(--ok);color:#07140b;font-weight:600;}
 .pill .series{margin-top:5px;font-size:10.5px;color:var(--muted);}
-.basis{text-align:center;font-size:10.5px;color:var(--muted);margin-top:7px;}
 
 /* ---------- 3. status strip ---------- */
 .strip{display:flex;justify-content:space-between;gap:10px;margin:10px 0 4px;
@@ -179,7 +178,6 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     <div class="ez r" id="ezR"></div>
   </div>
   <div class="pill" id="pill" hidden></div>
-  <div class="basis" id="basis"></div>
 
   <div class="strip" id="strip" hidden><span id="stripL"></span><span id="stripR"></span></div>
 
@@ -389,9 +387,11 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
       badge + (series ? '<div class="series">' + R.esc(series) + '</div>' : '');
     $('pill').hidden = false;
 
-    $('basis').textContent = st === 'pre' || st === 'live'
-      ? Math.round(pA * 100) + '% ' + nameOf(state.fidA) + ' — ' + proj.basis
-      : '';
+    /* The basis line is gone at Bryan's request — "I dont care about projected plus h2h."
+       The ball's position is the statement now. `proj.basis` is still computed and still
+       returned, because it is the canary that makes a drift between the number and its
+       reasoning visible in the console and in the tests; it just is not printed. The split
+       still reaches a screen reader through the ball's aria-label above. */
   }
 
   /* ---------- status strip ---------- */
