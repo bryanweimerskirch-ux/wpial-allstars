@@ -188,6 +188,7 @@ function check(name, cond, detail) {
         ballText: ball.textContent.trim(),
         ballAria: ball.getAttribute('aria-label') || '',
         yardNums: document.querySelectorAll('.ynum').length,
+        basisText: (document.getElementById('basis') || {}).textContent || '',
         endZones: [...document.querySelectorAll('.ez')].map(e => e.textContent.trim()),
         kitNumbers: [...document.querySelectorAll('.side .kit text')].map(t => t.textContent),
         turfNeutral: !!document.querySelector('.turf'),
@@ -204,7 +205,13 @@ function check(name, cond, detail) {
     check(`matchup ${state}: ball sits on the field`, r.ballLeft >= 4 && r.ballLeft <= 96, String(r.ballLeft));
     check(`matchup ${state}: 9 yard numbers`, r.yardNums === 9, String(r.yardNums));
     check(`matchup ${state}: end zones name both teams`, r.endZones.length === 2 && r.endZones.every(Boolean), JSON.stringify(r.endZones));
-    check(`matchup ${state}: probability is spelled out, not colour-only`, /%/.test(r.ballText) && /percent/.test(r.ballAria), r.ballText);
+    /* The ball has no visible label any more. The percentage still has to be PRINTED
+       somewhere on the page and still has to reach a screen reader — the basis line under
+       the field carries the first, the ball's aria-label the second. */
+    check(`matchup ${state}: ball carries no text label`, r.ballText === '', JSON.stringify(r.ballText));
+    check(`matchup ${state}: probability is still spelled out on the page`,
+      (state === 'final') || /%/.test(r.basisText || ''), r.basisText);
+    check(`matchup ${state}: probability still reaches a screen reader`, /percent/.test(r.ballAria), r.ballAria);
     check(`matchup ${state}: kits wear the OWNER's number, not the odds`,
       r.kitNumbers.length === 2 && r.kitNumbers.every(n => !/^(4[0-9]|5[0-9])$/.test(n) || true) && r.kitNumbers.every(n => n.length <= 2), JSON.stringify(r.kitNumbers));
     check(`matchup ${state}: every dot has a word`, r.dotsHaveLabels);
@@ -624,6 +631,33 @@ function check(name, cond, detail) {
     });
     check('shared math: seasonForm counts both games', r.games === 2 && r.w === 1, JSON.stringify(r));
     check('shared math: projectWin returns a probability + basis', r.p > 0 && r.p < 1 && !!r.basis, r.p + ' ' + r.basis);
+
+    /* The bug Bryan caught: the page printed 95.0 vs 99.6 projected and put the ball on the
+       95 side, because the 6-5 all-time series outranked the projections. Projections lead
+       now; history may only lean a number that already came from somewhere real. */
+    const f = await page.evaluate(() => {
+      const h2h = { teamA: 'Bijan Mustard', winsA: 6, teamB: 'Drake Draaaake?', winsB: 5 };
+      const under = WPIAL_ROW.projectWin('Bijan Mustard', 'Drake Draaaake?', {}, h2h, 95.0, 99.6);
+      const over  = WPIAL_ROW.projectWin('Bijan Mustard', 'Drake Draaaake?', {}, h2h, 99.6, 95.0);
+      const none  = WPIAL_ROW.projectWin('Bijan Mustard', 'Drake Draaaake?', {}, h2h, null, null);
+      const lop   = WPIAL_ROW.projectWin('Bijan Mustard', 'Drake Draaaake?', {}, null, 130, 100);
+      return { under: Math.round(under.p*100), underBasis: under.basis,
+               over: Math.round(over.p*100), none: Math.round(none.p*100), noneBasis: none.basis,
+               lop: Math.round(lop.p*100) };
+    });
+    check('formula: the lower projection is the underdog, even when it leads the series',
+      f.under < 50, f.under + '% (' + f.underBasis + ')');
+    /* NOT exact complements, and that is right: the head-to-head nudge leans the same team
+       in both directions, so it shifts each result the same way rather than mirroring. It
+       must stay small enough to never overturn the projection — under 2 points here. */
+    check('formula: flipping the projections flips the favorite',
+      f.under < 50 && f.over > 50 && Math.abs((100 - f.under) - f.over) <= 2,
+      f.under + ' -> ' + f.over);
+    check('formula: projections are named as the basis', /projected points/.test(f.underBasis), f.underBasis);
+    check('formula: with no projections and no form it is EVEN, not the series',
+      f.none === 50 && /even money/.test(f.noneBasis), f.none + '% (' + f.noneBasis + ')');
+    check('formula: a 30-point projected edge is confident but not a lock',
+      f.lop >= 75 && f.lop <= 90, f.lop + '%');
     check('shared math: kitWidth unchanged', r.kit === 64, String(r.kit));
     await page.close();
   }

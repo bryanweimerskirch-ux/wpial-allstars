@@ -2036,7 +2036,37 @@ function loadSchedule() {
       const form = seasonForm(data.weeks);
       const live = liveFantasyWeek(data.weeks, data.currentWeek, weekNums);
 
+      /* Projected totals per franchise, per week, so a scoreboard card and the matchup page
+         it links to compute the SAME probability from the SAME numbers. One extra request per
+         week viewed — affordable only because the navigator means one week is rendered at a
+         time. `null` means asked and unavailable (backend not deployed, or pre-draft). */
+      const projByWeek = {};
+      let shownWeek = null;
+
+      function fetchProj(w) {
+        if (projByWeek[w] !== undefined) return;
+        projByWeek[w] = null;                         // in flight; do not ask twice
+        waJSONOnce(WEB_APP_URL + '?action=matchup_detail&week=' + w)
+          .then(d => {
+            const norm = WPIAL_ROW.normalizeWeek(d);
+            if (!norm.ok || !norm.hasRosters) return;
+            const map = {};
+            norm.matchups.forEach(m => {
+              [m.away, m.home].forEach(side => {
+                const fid = fidFor(side.name);
+                if (!fid) return;
+                map[fid] = WPIAL_ROW.sum(side.players.filter(p => p.starter), 'proj');
+              });
+            });
+            projByWeek[w] = map;
+            if (shownWeek === w) renderWeek(w);       // repaint with real odds
+          })
+          .catch(() => {});
+      }
+
       function renderWeek(w) {
+        shownWeek = w;
+        fetchProj(w);
         wrap.innerHTML = '';
         const card = document.createElement('div');
         card.className = 'card';
@@ -2075,7 +2105,9 @@ function loadSchedule() {
           const awayWon = scored && mu.winner === 'AWAY';
           const homeWon = scored && mu.winner === 'HOME';
           const h2hKeyEarly = [teamKey(mu.away), teamKey(mu.home)].sort().join('|');
-          const proj = projectWin(mu.away, mu.home, form, h2hMap[h2hKeyEarly]);
+          const pj = projByWeek[w] || null;
+          const proj = projectWin(mu.away, mu.home, form, h2hMap[h2hKeyEarly],
+            pj && fidA ? pj[fidA] : null, pj && fidB ? pj[fidB] : null);
           const pA = proj.p, pH = 1 - proj.p;
 
           let sh = '';

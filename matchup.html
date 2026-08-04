@@ -89,8 +89,6 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 .ball{position:absolute;top:6px;transform:translateX(-50%);display:flex;flex-direction:column;
       align-items:center;gap:2px;z-index:3;white-space:nowrap;}
 .ball svg{display:block;width:26px;height:auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));}
-.ball i{font-style:normal;font-family:'Oswald';font-size:12px;color:var(--text);
-        background:rgba(11,14,19,.82);border-radius:999px;padding:1px 7px;letter-spacing:.5px;}
 /* the two kits stand on the turf */
 /* padding-top clears the ball band, padding-bottom clears the yard numbers painted at
    the foot of the turf — the meta line was landing 4px on top of them. */
@@ -142,7 +140,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
   .side .rec{font-size:12px;}
   .ez b{font-size:14px;}
   .ynum{font-size:12px;}
-  .ball svg{width:32px;} .ball i{font-size:14px;}
+  .ball svg{width:34px;}
 }
 </style>
 </head>
@@ -326,7 +324,13 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
       var r = WPIAL_SERIES._calc.h2hRecord(state.h2h, state.fidA, state.fidB);
       if (r) h2hRec = { teamA: nameOf(state.fidA), winsA: r.a, teamB: nameOf(state.fidB), winsB: r.b };
     }
-    var proj = R.projectWin(mu.away, mu.home, state.form, h2hRec);
+    /* Projections first — they are what the odds are now built from, so they have to be in
+       hand BEFORE projectWin runs, not computed afterwards for display. */
+    var detail = currentDetail();
+    var projA = detail ? R.sum(detail.away.players.filter(function (p) { return p.starter; }), 'proj') : null;
+    var projB = detail ? R.sum(detail.home.players.filter(function (p) { return p.starter; }), 'proj') : null;
+
+    var proj = R.projectWin(mu.away, mu.home, state.form, h2hRec, projA, projB);
     var pA = proj.p;
     if (st === 'final' && !FREEZE_CLOSING_ODDS_AT_FINAL) pA = (mu.winner === 'AWAY') ? 1 : 0;
     var pct = Math.round(pA * 100);
@@ -351,18 +355,15 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     var ballPct = Math.max(4, Math.min(96, pct));
     $('los').style.left = ballPct + '%';
     $('ball').style.left = ballPct + '%';
-    /* The label is ~100px wide and centred on the ball, so near either goal line it would
-       run off the turf and get clipped. Slide the anchor instead of the ball. */
-    $('ball').style.transform = ballPct > 82 ? 'translateX(-88%)'
-                              : ballPct < 18 ? 'translateX(-12%)'
-                              : 'translateX(-50%)';
-    $('ball').innerHTML = BALL_SVG + '<i>' + pct + '% ' + R.esc(shortName(state.fidA)) + '</i>';
+    $('ball').style.transform = 'translateX(-50%)';
+    /* The ball is just the ball. It carried a "53% Mustard" pill and Bryan asked for it gone;
+       nothing is lost, because the basis line directly under the field already prints the
+       same percentage AND says where it came from, and the aria-label below still spells the
+       split out for a screen reader. Position stays the visual channel, and position is
+       geometry — greyscale-safe on its own. */
+    $('ball').innerHTML = BALL_SVG;
     $('ball').setAttribute('aria-label',
       pct + ' percent ' + nameOf(state.fidA) + ', ' + (100 - pct) + ' percent ' + nameOf(state.fidB));
-
-    var detail = currentDetail();
-    var projA = detail ? R.sum(detail.away.players.filter(function (p) { return p.starter; }), 'proj') : null;
-    var projB = detail ? R.sum(detail.home.players.filter(function (p) { return p.starter; }), 'proj') : null;
 
     var metaFor = function (rec, pj) {
       return R.esc(rec) + (pj != null ? ' · ' + R.pts(pj) + ' proj' : '');

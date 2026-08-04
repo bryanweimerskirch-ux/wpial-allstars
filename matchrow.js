@@ -65,37 +65,58 @@
     return f;
   }
 
-  /* Win probability for the away side. Expected margin from scoring form, squashed through
-     a logistic; s=11 is roughly a fantasy week's standard deviation, so a projected
-     11-point edge lands near 73%. Head-to-head history nudges it a few points either way —
-     it is lore, not signal, so it is capped.
+  /* Win probability for the away side.
 
-     `basis` is returned and RENDERED, deliberately: it is what makes a drift between the
-     number and its explanation visible on screen instead of silent. */
-  function projectWin(awayName, homeName, form, h2hRec) {
-    var a = form[teamKey(awayName)], h = form[teamKey(homeName)];
-    var p = 0.5, basis = 'even money — no games played yet';
+     PRIORITY, and this order is the whole point: PROJECTED POINTS first, scoring form
+     second, even money last. All-time head-to-head is never the basis of anything — at most
+     it nudges a number that already came from somewhere real.
 
-    if (a && h && a.g >= 2 && h.g >= 2) {
-      var margin = ((a.pf / a.g) + (h.pa / h.g)) / 2 - ((h.pf / h.g) + (a.pa / a.g)) / 2;
-      p = 1 / (1 + Math.exp(-margin / 11));
-      basis = 'projected on scoring form';
+     It used to be the other way round in the preseason, and it produced a page that argued
+     with itself: Bijan Mustard 95.0 proj vs Drake 99.6 proj, with the ball sitting on
+     Mustard's side at 53% because Mustard led the all-time series 6-5. Two numbers on the
+     same screen saying opposite things. Bryan: "you have the wrong formula... this should
+     not flag off of all time h2h matchup percentage."
+
+     SCALE. A fantasy team scores ~110 a week with a standard deviation around 25, so the
+     MARGIN between two of them has an SD near 35. Converting that to a logistic scale is
+     sd * sqrt(3)/pi, about 19. The old value was 11, which treated an 11-point projected
+     edge as a 73% lock when it is closer to 62%. 19 is used for both point-margin paths. */
+  var MARGIN_SCALE = 19;
+
+  function logistic(margin) { return 1 / (1 + Math.exp(-margin / MARGIN_SCALE)); }
+
+  function projectWin(awayName, homeName, form, h2hRec, projAway, projHome) {
+    var p = 0.5, basis = 'even money — no projections yet', real = false;
+
+    /* 1. What the two lineups are actually projected to score. This is the number the page
+          prints six inches away, so it had better be the number the ball agrees with. */
+    if (has(projAway) && has(projHome) && (num(projAway) > 0 || num(projHome) > 0)) {
+      p = logistic(num(projAway) - num(projHome));
+      basis = 'on projected points';
+      real = true;
+    } else {
+      /* 2. Scoring form: what each side usually scores, blended with what the other usually
+            gives up. Only once there is enough of a season to mean anything. */
+      var a = form[teamKey(awayName)], h = form[teamKey(homeName)];
+      if (a && h && a.g >= 2 && h.g >= 2) {
+        var margin = ((a.pf / a.g) + (h.pa / h.g)) / 2 - ((h.pf / h.g) + (a.pa / a.g)) / 2;
+        p = logistic(margin);
+        basis = 'projected on scoring form';
+        real = true;
+      }
     }
 
-    if (h2hRec && (h2hRec.winsA || h2hRec.winsB)) {
+    /* 3. History is lore, not signal. It may lean a real number by a few points; it may
+          never BE the number. With nothing real to lean on, the honest answer is even. */
+    if (real && h2hRec && (h2hRec.winsA || h2hRec.winsB)) {
       var awayIsA = teamKey(h2hRec.teamA) === teamKey(awayName);
       var wAway = awayIsA ? h2hRec.winsA : h2hRec.winsB;
       var wHome = awayIsA ? h2hRec.winsB : h2hRec.winsA;
       var tot = wAway + wHome;
       if (tot) {
         var edge = (wAway / tot) - 0.5;
-        if (basis.indexOf('no games') === 0 || basis.indexOf('even') === 0) {
-          p = 0.5 + edge * 0.6;
-          basis = 'on all-time head-to-head';
-        } else {
-          p = Math.max(0.02, Math.min(0.98, p + edge * 0.12));
-          basis = 'scoring form + head-to-head';
-        }
+        p = Math.max(0.02, Math.min(0.98, p + edge * 0.12));
+        basis += ' + head-to-head';
       }
     }
     return { p: Math.max(0.05, Math.min(0.95, p)), basis: basis };
