@@ -64,19 +64,28 @@
      The jersey is the projection: the bigger one is the favorite. Size is a real visual
      channel, but it is never the ONLY channel — the percentage is always printed next to
      it, so the call is readable at a glance and unambiguous when you look. */
-  .spot-kits{display:flex;align-items:flex-end;justify-content:center;gap:14px;
-             margin:2px 0 8px;min-height:78px;}
-  .spot-kit{display:flex;flex-direction:column;align-items:center;gap:3px;
-            transition:width .25s ease,opacity .25s ease;}
+  .spot-kits{display:flex;align-items:flex-end;justify-content:center;gap:22px;
+             margin:2px 0 6px;min-height:70px;}
+  .spot-kit{display:flex;flex-direction:column;align-items:center;gap:3px;width:56px;}
   .spot-kit .kit{display:block;}
-  .spot-kit .odds{font-size:10px;letter-spacing:.6px;color:var(--muted);
-                  font-variant-numeric:tabular-nums;white-space:nowrap;}
-  .spot-kit.fav .odds{color:var(--accent);font-weight:700;}
-  .spot-kit.dog{opacity:.72;}
-  .spot-kit.lost{opacity:.35;filter:saturate(.25);}
-  .spot-kit.won .odds{color:var(--accent);font-weight:700;}
-  .spot-basis{font-size:10px;color:var(--muted);text-align:center;margin:-4px 0 6px;opacity:.8;}
-  body.colorblind .spot-kit.fav .odds,body.colorblind .spot-kit.won .odds{color:var(--accent2);}
+  .spot-kit.lost{opacity:.4;filter:saturate(.3);}
+  /* Compact field — the same object as the matchup header, at card scale. End zones are the
+     owners' colors (identity); the ball is the probability (state). Nothing here is
+     color-only: the percentage and the team are printed underneath. */
+  .spot-field{display:flex;height:20px;border-radius:5px;overflow:hidden;
+              border:1px solid var(--line);margin:0 0 5px;}
+  .sez{flex:0 0 12%;min-width:13px;background:var(--sc,#2a3140);}
+  .sturf{flex:1 1 auto;position:relative;min-width:0;
+         background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),
+                    rgba(255,255,255,.18) calc(10% - 1px) 10%),
+                    linear-gradient(180deg,#1b3a27,#142c1e);}
+  .slos{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);transform:translateX(-1px);}
+  .sball{position:absolute;top:50%;transform:translate(-50%,-50%);width:17px;line-height:0;}
+  .sball svg{display:block;width:100%;height:auto;}
+  .spot-odds{font-size:10.5px;color:var(--muted);text-align:center;margin:0 0 6px;
+             font-variant-numeric:tabular-nums;}
+  .spot-odds b{color:var(--text);font-weight:700;}
+  .spot-basis{font-size:10px;color:var(--muted);text-align:center;margin:-3px 0 6px;opacity:.8;}
   #history .card{margin-bottom:14px;}
   textarea{width:100%;min-height:140px;background:#0f1319;border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:12px;font-size:13px;font-family:inherit;}
   #board .card{margin-bottom:12px;}
@@ -209,19 +218,39 @@
   @keyframes cbShake{0%,100%{transform:rotate(0);}25%{transform:rotate(-2deg);}75%{transform:rotate(2deg);}}
       /* ---- NFL week card (schedule tab) ---- */
   .nflwk-legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);margin:10px 0 4px;}
+  /* Each chip and its label are ONE flex item. They were bare text nodes beside the chips,
+     which flex turns into separate anonymous items — so the line could wrap between the O
+     chip and the word "Out", which is exactly what it did on a phone. */
+  .nflwk-legend .lg{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
   .nflwk-slot{margin:16px 2px 8px;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
   .nflwk-game{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:10px;}
   .nflwk-head{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;}
   .nflwk-head b{font-size:16px;}
   .nflwk-head .mt{color:var(--muted);font-size:12.5px;}
   .nflwk-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
-  .nflwk-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;margin-top:8px;}
-  @media(max-width:640px){.nflwk-cols{grid-template-columns:1fr;}}
+  /* minmax(0,1fr), NOT 1fr. `1fr` is shorthand for minmax(auto,1fr), and an `auto` minimum
+     floors the track at its min-content width — so one long player row pushed this grid to
+     536px inside a 390px phone and clipped the Avail chips off the right edge. The 0 minimum
+     lets the track shrink and hands the truncation back to .nm's ellipsis, where it belongs. */
+  .nflwk-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 14px;margin-top:8px;}
+  @media(max-width:640px){.nflwk-cols{grid-template-columns:minmax(0,1fr);}}
+  /* Same reason, one level down: a flex item will not shrink below its content unless told. */
+  .nflwk-side{min-width:0;}
   .nflwk-side .tm{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:6px 0 4px;}
-  .nflwk-plr{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:15px;min-height:25px;}
+  .nflwk-plr{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:15px;min-height:25px;min-width:0;}
   .nflwk-plr .ps{flex:0 0 34px;font-size:11.5px;font-weight:700;color:var(--muted);}
   .nflwk-plr .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .nflwk-plr .ow{font-size:11.5px;color:var(--accent2);max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  /* On a phone 36% of the row turns "Return of The Mac" into "Return of The M…" — which
+     names nobody — while squeezing the player's own name. So the row carries BOTH labels and
+     the viewport picks one: the full name where it fits, a short form where it does not.
+     Truncating to a prefix was the worst of the three options. */
+  .nflwk-plr .ow .short{display:none;}
+  @media(max-width:640px){
+    .nflwk-plr .ow{max-width:88px;}
+    .nflwk-plr .ow .full{display:none;}
+    .nflwk-plr .ow .short{display:inline;}
+  }
   .nflwk-plr.avail .nm,.nflwk-plr.avail .ps{color:var(--muted);}
   .nflwk-plr.out .nm{text-decoration:line-through;opacity:.55;}
   /* colorblind-safe: letters always shown; severity = outline vs solid */
@@ -436,7 +465,7 @@
       <span class="badge" style="background:none;border:1px solid var(--line);color:var(--muted);" id="nflwk-phase">keepers only — draft pending</span>
     </div>
     <p class="sub" style="margin:6px 0 0;">Every NFL game with the fantasy-relevant players in it, injury designations, and which WPIAL squads have skin in the game. Injury data refreshes from ESPN on every load.</p>
-    <div class="nflwk-legend"><span>Injury:</span><span class="nflwk-chip q">Q</span> Questionable <span class="nflwk-chip d">D</span> Doubtful <span class="nflwk-chip o">O</span> Out <span class="nflwk-chip o">IR</span> Inj. Reserve <span class="nflwk-avail">Avail</span> Not kept/drafted</div>
+    <div class="nflwk-legend"><span>Injury:</span><span class="lg"><span class="nflwk-chip q">Q</span> Questionable</span><span class="lg"><span class="nflwk-chip d">D</span> Doubtful</span><span class="lg"><span class="nflwk-chip o">O</span> Out</span><span class="lg"><span class="nflwk-chip o">IR</span> Inj. Reserve</span><span class="lg"><span class="nflwk-avail">Avail</span> Not kept/drafted</span></div>
     <div id="nfl-games"><p class="placeholder">Loading NFL week&hellip;</p></div>
   </div>
 
@@ -1269,6 +1298,24 @@ function kitWidth(p) { return WPIAL_ROW.kitWidth(p); }
    fid rather than a name, so a rename in the ESPN app cannot break a URL somebody shared. */
 function fidFor(name) { return (window.WPIAL_FX && WPIAL_FX.resolve(name)) || null; }
 
+/* A phone-width label for a franchise. People say "Mac", "Mustard", "Jeans" — the last word
+   is how this league actually refers to its teams, and it is what rivalry.js already uses in
+   the meeting log. Two guards: a name that is already short stays whole, and a last token
+   that is not a real word ("G. O. A. T." -> "T.") falls back to the full name rather than
+   inventing a nickname nobody uses. */
+var SPOT_BALL = '<svg viewBox="0 0 26 17" aria-hidden="true">' +
+  '<ellipse cx="13" cy="8.5" rx="12" ry="7.5" fill="#7a4326" stroke="#f2efe6" stroke-width="1.2"/>' +
+  '<path d="M7 8.5h12" stroke="#f2efe6" stroke-width="1.4"/>' +
+  '<path d="M10 6.4v4.2M13 6.4v4.2M16 6.4v4.2" stroke="#f2efe6" stroke-width="1"/></svg>';
+
+function shortTeam(name) {
+  var full = String(name == null ? '' : name).trim();
+  if (full.length <= 12) return full;
+  var parts = full.split(/\s+/);
+  var last = parts[parts.length - 1];
+  return (parts.length > 1 && last.replace(/[^A-Za-z0-9]/g, '').length >= 3) ? last : full;
+}
+
 const grid = document.getElementById('teamGrid');
 Object.entries(ROSTERS).forEach(([team, info]) => {
   const card = document.createElement('div');
@@ -1859,23 +1906,38 @@ function loadSchedule() {
           const pA = proj.p, pH = 1 - proj.p;
 
           let sh = '';
-          /* The kits. Unplayed: size is the projection, favorite bigger. Final: the
-             winner stands full size and the loser fades out — the scoreboard tells you
-             who won before you have read a single number. */
+          /* The kits are identity now — the owner's colors and the number they chose — at one
+             size for both sides. They used to scale with the projection, which meant the same
+             shirt said two things at once: whose team, and how likely. The field below says
+             the second one, the way field position says it in the actual sport. */
           const kitA = jerseyFor(mu.away), kitH = jerseyFor(mu.home);
           if (kitA || kitH) {
-            const wA = scored ? (awayWon ? 68 : 40) : kitWidth(pA);
-            const wH = scored ? (homeWon ? 68 : 40) : kitWidth(pH);
-            const clsA = scored ? (awayWon ? 'won' : 'lost') : (pA >= pH ? 'fav' : 'dog');
-            const clsH = scored ? (homeWon ? 'won' : 'lost') : (pH > pA ? 'fav' : 'dog');
-            const lblA = scored ? (awayWon ? 'WON' : '') : Math.round(pA * 100) + '%';
-            const lblH = scored ? (homeWon ? 'WON' : '') : Math.round(pH * 100) + '%';
             sh += '<div class="spot-kits">' +
-              '<span class="spot-kit ' + clsA + '" style="width:' + wA + 'px" title="' + escapeAttr(teamDisplayName(mu.away)) + '">' +
-                '<span class="kit">' + kitA + '</span><span class="odds">' + lblA + '</span></span>' +
-              '<span class="spot-kit ' + clsH + '" style="width:' + wH + 'px" title="' + escapeAttr(teamDisplayName(mu.home)) + '">' +
-                '<span class="kit">' + kitH + '</span><span class="odds">' + lblH + '</span></span>' +
+              '<span class="spot-kit' + (scored && !awayWon ? ' lost' : '') + '" title="' + escapeAttr(teamDisplayName(mu.away)) + '">' +
+                '<span class="kit">' + kitA + '</span></span>' +
+              '<span class="spot-kit' + (scored && !homeWon ? ' lost' : '') + '" title="' + escapeAttr(teamDisplayName(mu.home)) + '">' +
+                '<span class="kit">' + kitH + '</span></span>' +
               '</div>';
+            /* Ball at the away side's win probability: the favorite is the one in the other
+               team's half. At a final it is driven to the winner's end. Clamped off the goal
+               lines so it never sits inside an end zone. */
+            const ballPct = Math.max(5, Math.min(95, scored ? (awayWon ? 95 : 5) : Math.round(pA * 100)));
+            const czA = (window.WPIAL_FX && fidA && WPIAL_FX.colors(fidA).primary) || '#2a3140';
+            const czH = (window.WPIAL_FX && fidB && WPIAL_FX.colors(fidB).primary) || '#2a3140';
+            sh += '<div class="spot-field" role="img" aria-label="' +
+                escapeAttr(scored
+                  ? teamDisplayName(awayWon ? mu.away : mu.home) + ' won'
+                  : Math.round(pA * 100) + ' percent ' + teamDisplayName(mu.away) + ', ' +
+                    Math.round(pH * 100) + ' percent ' + teamDisplayName(mu.home)) + '">' +
+              '<span class="sez" style="--sc:' + escapeAttr(czA) + '"></span>' +
+              '<span class="sturf"><span class="slos" style="left:' + ballPct + '%"></span>' +
+                '<span class="sball" style="left:' + ballPct + '%">' + SPOT_BALL + '</span></span>' +
+              '<span class="sez" style="--sc:' + escapeAttr(czH) + '"></span>' +
+            '</div>';
+            sh += '<div class="spot-odds">' + (scored
+              ? '<b>' + escapeHtml(shortTeam(teamDisplayName(awayWon ? mu.away : mu.home))) + '</b> won'
+              : '<b>' + Math.round(Math.max(pA, pH) * 100) + '%</b> ' +
+                escapeHtml(shortTeam(teamDisplayName(pA >= pH ? mu.away : mu.home)))) + '</div>';
             if (!scored) sh += '<div class="spot-basis">' + escapeHtml(proj.basis) + '</div>';
           }
           sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.away) + teamDisplayName(mu.away) + (awayWon ? ' ✓' : '') + '</span><span class="sc">' + awayScore + '</span></div>';
@@ -2061,7 +2123,9 @@ loadSchedule();
         + '<span class="nm">' + p.name + '</span>'
         + (chip ? '<span class="nflwk-chip ' + (chip === 'Q' ? 'q' : chip === 'D' ? 'd' : 'o') + '">' + chip + '</span>' : '')
         + fp
-        + (p.team ? '<span class="ow">' + p.team + '</span>' : '<span class="nflwk-avail">Avail</span>')
+        + (p.team ? '<span class="ow" title="' + escapeAttr(p.team) + '"><span class="full">'
+            + escapeHtml(p.team) + '</span><span class="short">' + escapeHtml(shortTeam(p.team))
+            + '</span></span>' : '<span class="nflwk-avail">Avail</span>')
         + '</div>'
         + (p.line ? '<div class="nflwk-statline">' + p.line + '</div>' : '');
     }).join('');

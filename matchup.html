@@ -51,51 +51,63 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 .switch button{padding:3px 9px;line-height:1.2;}
 .switch button[disabled]{opacity:.35;cursor:default;}
 
-/* ---------- 2. diagonal split header ----------
-   The slash POSITION encodes win probability; the two color fields are pure identity.
-   That separation is the whole reason this shape was chosen — an owner's color can never
-   end up meaning "favorite". */
-/* HEIGHT IS NOT FIXED. It was, and the kit slot then had to be tall enough for the largest
-   jersey the odds could ever produce — which left ~55px of dead air above every kit that
-   was not a 95% favorite. The sides sit in normal flow now and the header is as tall as
-   whatever it is holding; the padding-bottom reserves the score pill's strip. */
-.split{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);
-       background:var(--panel);min-height:210px;}
-.field{position:absolute;inset:0;}
-.field.l{background:linear-gradient(160deg,var(--al) 0%,var(--al2) 100%);}
-.field.r{background:linear-gradient(200deg,var(--hl) 0%,var(--hl2) 100%);}
-.split .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,14,19,.30),rgba(11,14,19,.86));}
-/* The sides get the TOP of the header and the score pill owns the bottom strip. Laying
-   both out over the same box is what put the pill on top of the team names at 390px — the
-   padding-bottom here is what keeps them apart now that the height is fluid. */
-.sides{position:relative;z-index:2;display:flex;align-items:flex-start;
-       justify-content:space-between;padding:12px 12px 96px;gap:8px;}
-.side{display:flex;flex-direction:column;align-items:center;gap:5px;width:44%;min-width:0;}
-/* The kits are deliberately different sizes — that IS the odds. But the name and meta
-   underneath must still line up across the two sides, or the underdog's label rides up and
-   the header reads as broken rather than as lopsided. Fixed-height slot, kit anchored to
-   its bottom.
+/* ---------- 2. the field ----------------------------------------------------------
+   The header is a football field seen side-on. Each END ZONE is that owner's color and
+   carries their name: identity, and nothing but identity. The BALL carries the state — it
+   sits at the win-probability yard line, so the favourite is the one in the other team's
+   half, which is what field position means in the actual sport. Geometry and a printed
+   percentage carry it; the turf is neutral, so no owner colour ever encodes "favourite".
 
-   The slot must be at least as tall as the LARGEST kit will render. The jersey viewBox is
-   64x88, so a kit W px wide is W*1.375 tall; sizing this slot off the width alone is what
-   had the 95%-favorite's shirt clipped against the top of the header. */
-/* Height is set inline, per render, to the TALLER of the two kits — so both sides share one
-   slot (the labels still line up, which is why the slot exists) and neither carries padding
-   for a jersey that is not on screen. */
-.side .kitwrap{display:flex;align-items:flex-end;justify-content:center;width:100%;}
-.side .kit{display:block;}
+   The jerseys no longer scale with the odds. They did, and it meant the same shirt was
+   saying two things at once — whose team, and how likely. The field says the second one
+   now, so the kit is pure identity and wears the number its owner actually chose. */
+.field{display:flex;border-radius:12px;overflow:hidden;border:1px solid var(--line);
+       background:#12211a;min-height:190px;}
+.ez{flex:0 0 10%;min-width:34px;position:relative;display:flex;align-items:center;
+    justify-content:center;background:var(--ezc,#2a3140);}
+.ez::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(
+   90deg,transparent 0 7px,rgba(0,0,0,.07) 7px 14px);}
+.ez b{position:relative;z-index:1;writing-mode:vertical-rl;font-family:'Oswald';
+      font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--ezink,#fff);
+      white-space:nowrap;overflow:hidden;max-height:92%;}
+.ez.r b{transform:rotate(180deg);}
+/* turf: mowing stripes, then yard lines over them */
+.turf{flex:1 1 auto;position:relative;min-width:0;
+      background:
+        repeating-linear-gradient(90deg,rgba(255,255,255,.022) 0 10%,transparent 10% 20%),
+        linear-gradient(180deg,#1b3a27,#142c1e);}
+.turf .lines{position:absolute;inset:0;
+      background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),
+                 rgba(255,255,255,.20) calc(10% - 1px) 10%);}
+.turf .hash{position:absolute;left:0;right:0;height:0;border-top:1px dashed rgba(255,255,255,.10);}
+.turf .hash.a{top:32%;} .turf .hash.b{top:68%;}
+.ynum{position:absolute;bottom:5px;transform:translateX(-50%);font-family:'Oswald';
+      font-size:10px;color:rgba(255,255,255,.34);letter-spacing:1px;}
+/* the ball: line of scrimmage + marker + the number spelled out */
+.los{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);opacity:.85;
+     transform:translateX(-1px);}
+.ball{position:absolute;top:6px;transform:translateX(-50%);display:flex;flex-direction:column;
+      align-items:center;gap:2px;z-index:3;white-space:nowrap;}
+.ball svg{display:block;width:26px;height:auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));}
+.ball i{font-style:normal;font-family:'Oswald';font-size:12px;color:var(--text);
+        background:rgba(11,14,19,.82);border-radius:999px;padding:1px 7px;letter-spacing:.5px;}
+/* the two kits stand on the turf */
+/* padding-top clears the ball band, padding-bottom clears the yard numbers painted at
+   the foot of the turf — the meta line was landing 4px on top of them. */
+.kits{position:relative;z-index:2;display:flex;align-items:flex-end;justify-content:space-around;
+      gap:8px;height:100%;padding:46px 8px 28px;}
+.side{display:flex;flex-direction:column;align-items:center;gap:4px;max-width:46%;min-width:0;}
+.side .kit{display:block;width:76px;}
 .side .kit svg{display:block;width:100%;height:auto;}
 .side .tn{font-family:'Oswald';font-size:13px;line-height:1.1;text-align:center;max-width:100%;
           overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-/* Record and projection share ONE line. They were two, which cost ~19px of vertical the
-   jersey wanted more than they did, and they read better together anyway. */
 .side .rec{font-family:'Barlow Semi Condensed';font-size:11px;letter-spacing:1.1px;color:var(--muted);
-           text-transform:uppercase;font-variant-numeric:tabular-nums;}
+           text-transform:uppercase;font-variant-numeric:tabular-nums;text-align:center;}
 
-/* center score pill */
-.pill{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:3;
-      background:rgba(11,14,19,.88);border:1px solid var(--line);border-radius:12px;
-      padding:7px 14px;text-align:center;min-width:190px;backdrop-filter:blur(3px);}
+/* score pill sits BELOW the field now — no absolute positioning, so it can never land on
+   top of a team name the way it did at 390px. */
+.pill{margin:10px auto 0;width:fit-content;background:var(--panel);border:1px solid var(--line);
+      border-radius:12px;padding:8px 16px;text-align:center;min-width:200px;}
 .pill .score{font-family:'Oswald';font-size:27px;line-height:1;font-variant-numeric:tabular-nums;
       display:flex;align-items:center;justify-content:center;gap:9px;}
 .pill .score i{font-style:normal;font-size:13px;color:var(--muted);}
@@ -123,10 +135,14 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 @media (prefers-reduced-motion:reduce){.skel{animation:none;}}
 
 @media (min-width:760px){
-  .split{min-height:260px;}
-  .sides{padding:16px 14px 92px;}
+  .field{min-height:250px;}
+  .kits{padding:56px 16px 34px;}
+  .side .kit{width:104px;}
   .side .tn{font-size:17px;}
   .side .rec{font-size:12px;}
+  .ez b{font-size:14px;}
+  .ynum{font-size:12px;}
+  .ball svg{width:32px;} .ball i{font-size:14px;}
 }
 </style>
 </head>
@@ -149,16 +165,22 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     </div>
   </div>
 
-  <div class="split" id="split" hidden>
-    <div class="field l" id="fieldL"></div>
-    <div class="field r" id="fieldR"></div>
-    <div class="scrim"></div>
-    <div class="sides">
-      <div class="side" id="sideL"></div>
-      <div class="side" id="sideR"></div>
+  <div class="field" id="field" hidden>
+    <div class="ez l" id="ezL"></div>
+    <div class="turf" id="turf">
+      <div class="lines"></div>
+      <div class="hash a"></div><div class="hash b"></div>
+      <div id="yards"></div>
+      <div class="kits">
+        <div class="side" id="sideL"></div>
+        <div class="side" id="sideR"></div>
+      </div>
+      <div class="los" id="los"></div>
+      <div class="ball" id="ball"></div>
     </div>
-    <div class="pill" id="pill"></div>
+    <div class="ez r" id="ezR"></div>
   </div>
+  <div class="pill" id="pill" hidden></div>
   <div class="basis" id="basis"></div>
 
   <div class="strip" id="strip" hidden><span id="stripL"></span><span id="stripR"></span></div>
@@ -226,45 +248,54 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
   function fx() { return window.WPIAL_FX; }
   function fidOf(name) { return (fx() && fx().resolve(name)) || null; }
   function nameOf(fid) { return (fx() && fx().name(fid)) || String(fid || ''); }
+  /* Last word is how this league talks — "Mac", "Mustard", "Jeans" — and it is what the
+     meeting log already uses. Short names stay whole; a last token that is not a real word
+     ("G. O. A. T." -> "T.") falls back rather than inventing a nickname. */
+  function shortName(fid) {
+    var full = String(nameOf(fid) || '').trim();
+    if (full.length <= 12) return full;
+    var parts = full.split(/\s+/), last = parts[parts.length - 1];
+    return (parts.length > 1 && last.replace(/[^A-Za-z0-9]/g, '').length >= 3) ? last : full;
+  }
+  /* The end zone is a tall narrow strip, so it gets the shortest legible label there is. */
+  function endZoneName(fid) { return shortName(fid); }
 
   var state = { week: null, weeks: null, list: [], idx: 0, form: {}, h2h: null, history: null, detail: null };
 
   /* ---------- the header ---------- */
 
-  function kitFor(fid, widthPx, number, slotHeight) {
+  function kitFor(fid) {
     if (!fx()) return '';
     var c = fx().colors(fid) || {};
     var j = fx().jersey(fid) || {};
+    /* The number is the OWNER'S — whatever they chose on their profile. It used to be the
+       win probability, which meant the scoreboard card and this header printed different
+       numbers on the same shirt. The field carries the probability now. */
     var svg = fx().jerseySVG({
       template: j.template || 'classic',
-      /* The win-probability number IS the jersey number — the handoff's idea, and the
-         reason the kit can carry the odds without a second label. */
-      number: number != null ? String(number) : (j.number || String(fid).replace(/[^0-9]/g, '')),
+      number: j.number || String(fid).replace(/[^0-9]/g, ''),
       wordmark: j.wordmark || '',
       sleeves: j.sleeves || 'stripe',
       primary: c.primary, secondary: c.secondary, accent: c.accent
     });
-    return '<span class="kitwrap" style="height:' + slotHeight + 'px">' +
-           '<span class="kit" style="width:' + widthPx + 'px">' + svg + '</span></span>';
+    return '<span class="kit">' + svg + '</span>';
   }
 
-  /* The handoff's `width = 46 + wp*0.55` was drawn against a 390px phone, where 46-101px is
-     most of the column. On a 1080px page that same shirt is a postage stamp — the wordmark
-     and the win-prob number both stop being legible without zooming. So the SPREAD is what
-     the design actually specifies (the favorite is ~2x the longshot, and size is never the
-     only channel because the number is printed on the shirt), and the base scales with the
-     room available. Ratio here is 2.04x on desktop and 1.82x on a phone.
-
-     Ceilings are set by what fits: each side is 44% of the content width, and the kit slot
-     is 1.375x the width in height. */
-  function kitSize() {
-    var wide = window.innerWidth >= 760;
-    var base = wide ? 70 : 52, span = wide ? 0.85 : 0.5;
-    var cap = Math.floor(Math.min(window.innerWidth * 0.44, 1080 * 0.44) * 0.92);
-    return function (pct) {
-      return Math.max(44, Math.min(cap, Math.round(base + pct * span)));
-    };
+  /* Yard numbers the way a real field reads them: up to 50 at midfield, back down. */
+  function paintYardNumbers() {
+    var el = $('yards');
+    if (el.childNodes.length) return;
+    var nums = [10, 20, 30, 40, 50, 40, 30, 20, 10], html = '';
+    for (var i = 0; i < nums.length; i++) {
+      html += '<span class="ynum" style="left:' + ((i + 1) * 10) + '%">' + nums[i] + '</span>';
+    }
+    el.innerHTML = html;
   }
+
+  var BALL_SVG = '<svg viewBox="0 0 26 17" aria-hidden="true">' +
+    '<ellipse cx="13" cy="8.5" rx="12" ry="7.5" fill="#7a4326" stroke="#f2efe6" stroke-width="1.1"/>' +
+    '<path d="M7 8.5h12" stroke="#f2efe6" stroke-width="1.3"/>' +
+    '<path d="M10 6.4v4.2M13 6.4v4.2M16 6.4v4.2" stroke="#f2efe6" stroke-width="1"/></svg>';
 
   function recordOf(fid) {
     var f = state.form[R.teamKey(nameOf(fid))];
@@ -298,51 +329,64 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     var proj = R.projectWin(mu.away, mu.home, state.form, h2hRec);
     var pA = proj.p;
     if (st === 'final' && !FREEZE_CLOSING_ODDS_AT_FINAL) pA = (mu.winner === 'AWAY') ? 1 : 0;
-
     var pct = Math.round(pA * 100);
-    /* Slash at the win-probability position, +/- 6% of slope. Geometry carries the state. */
-    var x = Math.max(12, Math.min(88, pct)), s = 6;
-    $('fieldL').style.clipPath = 'polygon(0 0, ' + (x + s) + '% 0, ' + (x - s) + '% 100%, 0 100%)';
-    $('fieldR').style.clipPath = 'polygon(' + (x + s) + '% 0, 100% 0, 100% 100%, ' + (x - s) + '% 100%)';
 
     var cA = (fx() && fx().colors(state.fidA)) || {}, cB = (fx() && fx().colors(state.fidB)) || {};
-    var sp = $('split');
-    sp.style.setProperty('--al', cA.primary || '#2a3140');
-    sp.style.setProperty('--al2', cA.secondary || '#12161d');
-    sp.style.setProperty('--hl', cB.primary || '#2a3140');
-    sp.style.setProperty('--hl2', cB.secondary || '#12161d');
-    sp.hidden = false;
+    /* End zone ink is derived by luminance, never chosen — same rule as --fx-ink elsewhere. */
+    var inkOf = function (hex) {
+      return (fx() && fx().contrast) ? fx().contrast.ink(hex || '#2a3140') : '#fff';
+    };
+    $('ezL').style.setProperty('--ezc', cA.primary || '#2a3140');
+    $('ezL').style.setProperty('--ezink', inkOf(cA.primary));
+    $('ezR').style.setProperty('--ezc', cB.primary || '#2a3140');
+    $('ezR').style.setProperty('--ezink', inkOf(cB.primary));
+    $('ezL').innerHTML = '<b>' + R.esc(endZoneName(state.fidA)) + '</b>';
+    $('ezR').innerHTML = '<b>' + R.esc(endZoneName(state.fidB)) + '</b>';
 
-    var kw = kitSize(), wA = kw(pct), wB = kw(100 - pct);
-    /* 64x88 viewBox: a kit W wide renders W*1.375 tall. Both slots take the taller one. */
-    var slotH = Math.ceil(Math.max(wA, wB) * 88 / 64);
+    paintYardNumbers();
+
+    /* The ball sits at the left team's win probability, so the favourite is the side in the
+       OTHER team's half — which is what field position means. Clamped off the goal lines so
+       it never sits on top of an end zone. */
+    var ballPct = Math.max(4, Math.min(96, pct));
+    $('los').style.left = ballPct + '%';
+    $('ball').style.left = ballPct + '%';
+    /* The label is ~100px wide and centred on the ball, so near either goal line it would
+       run off the turf and get clipped. Slide the anchor instead of the ball. */
+    $('ball').style.transform = ballPct > 82 ? 'translateX(-88%)'
+                              : ballPct < 18 ? 'translateX(-12%)'
+                              : 'translateX(-50%)';
+    $('ball').innerHTML = BALL_SVG + '<i>' + pct + '% ' + R.esc(shortName(state.fidA)) + '</i>';
+    $('ball').setAttribute('aria-label',
+      pct + ' percent ' + nameOf(state.fidA) + ', ' + (100 - pct) + ' percent ' + nameOf(state.fidB));
+
     var detail = currentDetail();
     var projA = detail ? R.sum(detail.away.players.filter(function (p) { return p.starter; }), 'proj') : null;
     var projB = detail ? R.sum(detail.home.players.filter(function (p) { return p.starter; }), 'proj') : null;
 
-    var metaFor = function (rec, proj) {
-      return R.esc(rec) + (proj != null ? ' · ' + R.pts(proj) + ' proj' : '');
+    var metaFor = function (rec, pj) {
+      return R.esc(rec) + (pj != null ? ' · ' + R.pts(pj) + ' proj' : '');
     };
-    $('sideL').innerHTML = kitFor(state.fidA, wA, st === 'final' ? null : pct, slotH) +
+    $('sideL').innerHTML = kitFor(state.fidA) +
       '<span class="tn">' + R.esc(nameOf(state.fidA)) + '</span>' +
       '<span class="rec">' + metaFor(recordOf(state.fidA), projA) + '</span>';
-    $('sideR').innerHTML = kitFor(state.fidB, wB, st === 'final' ? null : (100 - pct), slotH) +
+    $('sideR').innerHTML = kitFor(state.fidB) +
       '<span class="tn">' + R.esc(nameOf(state.fidB)) + '</span>' +
       '<span class="rec">' + metaFor(recordOf(state.fidB), projB) + '</span>';
+    $('field').hidden = false;
 
-    /* Pre-game the projections ARE the big numbers; actuals only once they mean something. */
     var bigA, bigB;
     if (st === 'pre') { bigA = projA != null ? R.pts(projA) : '—'; bigB = projB != null ? R.pts(projB) : '—'; }
     else { bigA = R.pts(mu.awayScore); bigB = R.pts(mu.homeScore); }
 
     var badge = st === 'live' ? '<span class="badge live">Live</span>'
               : st === 'final' ? '<span class="badge final">Final</span>'
-              /* No kickoff time is in this feed. An invented one is worse than none. */
               : '<span class="badge pre">Pregame</span>';
     var series = seriesLine();
     $('pill').innerHTML =
       '<div class="score">' + bigA + '<i>' + (st === 'pre' ? 'proj' : '–') + '</i>' + bigB + '</div>' +
       badge + (series ? '<div class="series">' + R.esc(series) + '</div>' : '');
+    $('pill').hidden = false;
 
     $('basis').textContent = st === 'pre' || st === 'live'
       ? Math.round(pA * 100) + '% ' + nameOf(state.fidA) + ' — ' + proj.basis
@@ -492,7 +536,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     state.list = matchupsForWeek(w);
     $('weekSel').value = String(w);
     if (!state.list.length) {
-      $('split').hidden = true;
+      $('field').hidden = true; $('pill').hidden = true;
       $('head-msg').innerHTML = '<p class="note">No matchups scheduled for week ' + R.esc(w) + '.</p>';
       $('box').innerHTML = '';
       $('series').innerHTML = '';
@@ -568,6 +612,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
         'matchup can\'t be looked up right now.</p>';
       $('box').innerHTML = '';
       if (window.WPIAL_SERIES) $('series').innerHTML = '';
+      $('field').hidden = true; $('pill').hidden = true;
     });
 
     loadSeries();

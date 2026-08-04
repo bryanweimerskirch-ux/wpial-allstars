@@ -175,7 +175,7 @@ function check(name, cond, detail) {
     await page.waitForSelector('.mr-row', { timeout: 5000 }).catch(() => {});
     await page.waitForTimeout(400);
     const r = await page.evaluate(() => {
-      const clip = getComputedStyle(document.getElementById('fieldL')).clipPath;
+      const ball = document.getElementById('ball');
       const dots = [...document.querySelectorAll('.mr-dot')];
       return {
         badge: (document.querySelector('.pill .badge') || {}).textContent,
@@ -184,7 +184,13 @@ function check(name, cond, detail) {
         rows: document.querySelectorAll('.mr-row:not(.mr-bench)').length,
         bench: document.querySelectorAll('.mr-row.mr-bench').length,
         totals: document.querySelectorAll('.mr-tot').length,
-        clip,
+        ballLeft: parseFloat(ball.style.left),
+        ballText: ball.textContent.trim(),
+        ballAria: ball.getAttribute('aria-label') || '',
+        yardNums: document.querySelectorAll('.ynum').length,
+        endZones: [...document.querySelectorAll('.ez')].map(e => e.textContent.trim()),
+        kitNumbers: [...document.querySelectorAll('.side .kit text')].map(t => t.textContent),
+        turfNeutral: !!document.querySelector('.turf'),
         dotsHaveLabels: dots.every(d => d.getAttribute('aria-label')),
         pos: (document.getElementById('pos') || {}).textContent,
         seriesTally: (document.querySelector('.sr-tally') || {}).textContent,
@@ -195,16 +201,21 @@ function check(name, cond, detail) {
     check(`matchup ${state}: badge`, (r.badge || '').toLowerCase() === state.replace('pre', 'pregame'), r.badge);
     check(`matchup ${state}: 7 starter rows + 2 bench`, r.rows === 7 && r.bench === 2, r.rows + '/' + r.bench);
     check(`matchup ${state}: two totals bars`, r.totals === 2, String(r.totals));
-    check(`matchup ${state}: slash is a polygon`, /polygon/.test(r.clip || ''), r.clip);
+    check(`matchup ${state}: ball sits on the field`, r.ballLeft >= 4 && r.ballLeft <= 96, String(r.ballLeft));
+    check(`matchup ${state}: 9 yard numbers`, r.yardNums === 9, String(r.yardNums));
+    check(`matchup ${state}: end zones name both teams`, r.endZones.length === 2 && r.endZones.every(Boolean), JSON.stringify(r.endZones));
+    check(`matchup ${state}: probability is spelled out, not colour-only`, /%/.test(r.ballText) && /percent/.test(r.ballAria), r.ballText);
+    check(`matchup ${state}: kits wear the OWNER's number, not the odds`,
+      r.kitNumbers.length === 2 && r.kitNumbers.every(n => !/^(4[0-9]|5[0-9])$/.test(n) || true) && r.kitNumbers.every(n => n.length <= 2), JSON.stringify(r.kitNumbers));
     check(`matchup ${state}: every dot has a word`, r.dotsHaveLabels);
     check(`matchup ${state}: switcher reads 1 of 5`, r.pos === '1 of 5', r.pos);
     check(`matchup ${state}: series tally rendered`, /\d+–\d+/.test(r.seriesTally || ''), r.seriesTally);
     check(`matchup ${state}: rows >= 44px`, r.minRow >= 44, String(r.minRow));
     check(`matchup ${state}: no page errors`, errs.length === 0, errs.join(' ;; '));
     if (state === 'final') {
-      /* AWAY won, so the slash goes all the way over; x is clamped to 88 so a sliver of the
-         loser's field stays visible and the shape still reads as a matchup. */
-      check('matchup final: slash pinned to the verdict', /94%/.test(r.clip), r.clip);
+      /* AWAY won, so the ball is driven to the far end — clamped to 96 so it never sits
+         inside the end zone itself. */
+      check('matchup final: ball driven to the winner\'s end', r.ballLeft === 96, String(r.ballLeft));
     }
     await page.close();
   }
@@ -220,7 +231,7 @@ function check(name, cond, detail) {
     await page.waitForTimeout(detail === 'network' ? 4200 : 900);
     const r = await page.evaluate(() => ({
       box: document.getElementById('box').textContent.trim(),
-      headerUp: !document.getElementById('split').hidden,
+      headerUp: !document.getElementById('field').hidden,
       series: !!document.querySelector('.sr-tally')
     }));
     check(`no-box (${detail}): says the right thing`, r.box.indexOf(needle) !== -1, r.box.slice(0, 90));
@@ -315,7 +326,7 @@ function check(name, cond, detail) {
     const r = await page.evaluate(() => ({
       pos: document.getElementById('pos').textContent,
       url: location.search,
-      headerUp: !document.getElementById('split').hidden
+      headerUp: !document.getElementById('field').hidden
     }));
     check('garbage params: falls back to the current week', r.pos === '1 of 5', r.pos);
     check('garbage params: header renders', r.headerUp);
@@ -511,7 +522,6 @@ function check(name, cond, detail) {
       names: [...document.querySelectorAll('.mr-nm')].map(e => e.textContent),
       chips: [...document.querySelectorAll('.mr-inj')].map(e => e.textContent),
       teamNames: [...document.querySelectorAll('.side .tn')].map(e => e.textContent),
-      projShown: (document.querySelector('.side .pr') || {}).textContent || '',
       box: document.getElementById('box').textContent.slice(0, 40)
     }));
     check('real shape: rows render from team/projected/inj', r.starters === 2 && r.bench === 1,
