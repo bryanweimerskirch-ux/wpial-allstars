@@ -203,7 +203,19 @@
   body.colorblind .player.keeper{border-color:#F0E442;background:#2b290f;color:#F0E442;}
   body.colorblind .honor{color:#F0E442;}
   body.colorblind .honor.og{color:#56B4E9;}
+  /* Colorblind mode underlines links so they are never identified by colour alone. That is
+     the right rule for an INLINE TEXT link. It is the wrong rule for a link that wraps a
+     whole card: the scoreboard card became an <a>, and this underlined every word inside it
+     — the odds, the basis line, both team names, the series line. The card opts out and
+     hands the underline to the one element that is actually its affordance. */
   body.colorblind a{text-decoration:underline;}
+  body.colorblind a.spotlight-link{text-decoration:none;}
+  body.colorblind a.spotlight-link .spotlight-go{text-decoration:underline;}
+  /* The standings team link is the opposite case and needs the opposite fix: it IS an inline
+     text link, but `.standings-table .tm-link{text-decoration:none}` is two classes and
+     outspecifies `body.colorblind a`, so it was silently exempting itself from the rule and
+     rendering as plain text with no affordance at all in colorblind mode. */
+  body.colorblind .standings-table .tm-link{text-decoration:underline;}
   body.colorblind .db-pick.first{border-color:#F0E442;}
   body.colorblind .db-pick.first b{color:#F0E442;}
 

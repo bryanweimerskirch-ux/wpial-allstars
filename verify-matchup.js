@@ -460,6 +460,32 @@ function check(name, cond, detail) {
     await page.close();
   }
 
+
+  /* Colorblind mode underlines links so colour is never the only cue. A card-sized <a> turns
+     that into every word in the card being underlined — which is what happened live. */
+  {
+    const { page, errs } = await newPage(browser, { state: 'final' });
+    await page.goto(BASE + 'index.html', { waitUntil: 'domcontentloaded' });
+    await ungate(page, { team: 'Bijan Mustard', is_commish: true });
+    await page.evaluate(() => document.body.classList.add('colorblind'));
+    await page.waitForTimeout(1200);
+    const r = await page.evaluate(() => {
+      const dec = e => e ? getComputedStyle(e).textDecorationLine : null;
+      const card = document.querySelector('a.spotlight-link');
+      const q = sel => dec(card.querySelector(sel));
+      return {
+        card: dec(card), odds: q('.spot-odds'), teamName: q('.spotlight-row .nm'),
+        go: q('.spotlight-go'), standings: dec(document.querySelector('.standings-table .tm-link'))
+      };
+    });
+    check('colorblind: card-sized link is not underlined wholesale',
+      r.card === 'none' && r.odds === 'none' && r.teamName === 'none', JSON.stringify(r));
+    check('colorblind: the card affordance still carries an underline', r.go === 'underline', r.go);
+    check('colorblind: the inline standings link IS underlined', r.standings === 'underline', r.standings);
+    check('colorblind: no page errors', errs.length === 0, errs.join(' ;; '));
+    await page.close();
+  }
+
   /* the shared math must produce the same numbers it did when it lived in index.html */
   {
     const { page } = await newPage(browser, { state: 'final' });
