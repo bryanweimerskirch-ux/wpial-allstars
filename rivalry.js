@@ -10,7 +10,7 @@
  *      on screen is client-side arithmetic over `meetings[]`: headline, streak, series
  *      shape, extremes, playoff split, averages. One reduce each. No server fields added.
  *   2. ?action=h2h      — the hand-maintained aggregate. The documented fallback for
- *      "h2h_log does not answer", which today is ALWAYS: h2hlog.gs is not built.
+ *      "h2h_log does not answer". Live since 2026-08-04 (v51), so this is now a real fallback.
  *   3. ?action=history  — the career resumes. Live today.
  *
  * ABOUT THE FALLBACK, AND WHY IT SAYS SO ON SCREEN
@@ -47,19 +47,44 @@
 
   /* ---------- arithmetic over meetings[] (all of it, in one pass each) ---------- */
 
-  /* meetings[] arrive newest-first and are oriented to the SORTED pair (fid_a < fid_b),
-     which is not necessarily the orientation this page is displaying. Re-orient once,
-     here, so nothing downstream has to think about it again. */
-  function orient(meetings, fidA, fidB) {
-    var lowFirst = pairKey(fidA, fidB).split('|')[0] === fidA;
+  /* meetings[] arrive newest-first, oriented to the pair's OWN a/b sides — which the
+     backend fixes by sorted ESPN member GUID, an order this page cannot compute and must
+     never try to. `aIsA` therefore comes from resolving the pair's own teamA, not from
+     sorting fids: an earlier version sorted fids here and silently swapped the score
+     columns for roughly half the rivalries.
+     The log reports winner as the literal 'A'/'B' of that same orientation; translate it
+     to a fid here so tally() and every caller downstream speak one language. */
+  function orient(meetings, fidA, fidB, aIsA) {
     return (meetings || []).map(function (m) {
+      var w = null;
+      if (m.winner === 'A') w = aIsA ? fidA : fidB;
+      else if (m.winner === 'B') w = aIsA ? fidB : fidA;
+      else if (m.winner) w = m.winner;            /* already a fid — the aggregate path */
       return {
         season: m.season, week: m.week, playoff: !!m.playoff,
-        a: Number(lowFirst ? m.a : m.b),
-        b: Number(lowFirst ? m.b : m.a),
-        winner: m.winner || null
+        a: Number(aIsA ? m.a : m.b),
+        b: Number(aIsA ? m.b : m.a),
+        winner: w
       };
     });
+  }
+
+  /* pairs[] is an ARRAY carrying CURRENT ESPN team names, not an object keyed by fid.
+     That is deliberate on the backend: the log stores member GUIDs and resolves names once,
+     at read time, so a rename follows the franchise instead of forking its history. The fid
+     is this site's key, so the join happens here, through the same resolver every other
+     panel uses. A name that resolves to nothing is a departed franchise, not a bug. */
+  function findPair(log, fidA, fidB) {
+    if (!log || !log.ok || !log.pairs || !log.pairs.length) return null;
+    var want = pairKey(fidA, fidB), i, ra, rb;
+    for (i = 0; i < log.pairs.length; i++) {
+      var p = log.pairs[i];
+      ra = window.WPIAL_FX ? window.WPIAL_FX.resolve(String(p.teamA || '').trim()) : null;
+      rb = window.WPIAL_FX ? window.WPIAL_FX.resolve(String(p.teamB || '').trim()) : null;
+      if (!ra || !rb) continue;
+      if (pairKey(ra, rb) === want) return { pair: p, aIsA: ra === fidA };
+    }
+    return null;
   }
 
   function tally(ms, fidA, fidB) {
@@ -287,8 +312,9 @@
 
     var log = opts.log, h2h = opts.h2h, history = opts.history;
     var logFailed = log && log.ok === false;
-    var pair = (log && log.ok && log.pairs) ? log.pairs[pairKey(fidA, fidB)] : null;
-    var meetings = pair ? orient(pair.meetings || [], fidA, fidB) : null;
+    var found = findPair(log, fidA, fidB);
+    var pair = found ? found.pair : null;
+    var meetings = pair ? orient(pair.meetings || [], fidA, fidB, found.aIsA) : null;
 
     /* Both feeds gone is the only true "feed down". A missing log with a working aggregate
        is a DIFFERENT claim and gets its own render — collapsing them is how a page tells an
@@ -501,6 +527,6 @@
     render: render, skeleton: skeleton, down: down,
     /* exported for the test harness — the arithmetic is the part worth asserting */
     _calc: { orient: orient, tally: tally, streak: streak, extremes: extremes, derived: derived,
-             pairKey: pairKey, h2hRecord: h2hRecord }
+             pairKey: pairKey, h2hRecord: h2hRecord, findPair: findPair }
   };
 })();

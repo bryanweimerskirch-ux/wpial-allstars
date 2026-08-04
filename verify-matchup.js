@@ -55,18 +55,27 @@ function weekMatchups(state) {
   return out;
 }
 
+/* Shaped like the LIVE ?action=h2h_log payload, verified against v51 on 2026-08-04:
+   winner is the literal 'A'/'B' of the pair's own orientation, never a fid. The pair's a/b
+   sides are fixed by sorted ESPN member GUID — an order this page cannot compute — so the
+   fixture deliberately puts TEAMS[1] on the A side. A fixture that always agreed with the
+   display order would pass whichever way rivalry.js read the columns. */
 function meetings(n, opts) {
   opts = opts || {};
   const ms = [];
   for (let i = 0; i < n; i++) {
     ms.push({
       season: 2025 - Math.floor(i / 2), week: 11 - i, playoff: i === 1,
-      a: 131.4 - i * 3, b: 99.2 + i * 2,
-      winner: (i % 3 === 0) ? A() : B()
+      a: 99.2 + i * 2, b: 131.4 - i * 3,
+      winner: (i % 3 === 0) ? 'B' : 'A'
     });
   }
-  if (opts.wide) { ms[0].a = 190.0; ms[0].b = 60.0; }
+  if (opts.wide) { ms[0].a = 60.0; ms[0].b = 190.0; }
   return ms;
+}
+
+function logPairs(firstSeason, n, opts) {
+  return [{ teamA: TEAMS[1], teamB: TEAMS[0], firstSeason, meetings: meetings(n, opts) }];
 }
 
 function fixtures(scn) {
@@ -88,12 +97,12 @@ function fixtures(scn) {
          { ok: true, matchups: [{ teamA: TEAMS[0], teamB: TEAMS[1], winsA: 7, winsB: 5, ties: 0 }] },
     h2h_log:
       scn.log === 'full' ? { ok: true, complete: true, seasons: [2019, 2025],
-        pairs: { [PAIR()]: { firstSeason: 2019, meetings: meetings(12, { wide: true }) } } } :
+        pairs: logPairs(2019, 12, { wide: true }) } :
       scn.log === 'thin' ? { ok: true, complete: true, seasons: [2023, 2025],
-        pairs: { [PAIR()]: { firstSeason: 2023, meetings: meetings(3) } } } :
+        pairs: logPairs(2023, 3) } :
       scn.log === 'partial' ? { ok: true, complete: false, seasons: [2022, 2025],
-        pairs: { [PAIR()]: { firstSeason: 2022, meetings: meetings(8) } } } :
-      scn.log === 'nevermet' ? { ok: true, complete: true, seasons: [2019, 2025], pairs: {} } :
+        pairs: logPairs(2022, 8) } :
+      scn.log === 'nevermet' ? { ok: true, complete: true, seasons: [2019, 2025], pairs: [] } :
       scn.log === 'down' ? { ok: false, error: 'H2HLog tab missing' } :
       { error: 'Unknown action' },
     history: scn.history === 'down' ? { ok: false } : {
@@ -250,7 +259,14 @@ function check(name, cond, detail) {
 
   /* ---------------- the series panel ---------------- */
   const seriesCases = [
-    ['full', s => s.marks === 12 && s.logRows === 5 && s.expand && /12 meetings/.test(s.expandText)],
+    /* WHO leads is arithmetic on the fixture, not a transcription of what the panel prints:
+       12 meetings, winner 'B' on i%3===0 (i=0,3,6,9) and 'A' otherwise, with TEAMS[1] on the
+       pair's A side — so TEAMS[1] owns the 8 and TEAMS[0] the 4. The tally itself is rendered
+       leader-first (hi–lo), so it reads 8–4 whichever way orient() ran; only the NAME in the
+       eyebrow moves. That name is therefore the one assertion here that catches orient()
+       reading the score columns backwards. Marks and row counts survive a flip untouched. */
+    ['full', s => s.marks === 12 && s.logRows === 5 && s.expand && /12 meetings/.test(s.expandText)
+                  && s.tally === '8–4' && new RegExp('^' + TEAMS[1] + ' LEAD$').test(s.eyebrow)],
     ['thin', s => s.marks === 3 && s.logRows === 3 && !s.expand && /robust sample of three/.test(s.note)],
     ['partial', s => s.info && /couldn't be reached/.test(s.info)],
     ['nevermet', s => /First meeting/.test(s.text) && !s.tally],
@@ -271,6 +287,7 @@ function check(name, cond, detail) {
       note: (document.querySelector('.sr-note') || {}).textContent || '',
       info: (document.querySelector('.sr-info') || {}).textContent || '',
       tally: (document.querySelector('.sr-tally') || {}).textContent || '',
+      eyebrow: (document.querySelector('.sr-eyebrow') || {}).textContent || '',
       retry: !!document.querySelector('.sr-retry'),
       resumes: document.querySelectorAll('.sr-res').length,
       text: document.getElementById('series').textContent
@@ -312,6 +329,7 @@ function check(name, cond, detail) {
     await page.waitForTimeout(700);
     const s = await page.evaluate(() => ({
       tally: (document.querySelector('.sr-tally') || {}).textContent || '',
+      eyebrow: (document.querySelector('.sr-eyebrow') || {}).textContent || '',
       note: (document.querySelector('.sr-note') || {}).textContent || '',
       shape: document.querySelectorAll('.sr-mark').length,
       resumes: document.querySelectorAll('.sr-res').length
