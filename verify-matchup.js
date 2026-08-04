@@ -448,18 +448,110 @@ function check(name, cond, detail) {
         kits: document.querySelectorAll('.spot-kit').length
       };
     });
-    check('index: every scoreboard card is an anchor', r.anchors === 15 && r.divs === 0, r.anchors + ' a / ' + r.divs + ' div');
+    /* ONE week is rendered now, not all fourteen — 5 cards, not 70. */
+    check('index: every scoreboard card is an anchor', r.anchors === 5 && r.divs === 0, r.anchors + ' a / ' + r.divs + ' div');
     check('index: hrefs carry fids on both sides', r.allHaveFids);
     check('index: team names still --text (gotcha 32)', r.nmColor === r.textColor, r.nmColor + ' vs ' + r.textColor);
-    check('index: cards carry the go caption', r.goCaptions === 15, String(r.goCaptions));
+    check('index: cards carry the go caption', r.goCaptions === 5, String(r.goCaptions));
     check('index: standings rows link to roster.html', r.tmLinks === 10 && /roster\.html\?team=f/.test(r.tmHref), r.tmLinks + ' ' + r.tmHref);
     check('index: standings link is not gold either', r.tmColor === r.textColor, r.tmColor);
     check('index: owner card still first (today\'s change)', r.ownerFirst === 'Bijan Mustard', r.ownerFirst);
-    check('index: scoreboard kits still render (shared math intact)', r.kits === 30, String(r.kits));
+    check('index: scoreboard kits still render (shared math intact)', r.kits === 10, String(r.kits));
     check('index: no page errors', errs.length === 0, errs.join(' ;; '));
     await page.close();
   }
 
+
+  /* Week navigator: one week in the DOM, defaulting to the live week, with a way to move. */
+  {
+    const scn = { state: 'pre' };
+    const { page, errs } = await newPage(browser, scn);
+    /* week 1 finished, week 2 in progress, week 3 untouched -> live week is 2 */
+    await page.unroute('**script.google.com/**');
+    await page.route('**script.google.com/**', route => {
+      const m = /[?&]action=([a-z0-9_]+)/.exec(route.request().url());
+      const k = m ? m[1] : '';
+      const body = k === 'espn_schedule'
+        ? { ok: true, currentWeek: 1, weeks: { 1: weekMatchups('final'), 2: weekMatchups('live'),
+                                              3: weekMatchups('pre'), 4: weekMatchups('pre') } }
+        : { error: 'Unknown action' };
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+    });
+    await page.goto(BASE + 'index.html', { waitUntil: 'domcontentloaded' });
+    await ungate(page);
+    await page.waitForTimeout(1400);
+    const r = await page.evaluate(() => ({
+      cards: document.querySelectorAll('#schedule-weeks .spotlight').length,
+      weekCards: document.querySelectorAll('#schedule-weeks .card').length,
+      label: (document.getElementById('wknav-label') || {}).textContent,
+      pills: document.querySelectorAll('.wkpill').length,
+      liveGlyphs: document.querySelectorAll('.wkpill .liveglyph').length,
+      selected: (document.querySelector('.wkpill.on') || {}).textContent,
+      prevDisabled: document.querySelector('[data-d="-1"]').disabled,
+      nextDisabled: document.querySelector('[data-d="1"]').disabled,
+      note: (document.getElementById('wknav-note') || {}).textContent
+    }));
+    check('weeknav: only the live week is in the DOM', r.cards === 5 && r.weekCards === 1,
+      r.cards + ' cards / ' + r.weekCards + ' week');
+    check('weeknav: defaults to the live week (2), not currentWeek (1)', /Week 2/.test(r.label || ''), r.label);
+    check('weeknav: one pill per week', r.pills === 4, String(r.pills));
+    check('weeknav: the live week keeps a glyph (greyscale-safe)', r.liveGlyphs === 1, String(r.liveGlyphs));
+    check('weeknav: selection and note agree', /Week 2/.test(r.selected || '') && r.note === 'current week',
+      r.selected + ' | ' + r.note);
+    check('weeknav: arrows bound to the ends', r.prevDisabled === false && r.nextDisabled === false,
+      r.prevDisabled + '/' + r.nextDisabled);
+
+    /* The scoreboard section is display:none until its tab is active, and Playwright will
+       not click an invisible control — activate it the way the page's own nav does. */
+    await page.evaluate(() => {
+      document.querySelectorAll('section').forEach(x => x.classList.remove('active'));
+      document.getElementById('scoreboard').classList.add('active');
+    });
+    await page.waitForTimeout(150);
+
+    /* move forward, then to the last week */
+    await page.click('[data-d="1"]');
+    await page.waitForTimeout(250);
+    const f = await page.evaluate(() => ({
+      label: document.getElementById('wknav-label').textContent,
+      cards: document.querySelectorAll('#schedule-weeks .spotlight').length,
+      h3: (document.querySelector('#schedule-weeks .card h3') || {}).textContent
+    }));
+    check('weeknav: next arrow moves a week and repaints', /Week 3/.test(f.label) && /Week 3/.test(f.h3) && f.cards === 5,
+      f.label + ' | ' + f.h3 + ' | ' + f.cards);
+    await page.click('.wkpill[data-w="4"]');
+    await page.waitForTimeout(250);
+    const g = await page.evaluate(() => ({
+      label: document.getElementById('wknav-label').textContent,
+      nextDisabled: document.querySelector('[data-d="1"]').disabled,
+      note: document.getElementById('wknav-note').textContent
+    }));
+    check('weeknav: pill jumps, and the last week disables next', /Week 4/.test(g.label) && g.nextDisabled === true,
+      g.label + ' | next disabled ' + g.nextDisabled);
+    check('weeknav: the note only claims "current" on the live week', g.note === '', JSON.stringify(g.note));
+    check('weeknav: no page errors', errs.length === 0, errs.join(' ;; '));
+    await page.close();
+  }
+
+  /* ?week=N is the linkable primitive, and it has to clamp. */
+  for (const [q, want] of [['?week=3', 'Week 3'], ['?week=99', 'Week 2'], ['?week=abc', 'Week 2']]) {
+    const { page } = await newPage(browser, { state: 'pre' });
+    await page.unroute('**script.google.com/**');
+    await page.route('**script.google.com/**', route => {
+      const m = /[?&]action=([a-z0-9_]+)/.exec(route.request().url());
+      const body = (m && m[1] === 'espn_schedule')
+        ? { ok: true, currentWeek: 1, weeks: { 1: weekMatchups('final'), 2: weekMatchups('live'),
+                                              3: weekMatchups('pre'), 4: weekMatchups('pre') } }
+        : { error: 'Unknown action' };
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+    });
+    await page.goto(BASE + 'index.html' + q, { waitUntil: 'domcontentloaded' });
+    await ungate(page);
+    await page.waitForTimeout(1300);
+    const label = await page.evaluate(() => (document.getElementById('wknav-label') || {}).textContent);
+    check(`weeknav: index.html${q} opens on ${want}`, label === want, label);
+    await page.close();
+  }
 
   /* The scoreboard card wears both franchises. The scrim over them is contrast-critical:
      if it ever thins out, --muted stops clearing 4.5:1 over a bright primary. */

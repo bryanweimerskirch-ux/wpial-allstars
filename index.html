@@ -42,6 +42,25 @@
   .player:hover{background:#22282f;}
   .player.pinged{background:var(--accent);color:#1a0e04;font-weight:600;}
   .empty{color:#4a525c;font-style:italic;}
+/* Week navigator. The selected pill is FILLED and the live week keeps a ● glyph whether or
+   not it is selected — both readable in greyscale, per the site rule that colour never
+   carries meaning alone. The arrows sit together beside the label rather than being pushed to
+   opposite edges, which on a wide card puts a thumb-width control a screen from its pair. */
+.wknav{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.wknav-top{display:flex;align-items:center;gap:8px;}
+.wknav-top b{font-size:15px;min-width:76px;}
+.wknav-top button{background:none;border:1px solid var(--line);color:var(--text);
+  border-radius:6px;padding:3px 10px;font-size:14px;line-height:1.3;cursor:pointer;}
+.wknav-top button:hover:not([disabled]){border-color:var(--accent);}
+.wknav-top button[disabled]{opacity:.3;cursor:default;}
+.wknav-top button:focus-visible,.wkpill:focus-visible{outline:2px solid var(--accent2);outline-offset:2px;}
+.wknav-note{font-size:11.5px;color:var(--muted);}
+.wkpills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.wkpills::-webkit-scrollbar{display:none;}
+.wkpill{flex:0 0 auto;background:none;border:1px solid var(--line);color:var(--text);
+  border-radius:20px;padding:4px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;}
+.wkpill.on{background:var(--accent);border-color:var(--accent);color:#1a0e04;font-weight:700;}
+.wkpill .liveglyph{font-size:9px;vertical-align:middle;margin-right:3px;}
 .spotlight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px;}
 /* The card wears the two franchises. Two stacked background images: the owners' colors
    split underneath, a scrim over the top. The scrim is not decoration — it is what holds
@@ -507,7 +526,8 @@
         </div>
         <div id="gelly-picks-body"><p class="placeholder">Loading Gelly's picks&hellip;</p></div>
       </div>
-  <div id="schedule-weeks" class="grid" style="margin-top:16px;"><p class="placeholder">Loading matchups&hellip;</p></div>
+  <div id="sb-nav" class="wknav" hidden></div>
+  <div id="schedule-weeks" class="grid" style="margin-top:12px;"><p class="placeholder">Loading matchups&hellip;</p></div>
 </section>
 
 <section id="standings">
@@ -1595,6 +1615,15 @@ function waJSON(url) {
   });
 }
 
+/* One in-flight promise per URL. `espn_schedule` was being fetched twice on every load —
+   once by loadSchedule, once by loadStandings — for a payload that cannot differ between
+   them. Opt-in on purpose: anything that polls must keep going over the wire. */
+var waOnce = {};
+function waJSONOnce(url) {
+  if (!waOnce[url]) waOnce[url] = waJSON(url);
+  return waOnce[url];
+}
+
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str == null ? '' : String(str);
@@ -1901,11 +1930,91 @@ loadKeepers();
 
 // ---- 2026 schedule / scoreboard (ESPN via backend proxy) ----
 
+/* Which fantasy week is "live", derived from RESULTS rather than from a date.
+   `data.currentWeek` off the feed reads 1 all offseason and is only right in-season, and
+   Bryan's rule is about games finishing: take the newest week with any activity, and advance
+   past it ONLY once every matchup in it has a winner. A week in progress keeps showing
+   itself. `currentWeek` is the offseason fallback. */
+function liveFantasyWeek(weeks, currentWeek, weekNums) {
+  var newestPlayed = 0, done = false;
+  weekNums.forEach(function (w) {
+    var list = weeks[w] || [];
+    if (!list.length) return;
+    var any = list.some(function (mu) {
+      return Number(mu.awayScore) > 0 || Number(mu.homeScore) > 0 || mu.winner !== 'UNDECIDED';
+    });
+    if (!any) return;
+    if (w >= newestPlayed) {
+      newestPlayed = w;
+      done = list.every(function (mu) { return mu.winner === 'AWAY' || mu.winner === 'HOME'; });
+    }
+  });
+  if (!newestPlayed) {
+    return weekNums.indexOf(currentWeek) !== -1 ? currentWeek : weekNums[0];
+  }
+  var idx = weekNums.indexOf(newestPlayed);
+  return (done && idx < weekNums.length - 1) ? weekNums[idx + 1] : newestPlayed;
+}
+
+function qsWeek() {
+  var m = /[?&]week=([0-9]+)/.exec(location.search);
+  return m ? m[1] : '';
+}
+
+/* Arrows plus a scrollable pill row. Repaints its own selection rather than calling back
+   into the picker, so choosing a week can never re-enter the render path. */
+function buildWeekNav(host, weekNums, live, start, onPick) {
+  if (!host) return;
+  var cur = start;
+  host.hidden = false;
+  host.innerHTML =
+    '<div class="wknav-top">' +
+      '<button type="button" data-d="-1" aria-label="Previous week">&lsaquo;</button>' +
+      '<b id="wknav-label"></b>' +
+      '<button type="button" data-d="1" aria-label="Next week">&rsaquo;</button>' +
+      '<span class="wknav-note" id="wknav-note"></span>' +
+    '</div>' +
+    '<div class="wkpills" role="tablist" aria-label="Week"></div>';
+  var pills = host.querySelector('.wkpills');
+  pills.innerHTML = weekNums.map(function (w) {
+    return '<button type="button" class="wkpill" role="tab" data-w="' + w + '">' +
+      (w === live ? '<span class="liveglyph" aria-hidden="true">\u25cf</span>' : '') +
+      'Week ' + w + '</button>';
+  }).join('');
+
+  function paint() {
+    host.querySelector('#wknav-label').textContent = 'Week ' + cur;
+    host.querySelector('#wknav-note').textContent = cur === live ? 'current week' : '';
+    host.querySelectorAll('.wkpill').forEach(function (b) {
+      var on = Number(b.dataset.w) === cur;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    var i = weekNums.indexOf(cur);
+    host.querySelector('[data-d="-1"]').disabled = i <= 0;
+    host.querySelector('[data-d="1"]').disabled = i >= weekNums.length - 1;
+    var sel = host.querySelector('.wkpill.on');
+    if (sel && sel.scrollIntoView) sel.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+  function go(w) {
+    if (weekNums.indexOf(w) === -1 || w === cur) return;
+    cur = w; paint(); onPick(w);
+  }
+  host.querySelectorAll('.wknav-top button').forEach(function (b) {
+    b.addEventListener('click', function () { go(weekNums[weekNums.indexOf(cur) + Number(b.dataset.d)]); });
+  });
+  pills.addEventListener('click', function (e) {
+    var b = e.target.closest('.wkpill');
+    if (b) go(Number(b.dataset.w));
+  });
+  paint();
+}
+
 function loadSchedule() {
   const wrap = document.getElementById('schedule-weeks');
   if (!wrap) return;
   Promise.all([
-        waJSON(WEB_APP_URL + '?action=espn_schedule'),
+        waJSONOnce(WEB_APP_URL + '?action=espn_schedule'),
         waJSON(WEB_APP_URL + '?action=h2h').catch(() => null)
       ])
         .then(([data, h2hData]) => {
@@ -1921,14 +2030,19 @@ function loadSchedule() {
           }
       if (!data.ok || !data.weeks) { wrap.innerHTML = '<p class="placeholder">Schedule feed is warming up &mdash; check back soon.</p>'; return; }
       const weekNums = Object.keys(data.weeks).map(Number).sort((a, b) => a - b);
+      /* The FORM still reads every week, deliberately. Only the DOM narrows below. Week 9's
+         projection depends on weeks 1-8, so narrowing the data would have broken the numbers
+         while appearing to work. */
       const form = seasonForm(data.weeks);
-      wrap.innerHTML = '';
-      weekNums.forEach(w => {
+      const live = liveFantasyWeek(data.weeks, data.currentWeek, weekNums);
+
+      function renderWeek(w) {
+        wrap.innerHTML = '';
         const card = document.createElement('div');
         card.className = 'card';
         const h3 = document.createElement('h3');
         h3.textContent = 'Week ' + w + ' ';
-        if (w === data.currentWeek) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'current'; h3.appendChild(b); }
+        if (w === live) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'current'; h3.appendChild(b); }
         card.appendChild(h3);
         const grid = document.createElement('div');
         grid.className = 'spotlight-grid';
@@ -2023,7 +2137,14 @@ function loadSchedule() {
         });
         card.appendChild(grid);
         wrap.appendChild(card);
-      });
+      }
+
+      /* `?week=N` is honoured once, clamped, so a week can be pasted into the group text.
+         It is not persisted after that — a manual pick lasts as long as the visit. */
+      const asked = parseInt(qsWeek(), 10);
+      const start = weekNums.indexOf(asked) !== -1 ? asked : live;
+      buildWeekNav(document.getElementById('sb-nav'), weekNums, live, start, renderWeek);
+      renderWeek(start);
     })
     .catch(() => { wrap.innerHTML = '<p class="placeholder">Schedule feed unavailable.</p>'; });
 }
@@ -2221,7 +2342,7 @@ loadSchedule();
         /* Bench points ride along as a garnish, never a dependency. Its own catch means
            a bad or slow bench feed can never take the standings table down with it. */
         Promise.all([
-          waJSON(WEB_APP_URL + '?action=espn_schedule'),
+          waJSONOnce(WEB_APP_URL + '?action=espn_schedule'),
           waJSON(WEB_APP_URL + '?action=bench_points').catch(() => ({ ok:false, teams:{} }))
         ])
           .then(([data, benchFeed]) => {
