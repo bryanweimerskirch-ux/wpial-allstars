@@ -84,6 +84,7 @@
   var remoteCursor = null;
   var remotePicks = {};      /* overall -> server pick node */
   var presence = {};         /* uid -> {fid,at} */
+  var activations = {};      /* uid -> {fid,email,at} — who has EVER connected */
   var clockNode = null;      /* {deadline, forOverall} in SERVER time */
   var origCommit = null;
   var origUndo = null;
@@ -186,6 +187,23 @@
     return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2);
   }
 
+  /* Commish-only: how many franchises have EVER completed Connect (per person,
+     not per device — three devices on one inbox share a uid), and who hasn't. */
+  function activationLine() {
+    if (!amCommish()) return null;
+    var have = {};
+    Object.keys(activations).forEach(function (u) {
+      var a = activations[u] || {};
+      if (a.fid) have[a.fid] = 1;
+    });
+    var missing = [];
+    teams().forEach(function (t) { if (!have[fidOf(t)]) missing.push(t); });
+    var total = teams().length;
+    if (!missing.length) return '<span>⚡ Activated: <b>all ' + total + ' owners</b> ✓</span>';
+    return '<span>⚡ Activated: <b>' + (total - missing.length) + ' of ' + total +
+      '</b> · waiting on ' + missing.map(h).join(', ') + '</span>';
+  }
+
   function paint() {
     var el = bar();
     if (!el) return;
@@ -219,6 +237,7 @@
       }
       if (lastPickLine) parts.push('<span>' + lastPickLine + '</span>');
     }
+    if (uid) { var actLine = activationLine(); if (actLine) parts.push(actLine); }
     if (msg) parts.push('<span class="dsmsg ' + msgClass + '">' + msg + '</span>');
     el.innerHTML = parts.join(' ');
 
@@ -300,6 +319,7 @@
     ref('cursor').on('value', function (s) { remoteCursor = s.val(); applyRemote(); });
     ref('picks').on('value', function (s) { remotePicks = s.val() || {}; applyRemote(); });
     ref('presence').on('value', function (s) { presence = s.val() || {}; paint(); });
+    db.ref('activations').on('value', function (s) { activations = s.val() || {}; paint(); });
     ref('clock').on('value', function (s) { clockNode = s.val(); paint(); });
     db.ref('commish').on('value', function (s) { commishMap = s.val() || {}; paint(); });
   }
@@ -542,6 +562,12 @@
     if (!uid) { syncFlag(); paint(); return; }
     db.ref('emailToFid/' + emailKey(myEmail)).once('value').then(function (s) {
       myFid = s.val() || null;
+      /* Activation record: "this inbox has completed Connect at least once."
+         Keyed by uid, so the same owner on three devices is still one person.
+         Feeds the commissioner's activated-count in the strip. */
+      var act = { email: myEmail, at: firebase.database.ServerValue.TIMESTAMP };
+      if (myFid) act.fid = myFid;
+      db.ref('activations/' + uid).set(act)["catch"](function () {});
       attach();
       syncFlag();
       if (connected && myFid) {
