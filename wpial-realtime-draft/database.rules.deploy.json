@@ -1,0 +1,70 @@
+{
+  "rules": {
+    "emailToFid": {
+      ".read": "auth != null",
+      ".write": "false"
+    },
+
+    "commish": {
+      ".read": "auth != null",
+      ".write": "false"
+    },
+
+    "drafts": {
+      "$env": {
+        "$season": {
+          ".read": "auth != null",
+
+          "meta": {
+            ".write": "auth != null && root.child('commish').child(auth.uid).val() === true",
+            ".validate": "newData.hasChildren(['rounds','startedAt'])"
+          },
+
+          "slots": {
+            ".write": "auth != null && root.child('commish').child(auth.uid).val() === true",
+            "$overall": {
+              ".validate": "newData.hasChild('fid')"
+            }
+          },
+
+          "cursor": {
+            ".write": "auth != null",
+            ".validate": "newData.isNumber() && (!data.exists() || newData.val() > data.val() || root.child('commish').child(auth.uid).val() === true)"
+          },
+
+          "picks": {
+            "$overall": {
+              ".write": "auth != null && ((!data.exists() && (root.child('commish').child(auth.uid).val() === true || ($overall === root.child('drafts').child($env).child($season).child('cursor').val() + '' && newData.child('fid').val() === root.child('drafts').child($env).child($season).child('slots').child($overall).child('fid').val() && newData.child('fid').val() === root.child('emailToFid').child(auth.token.email.replace('.', ',')).val()))) || (data.exists() && !newData.exists() && root.child('commish').child(auth.uid).val() === true))",
+              ".validate": "newData.hasChildren(['fid','name','at','by']) && newData.child('by').val() === auth.uid && newData.child('at').val() === now"
+            }
+          },
+
+          "clock": {
+            ".write": "auth != null && root.child('commish').child(auth.uid).val() === true",
+            ".validate": "newData.hasChildren(['deadline','forOverall'])"
+          },
+
+          "firing": {
+            ".read": "auth != null",
+            ".write": "auth != null && root.child('commish').child(auth.uid).val() === true",
+            ".validate": "newData.isNumber()"
+          },
+
+          "presence": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid",
+              ".validate": "newData.hasChildren(['fid','at'])"
+            }
+          },
+
+          "log": {
+            "$entry": {
+              ".write": "auth != null && !data.exists()",
+              ".validate": "newData.child('by').val() === auth.uid && newData.child('at').val() === now"
+            }
+          }
+        }
+      }
+    }
+  }
+}
