@@ -334,6 +334,14 @@ footer{padding:10px 16px;color:var(--muted);font-size:11px;border-top:1px solid 
 <script src="watchlist.js"></script>
 <script src="draftclock.js"></script>
 <script src="mobilehdr.js"></script>
+<!-- Realtime draft (LIVE mode only). Firebase SDK is vendored — the site has a
+     no-CDN rule and GitHub Pages serves these like any other file. Order
+     matters: SDK, then config, then draftsync last so it can patch the board. -->
+<script src="vendor/firebase-app-compat.js"></script>
+<script src="vendor/firebase-auth-compat.js"></script>
+<script src="vendor/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="draftsync.js"></script>
 </head>
 <body class="theme-broadcast">
 

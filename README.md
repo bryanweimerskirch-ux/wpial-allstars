@@ -17,8 +17,9 @@ Nothing here costs money and nothing runs on a server you have to maintain. It's
 | **Squarespace (DNS only)** | Points the domain `wadi.solutions` at GitHub instead of a Squarespace site. You are **not** paying for or using Squarespace's website builder — just their domain registrar/DNS panel. | Squarespace → Domains → DNS Settings |
 | **Google Apps Script + Google Sheets** | The "backend." Serves approved Feed posts to the site, and collects League Tips submissions into a spreadsheet tab | Bound to the "FF2025-2026 Keeper List - Google Sheets" file |
 | **Cloudflare Web Analytics** | Free, privacy-friendly page-view tracking | [dash.cloudflare.com](https://dash.cloudflare.com) |
+| **Firebase Realtime Database** (Spark/free plan) | The realtime draft only: shared picks, clock, presence on draft night. Owners sign in with an email link. | [console.firebase.google.com](https://console.firebase.google.com) → project `wpial-allstars` — see **DRAFTNIGHT-SETUP.md** |
 
-There is no database, no hosting bill, and no server to patch. The "backend" is a spreadsheet with a small script attached to it.
+There is no hosting bill and no server to patch. The "backend" is a spreadsheet with a small script attached to it, plus a free Firebase database that only the draft board touches (setup + draft-night runbook: `DRAFTNIGHT-SETUP.md`).
 
 ---
 
