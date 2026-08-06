@@ -4,11 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WPIAL All Stars</title>
+<!-- theme.css owns every colour token on this site. This page used to define its
+     own :root here — orange accent, blue accent2 — which is why the homepage and
+     the draft board looked like two different products. Do not re-add one. -->
+<link rel="stylesheet" href="theme.css">
+<!-- Not deferred, on purpose: it sets html.colorblind before <body> exists, so
+     the palette is already right at first paint. -->
+<script src="cbmode.js"></script>
 <style>
-  :root{
-    --bg:#0d1117; --card:#161b22; --line:#2a3038; --text:#e6edf3; --muted:#9aa4b2;
-    --accent:#ff6a1a; --accent2:#2ea6ff; --conflict:#3a2410; --conflict-line:#ff9f4d;
-  }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
   header{padding:28px 20px 18px;text-align:center;border-bottom:1px solid var(--line);}
@@ -16,7 +19,7 @@
   header p{margin:6px 0 0;color:var(--muted);font-size:14px;}
   nav{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;padding:14px 10px;border-bottom:1px solid var(--line);}
   nav button{background:none;border:1px solid var(--line);color:var(--text);padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;}
-  nav button.active{background:var(--accent);border-color:var(--accent);color:#1a0e04;font-weight:600;}
+  nav button.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600;}
   section{max-width:1100px;margin:0 auto;padding:24px 16px 60px;display:none;}
   section.active{display:block;}
   h2{font-size:20px;margin:0 0 4px;}
@@ -31,7 +34,7 @@
   .card.mine{border-color:var(--mine-accent,var(--accent));box-shadow:inset 0 0 0 1px var(--mine-accent,var(--accent));}
   .mine-strip{display:flex;align-items:center;gap:8px;margin:0 0 10px;}
   .mine-chip{flex:0 0 auto;font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;
-    padding:2px 8px;border-radius:999px;background:var(--mine-accent,var(--accent));color:var(--mine-ink,#1a0e04);}
+    padding:2px 8px;border-radius:999px;background:var(--mine-accent,var(--accent));color:var(--mine-ink,var(--accent-ink));}
   .mine-rule{flex:1 1 auto;height:1px;background:var(--mine-accent,var(--accent));opacity:0.4;}
   .row{display:flex;gap:8px;padding:5px 0;font-size:13px;border-bottom:1px solid #1d232b;}
   .row:last-child{border-bottom:none;}
@@ -40,7 +43,7 @@
   .players.conflict{background:var(--conflict);border:1px dashed var(--conflict-line);border-radius:6px;padding:2px 6px;}
   .player{cursor:pointer;padding:2px 6px;border-radius:5px;transition:background .15s;}
   .player:hover{background:#22282f;}
-  .player.pinged{background:var(--accent);color:#1a0e04;font-weight:600;}
+  .player.pinged{background:var(--accent);color:var(--accent-ink);font-weight:600;}
   .empty{color:#4a525c;font-style:italic;}
 /* Week navigator. The selected pill is FILLED and the live week keeps a ● glyph whether or
    not it is selected — both readable in greyscale, per the site rule that colour never
@@ -59,7 +62,7 @@
 .wkpills::-webkit-scrollbar{display:none;}
 .wkpill{flex:0 0 auto;background:none;border:1px solid var(--line);color:var(--text);
   border-radius:20px;padding:4px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;}
-.wkpill.on{background:var(--accent);border-color:var(--accent);color:#1a0e04;font-weight:700;}
+.wkpill.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700;}
 .wkpill .liveglyph{font-size:9px;vertical-align:middle;margin-right:3px;}
 .spotlight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px;}
 /* The card wears the two franchises. Two stacked background images: the owners' colors
@@ -126,9 +129,9 @@
   .cemetery{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;padding:10px 0 4px;}
   .tombstone{background:linear-gradient(180deg,#3a3f47,#2c3036);border:1px solid #454b53;border-radius:50px 50px 8px 8px;padding:24px 16px 18px;text-align:center;position:relative;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.03);}
   .tombstone .rip{font-size:10px;letter-spacing:2px;color:#8b9099;margin-bottom:8px;}
-  .tombstone .stone-name{font-size:15px;font-weight:500;color:#e6edf3;margin-bottom:10px;line-height:1.4;}
+  .tombstone .stone-name{font-size:15px;font-weight:500;color:var(--text);margin-bottom:10px;line-height:1.4;}
   .tombstone .stone-line{width:32px;height:1px;background:#565c65;margin:0 auto 10px;}
-  .tombstone .stone-detail{font-size:11px;color:#9aa4b2;line-height:1.7;}
+  .tombstone .stone-detail{font-size:11px;color:var(--muted);line-height:1.7;}
   .tombstone .stone-wins{font-size:18px;font-weight:500;color:#c9cdd3;margin:6px 0;}
   .tombstone::before{content:"";position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:60%;height:10px;background:#1a1d21;border-radius:50%;filter:blur(2px);opacity:0.5;}
 
@@ -140,20 +143,20 @@
   .honor.og{color:#7fc4ff;}
 
   .feed-profile{display:flex;gap:14px;align-items:center;}
-  .feed-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#ffb703,#fb8500);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+  .feed-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#f0d488,#c9a24b);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
   .feed-name{font-size:17px;font-weight:700;display:flex;align-items:center;gap:5px;}
   .feed-check{color:var(--accent2);font-size:14px;}
   .feed-handle{color:var(--muted);font-size:13px;}
   .feed-bio{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;}
   .gelly-strip{display:flex;gap:10px;align-items:center;padding:2px 0 18px;}
-  .gelly-strip-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#ffb703,#fb8500);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .gelly-strip-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f0d488,#c9a24b);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
   .gelly-strip-text{font-size:13px;color:var(--muted);line-height:1.5;}
   .gelly-strip-text b{color:var(--text);font-size:14px;}
   .tip-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px;}
   .tip-card summary{cursor:pointer;font-weight:600;font-size:14px;list-style:revert;color:var(--text);}
 .tip-card summary::marker{color:var(--accent);}.tip-card[open] summary{margin-bottom:10px;}.tweet{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid #1d232b;}.tweet:last-child{border-bottom:none;}
   .tweet.threaded{border-bottom:none;padding:0 0 2px;}
-  .tweet-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ffb703,#fb8500);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .tweet-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#f0d488,#c9a24b);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
   .tweet-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
   .tweet-connector{width:2px;flex:1;background:var(--line);margin:4px 0;min-height:14px;}
   .tweet-body{flex:1;min-width:0;}
@@ -165,7 +168,7 @@
   .thread-tag{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:12px;}
   .thread-tag.muted{color:var(--muted);}
 
-  .tip-fab{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#1a0e04;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.45);z-index:500;display:flex;align-items:center;justify-content:center;transition:transform .15s;}
+  .tip-fab{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:var(--accent-ink);border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.45);z-index:500;display:flex;align-items:center;justify-content:center;transition:transform .15s;}
   /* [hidden] loses to display:flex, so it has to be said explicitly. */
   .tip-fab[hidden]{display:none;}
   .tip-fab:hover{transform:scale(1.08);}
@@ -222,38 +225,63 @@
 .team-logo-badge{display:inline-flex;vertical-align:middle;margin-right:8px;width:30px;height:30px;flex-shrink:0;}
     .team-logo-badge svg{width:100%;height:100%;display:block;}
 
-  /* ---- Colorblind mode (the Wadi Accessibility Initiative) ---- */
-  .cb-toggle{display:inline-flex;align-items:center;gap:6px;}
-  .cb-toggle.on{background:var(--accent2);border-color:var(--accent2);color:#04121f;font-weight:600;}
-  body.colorblind{
-    --accent:#56B4E9; --accent2:#F0E442; --muted:#b9c4d1;
-    --conflict:#12283b; --conflict-line:#56B4E9;
-  }
+  /* ---- Rules tab ----
+     Every article of the constitution is a <details>, closed by default. On a
+     phone the whole thing is then a short list of headings instead of six
+     screens of legalese, and <details> is native — no JS, keyboard-operable and
+     findable by the browser's own find-on-page. */
+  .rules-note{background:var(--panel2,var(--card));border:1px solid var(--accent);
+    border-left:4px solid var(--accent);border-radius:8px;padding:11px 14px;margin:0 0 18px;
+    font-size:13.5px;line-height:1.5;}
+  .rules-card{margin-bottom:16px;}
+  .rules-card h3{font-size:17px;}
+  .rules-h4{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);
+    margin:20px 0 9px;font-weight:700;}
+  .rules-list{margin:0;padding-left:22px;font-size:13.5px;line-height:1.65;}
+  .rules-list li{margin-bottom:9px;}
+  .rules-list li b{color:var(--accent2);font-weight:600;}
+  .rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;}
+  .rv{border:1px solid var(--line);border-radius:6px;padding:5px 9px;font-size:12px;color:var(--muted);}
+  .rv b{color:var(--accent);font-size:12.5px;margin-right:6px;}
+  .lineup-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:7px;}
+  .lu{border:1px solid var(--line);border-radius:7px;padding:8px 11px;font-size:13px;font-weight:600;}
+  .lu b{color:var(--accent);font-size:16px;margin-right:7px;}
+  .lu span{display:block;font-size:10.5px;color:var(--muted);font-weight:400;margin-top:1px;}
+  .rules-fine{font-size:11.5px;color:var(--muted);line-height:1.6;margin:11px 0 0;}
+  .rules-src{border-top:1px solid var(--line);padding-top:11px;margin-top:18px;}
+  .rules-det{border:1px solid var(--line);border-radius:8px;margin-top:9px;overflow:hidden;}
+  .rules-det > summary{cursor:pointer;padding:11px 14px;font-size:13.5px;font-weight:600;
+    list-style:none;display:flex;align-items:center;gap:9px;}
+  .rules-det > summary::-webkit-details-marker{display:none;}
+  /* The twisty is a glyph, not a colour — the row has to read closed-vs-open in
+     grayscale and in colorblind mode alike. */
+  .rules-det > summary::before{content:"\25B8";color:var(--accent);font-size:11px;
+    transition:transform .15s ease;display:inline-block;}
+  .rules-det[open] > summary::before{transform:rotate(90deg);}
+  .rules-det > summary:hover{color:var(--accent2);}
+  .rules-det-body{padding:2px 14px 13px;font-size:13px;line-height:1.65;color:var(--text);
+    border-top:1px solid var(--line);}
+  .rules-det-body p{margin:10px 0;}
+  .rules-det-body b{color:var(--accent2);font-weight:600;}
+  .rules-det-body ol{padding-left:20px;margin:10px 0;}
+  .rules-det-body ol li{margin-bottom:6px;}
+
+  /* ---- Colorblind mode (the Wadi Accessibility Initiative) ----
+     The token swap, the toggle's styling and the link-underline rules all moved
+     to theme.css, so every page gets them rather than just this one. What stays
+     here is only what is specific to this page's own components. */
   body.colorblind .player.keeper{border-color:#F0E442;background:#2b290f;color:#F0E442;}
   body.colorblind .honor{color:#F0E442;}
   body.colorblind .honor.og{color:#56B4E9;}
-  /* Colorblind mode underlines links so they are never identified by colour alone. That is
-     the right rule for an INLINE TEXT link. It is the wrong rule for a link that wraps a
-     whole card: the scoreboard card became an <a>, and this underlined every word inside it
-     — the odds, the basis line, both team names, the series line. The card opts out and
-     hands the underline to the one element that is actually its affordance. */
-  body.colorblind a{text-decoration:underline;}
-  body.colorblind a.spotlight-link{text-decoration:none;}
-  body.colorblind a.spotlight-link .spotlight-go{text-decoration:underline;}
-  /* The standings team link is the opposite case and needs the opposite fix: it IS an inline
-     text link, but `.standings-table .tm-link{text-decoration:none}` is two classes and
-     outspecifies `body.colorblind a`, so it was silently exempting itself from the rule and
-     rendering as plain text with no affordance at all in colorblind mode. */
-  body.colorblind .standings-table .tm-link{text-decoration:underline;}
   body.colorblind .db-pick.first{border-color:#F0E442;}
   body.colorblind .db-pick.first b{color:#F0E442;}
 
-  #cbGag{position:fixed;inset:0;z-index:900;background:#0d1117;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;cursor:pointer;}
+  #cbGag{position:fixed;inset:0;z-index:900;background:var(--bg);display:none;align-items:center;justify-content:center;text-align:center;padding:24px;cursor:pointer;}
   #cbGag.show{display:flex;}
   .cb-gag-inner{max-width:520px;animation:cbPop .45s cubic-bezier(.18,1.4,.4,1);}
   .cb-gag-inner svg{width:min(320px,80vw);height:auto;display:block;margin:0 auto;}
-  .cb-gag-title{font-size:46px;font-weight:800;color:#ff6a1a;margin:16px 0 8px;letter-spacing:1px;animation:cbShake .5s ease .5s 2;}
-  .cb-gag-sub{color:#9aa4b2;font-size:14px;line-height:1.6;}
+  .cb-gag-title{font-size:46px;font-weight:800;color:var(--accent);margin:16px 0 8px;letter-spacing:1px;animation:cbShake .5s ease .5s 2;}
+  .cb-gag-sub{color:var(--muted);font-size:14px;line-height:1.6;}
   .cb-gag-skip{color:#4a525c;font-size:11px;margin-top:14px;}
   @keyframes cbPop{0%{transform:scale(.6);opacity:0;}100%{transform:scale(1);opacity:1;}}
   @keyframes cbShake{0%,100%{transform:rotate(0);}25%{transform:rotate(-2deg);}75%{transform:rotate(2deg);}}
@@ -375,21 +403,204 @@
 </div>
 
 
+<!-- This nav is HARDCODED and the inline script below binds `nav button[data-tab]`
+     to it. Rename a label freely; do not rebuild the element, and do not remove a
+     data-tab without removing its <section> (gotcha 33-B).
+
+     Two things that used to live here have moved out:
+       - 🏈 Draftboard and Depth Chart are injected by sitenav.js, from the same
+         NAV array every other page reads, so the bar can never disagree with
+         itself again.
+       - 👓 Colorblind mode is in the identity menu under "View options". As a
+         filled yellow pill it was the loudest element on the page, which is the
+         wrong rank for a set-once preference sitting next to a draft. -->
 <nav>
-  <button data-tab="board" class="active">The Gelly</button>
-  <button data-tab="rosters">Rosters &amp; Round Values</button>
+  <button data-tab="board" class="active">League News</button>
+  <button data-tab="rosters">Rosters and Round Values</button>
+  <button data-tab="rules">Rules</button>
   <button data-tab="history">League History</button>
   <button data-tab="schedule">2026 NFL Schedule</button>
   <button data-tab="scoreboard">Scoreboard</button>
   <button data-tab="standings">Standings</button>
-  <button type="button" onclick="window.location.href='draftboard.html'" style="border-color:var(--accent);color:var(--accent);font-weight:700;" title="Interactive keeper draftboard — mock drafts, keeper decisions, and a full season simulator">🏈 Draftboard</button>
-  <button id="cbToggle" class="cb-toggle" type="button" aria-pressed="false" title="The Wadi Accessibility Initiative — colors even Wadi can tell apart">👓 Colorblind mode</button>
 </nav>
 
 <section id="rosters">
-  <h2>Team rosters</h2>
-  <p class="sub">Round value = what it costs to keep that player in the 2026 draft. Dashed orange box = two players competing for the same round, owner has to pick one. ⭐ Gold = a declared 2026 keeper. Click a name to flag interest &mdash; this powers the league buzz reports.</p>
+  <h2>Rosters and Round Values</h2>
+  <!-- Keeper declaration lives HERE, on the roster card it applies to (keepers.js
+       decorates each card). There is deliberately no separate Keepers tab: the
+       decision and the data it rests on are the same screen, and a second tab
+       would have shown the same ten cards again. -->
+  <p class="sub">Round value = what it costs to keep that player in the 2026 draft. Dashed red box = two players competing for the same round, owner has to pick one. &#11088; Gold = a declared 2026 keeper. Declare your own keepers on your card. Click a name to flag interest &mdash; this powers the league buzz reports.</p>
   <div class="grid" id="teamGrid"></div>
+</section>
+
+<!-- ============================================================================
+     RULES
+     Source: two documents in the commissioner's Drive —
+       "Keeper rules.docx"            (modified 2020-08-25)
+       "Fantasy Football Constitution.docx" (2022-07-11, adopted 2019-08-14)
+
+     REDACTED ON PURPOSE. This repo is PUBLIC and page data is baked into static
+     HTML, so view-source defeats the login gate. The constitution as written
+     carries every manager's real name and the commissioner's phone number. Those
+     are removed here and nowhere else — the Drive originals are untouched.
+
+     Article IV's manager roster was ALSO four years stale (it lists managers and
+     team names that no longer exist), so publishing it would have been both a
+     privacy leak and wrong.
+     ========================================================================= -->
+<section id="rules">
+  <h2>Rules</h2>
+  <p class="sub">The keeper system and the league constitution. Keeper rules are what you need before Aug 30; the constitution is the long version.</p>
+
+  <div class="rules-note">
+    <b>Keeper deadline: Friday, Aug 29 at 5:30 PM Mountain</b> &mdash; 24 hours before the draft. Keeper selections may be changed up to that point and not after.
+  </div>
+
+  <div class="card rules-card">
+    <h3>Keeper system</h3>
+
+    <ol class="rules-list">
+      <li>A player can only be kept the following year if he is <b>on your roster at the end of the season</b>.</li>
+      <li>When a player is drafted, his <b>round value is locked for the year</b> and cannot be altered. If he leaves your roster by drop or trade, he keeps that round value for the rest of the season.</li>
+      <li>Keeping a player <b>costs you that draft round</b>. Draft him in the 4th this year and keep him, and you have no 3rd-round pick next year.</li>
+      <li>Free agent pickups are assigned a round value from their <b>projected half-PPR rank</b> for the upcoming season, on the agreed list below.</li>
+      <li>If a draft pick is traded away, the team that traded it <b>forfeits its ability to keep anyone in that round</b>. The other team must trade a pick back to balance the selections.</li>
+      <li><b>No team may keep two players in the same round</b> &mdash; keepers or franchise tags &mdash; even if it holds multiple picks in that round.</li>
+      <li>A <b>franchise tag</b> locks a player at that round for the following draft, and he may then be kept for a maximum of one more year.</li>
+      <li>A player traded during the <b>off-season</b> must be kept by the team that receives him.</li>
+      <li>Teams may keep <b>up to 5 players</b>, or up to <b>4 players plus a franchise tag</b>. If expansion teams are added that year, those numbers drop to 3, or 2 with a tag.</li>
+      <li>Keeper selections may be changed <b>up to 24 hours before the draft start time</b>.</li>
+    </ol>
+
+    <h4 class="rules-h4">Free agent round values &mdash; projected half-PPR rank</h4>
+    <div class="rv-grid">
+      <div class="rv"><b>1</b> 1&ndash;10</div>
+      <div class="rv"><b>2</b> 11&ndash;20</div>
+      <div class="rv"><b>3</b> 21&ndash;30</div>
+      <div class="rv"><b>4</b> 31&ndash;40</div>
+      <div class="rv"><b>5</b> 41&ndash;50</div>
+      <div class="rv"><b>6</b> 51&ndash;60</div>
+      <div class="rv"><b>7</b> 61&ndash;70</div>
+      <div class="rv"><b>8</b> 71&ndash;80</div>
+      <div class="rv"><b>9</b> 81&ndash;90</div>
+      <div class="rv"><b>10</b> 91&ndash;100</div>
+      <div class="rv"><b>11</b> 101&ndash;110</div>
+      <div class="rv"><b>12</b> 111&ndash;120</div>
+      <div class="rv"><b>13</b> 121&ndash;130</div>
+      <div class="rv"><b>14</b> 131&ndash;140</div>
+      <div class="rv"><b>15</b> 141&ndash;150</div>
+      <div class="rv"><b>16</b> 151+ &middot; FA</div>
+    </div>
+  </div>
+
+  <div class="card rules-card">
+    <h3>League settings</h3>
+    <p class="sub" style="margin-bottom:14px;">From the constitution, Article V. These are the ESPN settings the league actually runs on.</p>
+
+    <h4 class="rules-h4">Starting lineup &mdash; 16 players, plus 2 IR</h4>
+    <div class="lineup-grid">
+      <div class="lu"><b>1</b> QB</div>
+      <div class="lu"><b>2</b> RB</div>
+      <div class="lu"><b>2</b> WR</div>
+      <div class="lu"><b>1</b> TE</div>
+      <div class="lu"><b>2</b> FLEX <span>RB/WR/TE</span></div>
+      <div class="lu"><b>1</b> K</div>
+      <div class="lu"><b>1</b> D/ST</div>
+      <div class="lu"><b>6</b> Bench</div>
+      <div class="lu"><b>2</b> IR <span>injured reserve</span></div>
+    </div>
+    <p class="rules-fine">10 teams, 16 rounds. Rosters hold <b>16 players</b> at all times during the regular season, plus <b>2 IR spots</b> that do not count against the 16. Any empty spot must be filled within one week. Maximum 3 K and 3 D/ST. A player may not sit in your active lineup more than one week after an IR designation.</p>
+
+    <details class="rules-det">
+      <summary>Scoring &mdash; ESPN half PPR</summary>
+      <div class="rules-det-body">
+        <p class="rules-fine" style="margin-top:0;">ESPN's standard half-PPR scoring. Half a point per reception; one point per 25 passing yards and per 10 rushing or receiving yards.</p>
+        <p><b>Passing</b> &mdash; yards 0.04 &middot; TD 4 &middot; interception &minus;2 &middot; 2-pt conversion 2</p>
+        <p><b>Rushing</b> &mdash; yards 0.1 &middot; TD 6 &middot; 2-pt conversion 2</p>
+        <p><b>Receiving</b> &mdash; yards 0.1 &middot; TD 6 &middot; <b>reception 0.5</b> &middot; 2-pt conversion 2</p>
+        <p><b>Kicking</b> &mdash; PAT 1 &middot; FG 0&ndash;49 yds 3 &middot; FG 50+ yds 4</p>
+        <p><b>Miscellaneous</b> &mdash; kick return TD 6 &middot; punt return TD 6 &middot; fumble recovered for TD 6 &middot; fumble return TD 6 &middot; fumble lost &minus;2 &middot; 2-pt return 2</p>
+        <p><b>Defense / Special teams</b> &mdash; sack 1 &middot; interception 2 &middot; fumble recovered 2 &middot; safety 2 &middot; INT return TD 6 &middot; fumble return TD 6 &middot; blocked punt or FG returned for TD 6 &middot; blocked punt, PAT or FG 2</p>
+        <p><b>Points allowed</b> &mdash; 0 pts <b>10</b> &middot; 1&ndash;6 <b>7</b> &middot; 7&ndash;13 <b>4</b> &middot; 14&ndash;17 <b>1</b> &middot; 28&ndash;34 <b>&minus;3</b> &middot; 35&ndash;45 <b>&minus;6</b> &middot; 46+ <b>&minus;10</b></p>
+      </div>
+    </details>
+
+    <details class="rules-det">
+      <summary>Trades, waivers and the deadline</summary>
+      <div class="rules-det-body">
+        <p>Unlimited trades and add/drops per season. Every proposed trade sits in a <b>two-day review</b>, during which owners vote to allow or reject it. <b>If 50% of owners reject, the commissioner nullifies the trade.</b></p>
+        <p>The commissioner may veto a trade that contravenes the constitution or is contrary to the best interests of fantasy football. A veto must be announced within 24 hours and is reviewable.</p>
+        <p><b>Trade deadline: Wednesday at 12pm during week 7.</b> No trades in week 7.</p>
+        <p><b>Draft picks and "players to be named later" are non-transferable</b> and may not form part of a trade.</p>
+        <p>Free agents come through the weekly waiver wire, in reverse standings order &mdash; last place claims first. Each free agent sits on waivers for two days. No season acquisition limit.</p>
+      </div>
+    </details>
+
+    <details class="rules-det">
+      <summary>Playoffs and payouts</summary>
+      <div class="rules-det-body">
+        <p>Playoffs begin <b>week 14</b>. Three rounds, one week each.</p>
+        <p>The <b>six</b> clubs with the highest win percentage qualify. The <b>top two get a first-round bye</b>.</p>
+        <p>Ties are broken first by <b>head-to-head</b>, then by <b>total points for</b> in the regular season.</p>
+        <p><b>Champion $600 &middot; Runner-up $300 &middot; 3rd place $100.</b> Paid within one week of the championship.</p>
+        <p>Buy-in is set by vote each off-season and handled by the commissioner via Venmo. Miss the buy-in date and your club is locked out of its ESPN controls, all drafting privileges and all players are benched &mdash; which counts as Inactivity.</p>
+      </div>
+    </details>
+
+    <details class="rules-det">
+      <summary>The commissioner, and how to overrule him</summary>
+      <div class="rules-det-body">
+        <p>The commissioner is the chief administrative, dispute-resolution and financial officer of the league. He reviews keeper selections and transactions, rules on interpretations, and may investigate any act alleged not to be in the best interests of fantasy football.</p>
+        <p><b>Penalties</b> available to him: a formal warning &middot; a reprimand &middot; reversing or denying a transaction &middot; forfeiting a period of competition &middot; forfeiting a draft pick &middot; reducing waiver priority &middot; suspension or removal &middot; forfeiting annual dues. Any decision carrying a penalty must be posted formally.</p>
+        <p><b>Any decision of the commissioner can be overturned.</b> The process:</p>
+        <ol>
+          <li>Clubs with a direct interest in the outcome are Interested Parties and cannot vote.</li>
+          <li><b>One third</b> of eligible clubs must petition for reconsideration, <b>within one week</b> of the decision being posted. Without a petition there is no review.</li>
+          <li>If the commissioner declines to reconsider, a vote is held.</li>
+          <li>A <b>two-thirds majority</b> of eligible clubs vacates the decision. Anything less and it stands.</li>
+        </ol>
+        <p>The commissioner serves a minimum term of three years, has no term limit, and is elected by simple majority. No election may be held within 60 days of the draft.</p>
+      </div>
+    </details>
+
+    <details class="rules-det">
+      <summary>Voting</summary>
+      <div class="rules-det-body">
+        <p>Off-season votes cover the election of a commissioner, the buy-in, the payout schedule, and amendments to the constitution &mdash; including expansion clubs, league settings and draft regulations.</p>
+        <p>Most votes are a <b>simple majority</b>. Constitutional amendments need <b>two thirds</b>. Amending during the regular season needs a <b>unanimous</b> vote.</p>
+        <p>All votes stay open for <b>3 days</b>. There is no minimum quorum.</p>
+      </div>
+    </details>
+
+    <details class="rules-det">
+      <summary>Roster management and inactivity</summary>
+      <div class="rules-det-body">
+        <p>Managers must field a complete team at all times.</p>
+        <p>A player on Injured Reserve may not stay in your active lineup for more than <b>one week</b> after his IR designation.</p>
+        <p><b>Inactive</b> means neglecting both to add or drop players and to roster a full starting lineup. Being inactive for more than <b>two weeks</b> is an offence, and is grounds for permanent suspension.</p>
+      </div>
+    </details>
+
+    <details class="rules-det">
+      <summary>Offences</summary>
+      <div class="rules-det-body">
+        <p>Conduct beyond a minor contravention. Everyone commits an offence who engages in:</p>
+        <p><b>Bribery</b> &mdash; providing value other than in-game value in exchange for in-game value.</p>
+        <p><b>Collusion</b> &mdash; agreeing with another party to limit open competition. Assumed in any case where one manager acts for more than one club.</p>
+        <p><b>Disrespect</b> &mdash; comments a reasonable person would consider in excess of friendly trash talk.</p>
+        <p><b>Harassment</b> &mdash; repeatedly contacting someone after they have asked you not to. It is a defence that the contact was objectively reasonable in tone, content and frequency.</p>
+        <p><b>Non-competitive behaviour</b> &mdash; demonstrating an intention not to compete, beyond mere negligence.</p>
+        <p><b>Nuisance</b> &mdash; complaining about the league to the point of harassing the commissioner or markedly decreasing everyone else's enjoyment.</p>
+        <p><b>General Anti-Avoidance Provision</b> &mdash; conduct not otherwise prohibited but generally acknowledged to be shitty.</p>
+        <p>Penalties run up to permanent suspension without refund. The commissioner may appoint a neutral arbitrator or an advisory jury, and must do so if he is himself an interested party. Jury votes are advisory only and may not be secret.</p>
+      </div>
+    </details>
+
+    <p class="rules-fine rules-src">
+      This page is the current rules of record. The keeper system comes from the league keeper rules; league settings, trades, playoffs and offences come from the constitution (adopted 14 August 2019, agreed 7 September 2018). <b>Older copies in Drive are archived and superseded</b> &mdash; several carry a 12-team, 19-round, 1-FLEX league with different scoring, which has not been true for years. Article IV's manager roster and Appendix A's contact details are deliberately not reproduced here: this site is served from a public repository. Buy-ins and payouts go through the commissioner; text him for the details.
+    </p>
+  </div>
 </section>
 
 <section id="history">
@@ -540,8 +751,8 @@
 </section>
 
 <section id="board" class="active">
-  <h2>The Gelly</h2>
-  <p class="sub">Where the league gets its news &mdash; straight from our completely unbiased, extremely credentialed NFL insider.</p>
+  <h2>League News</h2>
+  <p class="sub">Where the league gets its news &mdash; straight from The Gelly, our completely unbiased, extremely credentialed NFL insider.</p>
 
   <div class="gelly-strip">
     <div class="gelly-strip-avatar">🖤💛</div>
@@ -2665,47 +2876,33 @@ function loadHistoryTable() {
 loadHistoryTable();
 
 // ---- Colorblind mode (the Wadi Accessibility Initiative) ----
-// Turning it ON runs the mandatory public-shaming ceremony first, then swaps
-// the palette to colorblind-safe hues (Okabe-Ito: sky blue / yellow) with
-// higher-contrast muted text. Keepers still carry the star and conflict rows
-// still carry the dashed box, so nothing relies on color alone.
-// Preference persists across visits; the ceremony only replays on a manual toggle.
-const CB_KEY = 'wpial-cb-mode';
-const cbToggle = document.getElementById('cbToggle');
+// The mode itself now lives in cbmode.js and applies to every page. All this
+// page still owns is the mandatory public-shaming ceremony, registered as a hook
+// that cbmode.js calls when the toggle is used to turn the mode ON here.
+//
+// The ceremony is deliberately NOT part of cbmode.js: it must not replay when
+// the setting is merely restored on load, when another tab flips it, or — most
+// importantly — when it comes on by default for an owner who never asked for a
+// bit. A default is not a punchline.
 const cbGag = document.getElementById('cbGag');
 let cbGagTimer = null;
-
-function setCbMode(on) {
-  document.body.classList.toggle('colorblind', on);
-  if (cbToggle) {
-    cbToggle.classList.toggle('on', on);
-    cbToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
-    cbToggle.textContent = on ? '👓 Colorblind mode: ON' : '👓 Colorblind mode';
-  }
-  try { localStorage.setItem(CB_KEY, on ? '1' : '0'); } catch (e) {}
-}
+let cbGagDone = null;
 
 function finishCbGag() {
   clearTimeout(cbGagTimer);
   if (cbGag) cbGag.classList.remove('show');
-  setCbMode(true);
+  if (cbGagDone) { const f = cbGagDone; cbGagDone = null; f(); }
 }
 
-if (cbToggle) {
-  cbToggle.onclick = () => {
-    const turningOn = !document.body.classList.contains('colorblind');
-    if (!turningOn) { setCbMode(false); return; }
-    if (cbGag) {
-      cbGag.classList.add('show');
-      clearTimeout(cbGagTimer);
-      cbGagTimer = setTimeout(finishCbGag, 3500);
-    } else {
-      setCbMode(true);
-    }
+if (cbGag) {
+  window.WPIAL_CB_CEREMONY = function (done) {
+    cbGagDone = done;
+    cbGag.classList.add('show');
+    clearTimeout(cbGagTimer);
+    cbGagTimer = setTimeout(finishCbGag, 3500);
   };
+  cbGag.onclick = finishCbGag;
 }
-if (cbGag) cbGag.onclick = finishCbGag;
-try { if (localStorage.getItem(CB_KEY) === '1') setCbMode(true); } catch (e) {}
 </script>
   <script src="trade-machine.js" defer></script>
 </body>

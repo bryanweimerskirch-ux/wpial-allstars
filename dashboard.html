@@ -6,12 +6,13 @@
 <title>WPIAL All Stars — Commish Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<!-- Not deferred: sets html.colorblind before <body> exists, so no flash of gold. -->
+<script src="cbmode.js"></script>
 <style>
-:root{
-  --bg:#0b0e13; --panel:#12161d; --panel2:#0f1319; --line:#232a35;
-  --text:#e8eaee; --muted:#9aa3b0; --accent:#d8b45c; --accent2:#f0d488;
-  --ok:#57b26a; --warn:#e0644f; --none:#8a93a0;
-}
+/* Colour tokens come from theme.css, shared with every page. Do not re-add a
+   palette here — six copies of one palette is what made colorblind mode work on
+   some pages and not others. */
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-size:14px;
      font-family:'Barlow',-apple-system,Segoe UI,Roboto,sans-serif;}
@@ -21,7 +22,7 @@ button{font-family:'Barlow',sans-serif;cursor:pointer;border-radius:6px;
        border:1px solid var(--line);background:var(--panel);color:var(--text);
        padding:6px 12px;font-size:13px;}
 button:hover{border-color:var(--accent);}
-button.primary{background:var(--accent);color:#14110a;border-color:var(--accent);font-weight:700;}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700;}
 
 header{display:flex;align-items:center;gap:16px;padding:10px 16px;
        border-bottom:2px solid var(--accent);background:var(--panel2);

@@ -38,41 +38,46 @@
     '.wpial-gated body > *{display:none !important;}' +
     '.wpial-gated body > #' + GATE_ID + '{display:flex !important;}' +
     '.wpial-gated body{overflow:hidden !important;}' +
-    '#' + GATE_ID + '{position:fixed;inset:0;z-index:2147483647;background:#0d1117;' +
-      'color:#e6edf3;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;' +
+    '#' + GATE_ID + '{position:fixed;inset:0;z-index:2147483647;background:var(--bg,#0b0e13);' +
+      'color:var(--text,#e8eaee);font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;' +
       'align-items:center;justify-content:center;padding:20px;}' +
-    '#' + GATE_ID + ' .wg-card{width:100%;max-width:380px;background:#161b22;' +
-      'border:1px solid #2a3038;border-radius:14px;padding:26px 24px 22px;' +
+    '#' + GATE_ID + ' .wg-card{width:100%;max-width:380px;background:var(--panel,#12161d);' +
+      'border:1px solid var(--line,#232a35);border-radius:14px;padding:26px 24px 22px;' +
       'box-shadow:0 18px 50px rgba(0,0,0,.55);}' +
     '#' + GATE_ID + ' h1{margin:0 0 4px;font-size:21px;letter-spacing:.3px;}' +
-    '#' + GATE_ID + ' .wg-sub{margin:0 0 18px;color:#9aa4b2;font-size:13px;line-height:1.45;}' +
-    '#' + GATE_ID + ' label{display:block;font-size:12px;color:#9aa4b2;margin:0 0 5px;}' +
-    '#' + GATE_ID + ' input{width:100%;background:#0d1117;border:1px solid #2a3038;' +
-      'color:#e6edf3;border-radius:8px;padding:11px 12px;font-size:16px;margin:0 0 12px;}' +
-    '#' + GATE_ID + ' input:focus{outline:none;border-color:#2ea6ff;}' +
-    '#' + GATE_ID + ' button.wg-go{width:100%;background:#ff6a1a;border:0;color:#1a0e04;' +
+    '#' + GATE_ID + ' .wg-sub{margin:0 0 18px;color:var(--muted,#9aa3b0);font-size:13px;line-height:1.45;}' +
+    '#' + GATE_ID + ' label{display:block;font-size:12px;color:var(--muted,#9aa3b0);margin:0 0 5px;}' +
+    '#' + GATE_ID + ' input{width:100%;background:var(--panel2,#0f1319);border:1px solid var(--line,#232a35);' +
+      'color:var(--text,#e8eaee);border-radius:8px;padding:11px 12px;font-size:16px;margin:0 0 12px;}' +
+    '#' + GATE_ID + ' input:focus{outline:none;border-color:var(--accent,#d8b45c);}' +
+    '#' + GATE_ID + ' button.wg-go{width:100%;background:var(--accent,#d8b45c);border:0;' +
+      'color:var(--accent-ink,#14110a);' +
       'font-weight:700;font-size:15px;padding:12px;border-radius:8px;cursor:pointer;}' +
     '#' + GATE_ID + ' button.wg-go:disabled{opacity:.55;cursor:default;}' +
-    '#' + GATE_ID + ' .wg-link{background:none;border:0;color:#2ea6ff;font-size:13px;' +
-      'cursor:pointer;padding:10px 0 0;display:block;margin:0 auto;}' +
+    '#' + GATE_ID + ' .wg-link{background:none;border:0;color:var(--accent2,#f0d488);font-size:13px;' +
+      'cursor:pointer;padding:10px 0 0;display:block;margin:0 auto;text-decoration:underline;}' +
+    /* The accessibility toggle has to be reachable ON the gate. Everything else
+       on the page is display:none until sign-in, so an owner who needs the
+       colorblind palette to read the form could not get to it. */
+    '#' + GATE_ID + ' .cb-toggle{margin:14px auto 0;display:flex;}' +
     '#' + GATE_ID + ' .wg-msg{font-size:13px;line-height:1.45;margin:0 0 12px;padding:9px 11px;' +
       'border-radius:8px;display:none;}' +
     '#' + GATE_ID + ' .wg-msg.err{display:block;background:#3a1414;border:1px solid #ff6b6b;color:#ffc9c9;}' +
     '#' + GATE_ID + ' .wg-msg.ok{display:block;background:#0f2a1a;border:1px solid #3fb950;color:#b7f0c6;}' +
-    '#' + GATE_ID + ' .wg-who{font-size:13px;color:#9aa4b2;margin:0 0 14px;}' +
-    '#' + GATE_ID + ' .wg-who b{color:#e6edf3;}' +
+    '#' + GATE_ID + ' .wg-who{font-size:13px;color:var(--muted,#9aa3b0);margin:0 0 14px;}' +
+    '#' + GATE_ID + ' .wg-who b{color:var(--text,#e8eaee);}' +
     '#' + GATE_ID + ' .wg-foot{margin:16px 0 0;font-size:11px;color:#6b7480;text-align:center;line-height:1.5;}' +
     // Sits inline in the page's own nav/header so it never collides with the
     // Gelly tip FAB (fixed bottom-right) or the draftboard's controls.
     '#wpial-chip{position:static;display:inline-flex;align-items:center;gap:7px;background:transparent;' +
-      'border:1px solid #2a3038;border-radius:20px;padding:7px 13px;font-size:12px;color:#9aa4b2;' +
+      'border:1px solid var(--line,#232a35);border-radius:20px;padding:7px 13px;font-size:12px;color:var(--muted,#9aa3b0);' +
       'font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;' +
       'vertical-align:middle;margin:0 0 0 6px;white-space:nowrap;}' +
-    '#wpial-chip b{color:#e6edf3;font-weight:600;}' +
-    '#wpial-chip button{background:none;border:0;color:#2ea6ff;font-size:12px;cursor:pointer;' +
+    '#wpial-chip b{color:var(--text,#e8eaee);font-weight:600;}' +
+    '#wpial-chip button{background:none;border:0;color:var(--accent2,#f0d488);font-size:12px;cursor:pointer;' +
       'padding:0;text-decoration:underline;}' +
     '#wpial-chip.wpial-chip-float{position:fixed;top:8px;left:8px;z-index:2147483000;' +
-      'background:#161b22;margin:0;}' +
+      'background:var(--panel,#12161d);margin:0;}' +
     '@media (max-width:600px){#wpial-chip{font-size:11px;padding:6px 10px;}}' +
     '';
   (document.head || html).appendChild(style);

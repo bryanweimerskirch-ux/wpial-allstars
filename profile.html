@@ -7,11 +7,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<!-- Not deferred: sets html.colorblind before <body> exists, so no flash of gold. -->
+<script src="cbmode.js"></script>
 <style>
+/* Colour tokens come from theme.css, shared with every page. This block keeps only
+   what is genuinely local to this page. Do not re-add a palette here — six copies of
+   one palette is what made colorblind mode work on some pages and not others. */
 :root{
-  --bg:#0b0e13; --panel:#12161d; --panel2:#0f1319; --line:#232a35;
-  --text:#e8eaee; --muted:#9aa3b0; --accent:#d8b45c; --accent2:#f0d488;
-  --ok:#57b26a; --warn:#e0644f; --none:#8a93a0;
   --hdr-h:96px;
   /* Owner colors are SCOPED. They never reassign --accent/--text/--bg, which carry
      site meaning (on-the-clock, conflict, keeper gold). One owner picking a bad orange
@@ -242,46 +245,17 @@ main{max-width:1180px;margin:0 auto;padding:20px 14px 80px;}
         <div class="presets" id="presets"></div>
       </section>
 
-      <!-- LOGO -->
-      <section class="card span2">
-        <span class="lab">Logo</span>
-        <div class="tabs" id="logoTabs">
-          <button data-pane="builder" class="on">Builder</button>
-          <button data-pane="upload">Upload</button>
-        </div>
+      <!-- LOGO — REMOVED 2026-08-06 (Bryan: "remove logos from profile section").
+           The logo MODEL is deliberately untouched: `logo_kind` / `logo_data` still
+           round-trip through profile.gs to the sheet, franchise.js still renders
+           whatever an owner previously saved, and the hero badge above still shows it.
+           So this is a UI removal, not a migration — restoring the builder is putting
+           this markup back, nothing else.
 
-        <div class="pane on" data-pane="builder">
-          <div class="builder">
-            <span class="preview" id="bPreview"></span>
-            <div class="opts">
-              <label style="display:block;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">Shape</label>
-              <div class="chips" id="shapeChips"></div>
-              <label style="display:block;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">Icon</label>
-              <div class="chips" id="iconChips"></div>
-              <div class="field" style="margin-bottom:6px;">
-                <label for="fMono">…or 1–3 letters instead</label>
-                <input id="fMono" maxlength="3" placeholder="BM" style="max-width:110px;text-transform:uppercase;">
-              </div>
-              <div class="fillrow" id="fillRow"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="pane" data-pane="upload">
-          <label class="drop" id="drop" for="fFile">
-            <b>Choose an image</b><br>
-            <span class="sub">PNG, JPEG or WebP. Resized to 256&times;256 in your browser before it
-            is ever uploaded. SVG is not accepted — your logo renders on nine other people's
-            screens and SVG can carry scripts.</span>
-            <input type="file" id="fFile" accept="image/png,image/jpeg,image/webp">
-          </label>
-          <div style="display:flex;gap:14px;align-items:center;margin-top:12px;">
-            <span class="preview" id="uPreview" style="width:64px;height:64px;"></span>
-            <span class="sub" id="uNote">Nothing uploaded yet.</span>
-          </div>
-        </div>
-
-      </section>
+           profile.js guards every logo-editor reference behind `HAS_LOGO_UI`, which is
+           just `!!getElementById('logoTabs')`. Do not delete that flag: without it a
+           single null deref here takes the whole profile page down, colors and jersey
+           with it. -->
 
       <!-- JERSEY -->
       <section class="card span2">

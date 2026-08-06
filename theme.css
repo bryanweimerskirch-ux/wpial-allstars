@@ -1,0 +1,197 @@
+/* ============================================================================
+ * theme.css — THE palette for wadi.solutions. One file, every page.
+ * ----------------------------------------------------------------------------
+ * Why this file exists
+ * --------------------
+ * Until now every page carried its own :root block, and they disagreed:
+ *
+ *   index.html      --accent #ff6a1a (orange)   --accent2 #2ea6ff (blue)
+ *   draftboard.html --accent #d8b45c (gold)     --accent2 #f0d488 (light gold)
+ *   dashboard/profile/matchup/roster            gold, but no colorblind support
+ *
+ * So "use the accent colour" meant two different things depending on the file,
+ * `#e0644f` was `--danger` on one page and `--warn` on another, and colorblind
+ * mode existed on exactly two of six pages. Navigating from the H2H detail page
+ * to the draft board looked like the setting had switched itself off, because on
+ * the H2H page it had never been implemented at all.
+ *
+ * The rule now: THIS FILE OWNS THE TOKENS. A page's own <style> block styles
+ * that page's components; it does not define colours. If you need a new colour,
+ * add it here, or you have started palette #7.
+ *
+ * Load order on every page:
+ *     <link rel="stylesheet" href="theme.css">      <-- before the page's <style>
+ *     <script src="cbmode.js"></script>             <-- head, NOT deferred
+ *
+ * The three laws this palette is built around (see the eng-to-UX memo)
+ * -------------------------------------------------------------------
+ *   1. Fill carries category, outline carries state.
+ *   2. Every state carries a word or a glyph, never hue alone.
+ *   3. Owner colours (--fx-*) are identity, never state, and are set on a
+ *      container — never on :root, and never in this file.
+ *
+ * Law 1 is load-bearing, not stylistic: --danger and --qb are the same hex, so a
+ * SOLID #e0644f is a quarterback and an OUTLINED #e0644f is a problem. In
+ * colorblind mode the collision moves rather than disappears (--danger/--qb and
+ * --accent/--wr each collapse to one hue). Break law 1 and those two pairs are
+ * where it bites first.
+ * ==========================================================================*/
+
+/* ---------------------------------------------------------------------------
+ * 1. DEFAULT — "Broadcast". Dark and gold. This is the site's look.
+ * ------------------------------------------------------------------------ */
+:root{
+  /* surfaces */
+  --bg:#0b0e13;
+  --panel:#12161d;
+  --panel2:#0f1319;
+  --line:#232a35;
+
+  /* --card is index.html's historical name for --panel. Kept as an alias so the
+     homepage's existing rules keep working; prefer --panel in new code. */
+  --card:#12161d;
+
+  /* type */
+  --text:#e8eaee;
+  --muted:#9aa3b0;
+
+  /* brand / accent. --accent-ink is the text colour that goes ON --accent; it is
+     part of the token set precisely so nobody hardcodes a near-black again and
+     has to re-pick it when the accent moves. */
+  --accent:#d8b45c;
+  --accent2:#f0d488;
+  --accent-ink:#14110a;
+  --otc:#d8b45c;              /* on-the-clock — same gold, named for its meaning */
+
+  /* semantic state. --warn is dashboard/profile's name for --danger; both are
+     defined so neither page has to be edited to agree with the other. */
+  --danger:#e0644f;
+  --warn:#e0644f;
+  --ok:#57b26a;
+  --none:#8a93a0;
+
+  /* keeper conflict (two owners want the same player). Was orange, which now
+     collides with the gold accent, so it moves onto the danger hue — it IS a
+     warning, and the dashed box carries the meaning independently of colour. */
+  --conflict:#2b1512;
+  --conflict-line:#e0644f;
+
+  /* positions — fills only, per law 1 */
+  --qb:#e0644f;
+  --rb:#57b26a;
+  --wr:#5b9bd5;
+  --te:#e39b3b;
+  --k:#a97fd1;
+  --def:#8a93a0;
+
+  /* draft board cells */
+  --cellbg:#12161d;
+  --cellfill:#1a212b;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. ALTERNATE THEMES — draft board only, switched by a <body> class.
+ *    They live here rather than in draftboard.html so that the colorblind
+ *    overrides in §3 can be guaranteed to come AFTER them in the cascade.
+ *    That ordering is the whole reason this section moved.
+ * ------------------------------------------------------------------------ */
+body.theme-chalk{
+  --bg:#1d2b23; --panel:#24362c; --panel2:#1f3026; --card:#24362c; --line:#3a5244;
+  --text:#f2f0e4; --muted:#a8bcae; --accent:#f5e6a8; --accent2:#fff3c0;
+  --accent-ink:#1d2b23; --otc:#f5e6a8;
+  --cellbg:#24362c; --cellfill:#2d4436;
+}
+body.theme-light{
+  --bg:#f2f0ea; --panel:#ffffff; --panel2:#faf8f2; --card:#ffffff; --line:#d8d3c4;
+  --text:#1c2333; --muted:#6b7280; --accent:#a8842c; --accent2:#8a6a1c;
+  /* Dark ink, not white — best-ink-wins says so and it is not obvious: #a8842c
+     scores 5.39:1 against #14110a and only 3.50:1 against white, so the "text on
+     a light theme is dark, text on an accent is light" instinct fails here. */
+  --accent-ink:#14110a; --otc:#a8842c;
+  --cellbg:#ffffff; --cellfill:#f4efe2;
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. COLORBLIND MODE — the Wadi Accessibility Initiative.
+ *
+ *    Okabe-Ito. Sky blue and yellow replace gold; vermillion and bluish-green
+ *    replace the red/green pair.
+ *
+ *    THREE SELECTORS, DELIBERATELY:
+ *      html.colorblind       — cbmode.js sets this in <head>, before <body>
+ *                              exists, so the tokens are already right at first
+ *                              paint. No flash of gold.
+ *      html.colorblind body  — (0,1,2) specificity, so it outranks
+ *                              body.theme-light / body.theme-chalk above.
+ *                              Without this, changing the draft board theme
+ *                              would visually undo colorblind mode.
+ *      body.colorblind       — what every existing page rule already keys on
+ *                              (body.colorblind .honor, body.colorblind a, ...).
+ *                              cbmode.js sets it as soon as <body> exists.
+ *
+ *    This section MUST stay last. Everything here is a single-class selector at
+ *    the same specificity as the themes above, so source order is what decides.
+ * ------------------------------------------------------------------------ */
+html.colorblind,
+html.colorblind body,
+body.colorblind{
+  --accent:#56B4E9;           /* sky blue */
+  --accent2:#F0E442;          /* yellow */
+  --accent-ink:#04121f;
+  --otc:#F0E442;
+  --muted:#b9c4d1;            /* lifted: the default muted loses too much here */
+
+  --danger:#D55E00;           /* vermillion */
+  --warn:#D55E00;
+  --ok:#009E73;               /* bluish green */
+
+  --conflict:#12283b;
+  --conflict-line:#56B4E9;
+
+  --qb:#D55E00; --rb:#009E73; --wr:#56B4E9; --te:#E69F00; --k:#CC79A7; --def:#8a93a0;
+}
+
+/* Links are never identified by colour alone in colorblind mode.
+   Two documented exceptions, both real and both learned the hard way:
+     - a link that WRAPS A WHOLE CARD would underline every word inside it (the
+       odds, the basis line, both team names). It hands the underline to the one
+       element that is actually its affordance.
+     - .standings-table .tm-link sets text-decoration:none with two classes, so
+       it silently outspecified the rule and rendered with no affordance at all.
+       It is restated at matching specificity here. */
+body.colorblind a{text-decoration:underline;}
+body.colorblind a.spotlight-link{text-decoration:none;}
+body.colorblind a.spotlight-link .spotlight-go{text-decoration:underline;}
+body.colorblind .standings-table .tm-link{text-decoration:underline;}
+
+/* ---------------------------------------------------------------------------
+ * 4. THE TOGGLE — one button, one look, every page.
+ *    cbmode.js injects it wherever the page has not hand-written one.
+ * ------------------------------------------------------------------------ */
+.cb-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  background:none;
+  border:1px solid var(--line);
+  color:var(--text);
+  padding:8px 14px;
+  border-radius:20px;
+  font-size:13px;
+  font-family:inherit;
+  line-height:1.2;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.cb-toggle:hover{border-color:var(--accent);}
+.cb-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+/* ON is not signalled by colour alone — the label itself reads ": ON". */
+.cb-toggle.on{
+  background:var(--accent2);
+  border-color:var(--accent2);
+  color:#04121f;
+  font-weight:600;
+}
+/* The draft board's toggle is a .small button in a dense header bar; it opts out
+   of the pill shape but keeps the ON treatment. */
+#cbToggle.small{border-radius:6px;padding:3px 8px;font-size:11px;}

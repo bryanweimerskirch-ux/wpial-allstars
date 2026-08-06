@@ -3,21 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WPIAL All Stars — Roster</title>
+<title>WPIAL All Stars — Depth Chart</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<!-- Not deferred: sets html.colorblind before <body> exists, so no flash of gold. -->
+<script src="cbmode.js"></script>
 <style>
 /* Same draft-board palette as matchup.html — this page is its single-team sibling and the
    two must not drift apart visually any more than their row grammar does. */
+/* Colour tokens come from theme.css, shared with every page. This block keeps only
+   what is genuinely local to this page. Do not re-add a palette here — six copies of
+   one palette is what made colorblind mode work on some pages and not others. */
 :root{
-  --bg:#0b0e13; --panel:#12161d; --panel2:#0f1319; --line:#232a35;
-  --text:#e8eaee; --muted:#9aa3b0; --accent:#d8b45c; --accent2:#f0d488;
-  --danger:#e0644f; --ok:#57b26a;
-  --qb:#e0644f; --rb:#57b26a; --wr:#5b9bd5; --te:#e39b3b; --k:#a97fd1; --def:#8a93a0;
   --hdr-h:96px;
   --fx-primary:#d8b45c;
 }
+.viewsw{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:0 0 12px;}
+.viewsw button{background:none;border:0;color:var(--muted);font:inherit;font-size:12.5px;
+  padding:7px 14px;cursor:pointer;}
+.viewsw button.on{background:var(--accent);color:var(--accent-ink);font-weight:700;}
+.dc-pos{display:flex;align-items:center;gap:9px;margin:16px 0 6px;}
+.dc-pos b{font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent);}
+.dc-pos i{flex:1;height:1px;background:var(--line);}
+.dc-pos em{font-style:normal;font-size:10.5px;color:var(--muted);letter-spacing:.6px;}
+.dc-slot{display:flex;align-items:stretch;gap:8px;margin-bottom:5px;}
+/* The rank chip is the depth chart. It is a NUMBER, so it survives greyscale and
+   colorblind mode with no hue doing any work at all. */
+.dc-rank{flex:0 0 38px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid var(--line);border-radius:6px;font-size:11px;font-weight:700;
+  color:var(--muted);font-family:'Oswald',sans-serif;letter-spacing:.5px;line-height:1.15;}
+.dc-rank em{font-style:normal;font-size:7.5px;letter-spacing:.8px;color:var(--accent);}
+.dc-slot.starter .dc-rank{border-color:var(--accent);color:var(--accent);}
+.dc-slot > .dc-row{flex:1;min-width:0;}
+.dc-empty{border:1px dashed var(--line);border-radius:8px;padding:10px 12px;
+  font-size:12.5px;color:var(--muted);}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-size:14px;
      font-family:'Barlow',-apple-system,Segoe UI,Roboto,sans-serif;}
@@ -74,7 +95,7 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
 <body>
 
 <header>
-  <div class="logo"><b>WPIAL ALL STARS</b><span>Team Roster</span></div>
+  <div class="logo"><b>WPIAL ALL STARS</b><span>Depth Chart</span></div>
   <div class="hdr-right"></div>
 </header>
 
@@ -89,8 +110,18 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
 
   <div class="hero" id="hero"></div>
 
+  <!-- Two views of the same fifteen players. Depth chart is the default because
+       that is what the nav item promises and what an owner wants after the draft:
+       "who is behind my RB1". Week lineup is the old view, kept because it is the
+       one that answers "what did I actually start" and the standings' bench column
+       argues about it. -->
+  <div class="viewsw" role="group" aria-label="View">
+    <button id="vDepth" class="on" type="button" aria-pressed="true">Depth chart</button>
+    <button id="vWeek" type="button" aria-pressed="false">Week lineup</button>
+  </div>
+
   <div class="sect">
-    <div class="sect-t" id="lineupT">STARTERS</div>
+    <div class="sect-t" id="lineupT">DEPTH CHART</div>
     <div id="lineup"><span class="skel"></span><span class="skel"></span><span class="skel"></span></div>
   </div>
 </main>
@@ -164,7 +195,7 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
   function fidOf(n) { return (fx() && fx().resolve(n)) || null; }
   function nameOf(f) { return (fx() && fx().name(f)) || String(f || ''); }
 
-  var state = { week: null, weeks: null, form: {}, fid: null, detail: 'pending' };
+  var state = { week: null, weeks: null, form: {}, fid: null, detail: 'pending', view: 'depth' };
 
   /* Captured ONCE, at load. syncURL() writes the current team back into the address bar,
      so re-reading qp('team') later cannot distinguish "the visitor asked for this team"
@@ -244,6 +275,94 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
     return found;
   }
 
+  /* ---- depth chart ------------------------------------------------------
+     The league starts 1 QB · 2 RB · 2 WR · 1 TE · 2 FLEX · 1 K · 1 D/ST on a
+     16-man roster (constitution, Article V, and the same LINEUP the draft board
+     computes against — the two agreed, which is worth knowing because the older
+     keeper-rules doc in Drive says 1 FLEX and it is stale).
+
+     FLEX is not a position, so it does not get its own group here: a flex body is
+     an RB/WR/TE and belongs on the chart under the position he actually plays.
+     The starter ring counts starters at that position INCLUDING anyone the week's
+     lineup happens to be flexing. */
+  var DEPTH = [
+    { k: 'QB',  n: 1, label: 'Quarterback' },
+    { k: 'RB',  n: 2, label: 'Running back' },
+    { k: 'WR',  n: 2, label: 'Wide receiver' },
+    { k: 'TE',  n: 1, label: 'Tight end' },
+    { k: 'K',   n: 1, label: 'Kicker' },
+    { k: 'DEF', n: 1, label: 'Defense / Special teams' }
+  ];
+
+  function posKey(p) {
+    var v = String((p && (p.pos || p.position)) || '').toUpperCase();
+    if (v.indexOf('D') === 0 && v !== 'DEF') return 'DEF';     // D/ST, DST
+    if (v === 'PK') return 'K';
+    return v;
+  }
+
+  function paintDepth(el) {
+    var side = sideFor(state.fid);
+    if (!side) { el.innerHTML = '<p class="note">No roster for this team yet.</p>'; return; }
+
+    var opp = opponentFor(state.week, state.fid);
+    var st = gameState(opp && opp.mu);
+    var split = R.splitLineup(side.players);
+    var starting = {};
+    split.starters.forEach(function (p) { starting[p.name] = true; });
+
+    var all = split.starters.concat(split.bench);
+    var html = '';
+    var placed = 0;
+
+    DEPTH.forEach(function (g) {
+      var list = all.filter(function (p) { return posKey(p) === g.k; });
+      /* Whoever is starting this week sits on top; below that, by projection.
+         Projection rather than actual, deliberately: a depth chart is a statement
+         about who you would start NEXT week, and last week's actual is noise. */
+      list.sort(function (a, b) {
+        var sa = starting[a.name] ? 1 : 0, sb = starting[b.name] ? 1 : 0;
+        if (sa !== sb) return sb - sa;
+        return (Number(b.proj) || 0) - (Number(a.proj) || 0);
+      });
+      placed += list.length;
+
+      html += '<div class="dc-pos"><b>' + g.k + '</b>' +
+              '<em>' + R.esc(g.label) + ' &middot; ' + g.n + ' starting</em><i></i></div>';
+
+      if (!list.length) {
+        html += '<div class="dc-empty">Nobody on the roster at ' + g.k + '.</div>';
+        return;
+      }
+      list.forEach(function (p, i) {
+        var isStarter = !!starting[p.name];
+        /* A starter ranked below the positional count is starting through FLEX.
+           Say so: otherwise "RB3" under a header reading "2 starting" looks like a
+           mistake, and the only thing distinguishing him would be the accent ring —
+           which is hue, and hue is never allowed to be the only signal. */
+        var viaFlex = isStarter && i >= g.n;
+        html += '<div class="dc-slot' + (isStarter ? ' starter' : '') + '">' +
+                  '<span class="dc-rank">' + g.k + (i + 1) +
+                    (viaFlex ? '<em>FLEX</em>' : '') + '</span>' +
+                  '<span class="dc-row">' + R.soloRow(p, { state: st, bench: !isStarter }) + '</span>' +
+                '</div>';
+      });
+    });
+
+    /* Anything whose position we did not recognise still has to appear. A roster
+       spot that silently vanishes from a depth chart is worse than an ugly one. */
+    if (placed < all.length) {
+      var rest = all.filter(function (p) { return DEPTH.every(function (g) { return posKey(p) !== g.k; }); });
+      html += '<div class="dc-pos"><b>Other</b><em>unrecognised position</em><i></i></div>';
+      rest.forEach(function (p) {
+        html += '<div class="dc-slot"><span class="dc-rank">' + R.esc(posKey(p) || '?') + '</span>' +
+                '<span class="dc-row">' + R.soloRow(p, { state: st, bench: true }) + '</span></div>';
+      });
+    }
+
+    el.innerHTML = html;
+  }
+
   function paintLineup() {
     var el = $('lineup');
     if (state.detail === 'pending') {
@@ -262,9 +381,17 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
       return;
     }
     if (!state.detail.hasRosters) {
-      el.innerHTML = '<p class="note">ESPN has nothing to show until the draft is in.</p>';
+      /* U10's lesson, applied to a depth chart: a grid of empty position groups in
+         August asserts something false — that these teams have no players. Say
+         what is actually true and when it changes. */
+      el.innerHTML = '<p class="note">Depth charts fill in once the draft is done &mdash; ' +
+                     '<b>Sunday, Aug 30 at 5:30 PM Mountain</b>. Until then, keeper round values ' +
+                     'live on <a href="index.html#rosters">Rosters and Round Values</a>.</p>';
       return;
     }
+    if (state.view === 'depth') { $('lineupT').textContent = 'DEPTH CHART'; paintDepth(el); return; }
+    $('lineupT').textContent = 'STARTERS';
+
     var side = sideFor(state.fid);
     if (!side) {
       el.innerHTML = '<p class="note">No lineup for this team in week ' + R.esc(state.week) + '.</p>';
@@ -358,6 +485,22 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
     userPickedTeam = true; state.fid = this.value; repaint();
   });
   $('weekSel').addEventListener('change', function () { setWeek(parseInt(this.value, 10)); });
+
+  /* The view switch. Remembered per device, because an owner who thinks in depth
+     charts thinks in depth charts every week. */
+  function setView(v) {
+    state.view = (v === 'week') ? 'week' : 'depth';
+    try { localStorage.setItem('wpial-roster-view', state.view); } catch (e) {}
+    var d = $('vDepth'), w = $('vWeek');
+    d.classList.toggle('on', state.view === 'depth');
+    w.classList.toggle('on', state.view === 'week');
+    d.setAttribute('aria-pressed', state.view === 'depth' ? 'true' : 'false');
+    w.setAttribute('aria-pressed', state.view === 'week' ? 'true' : 'false');
+    paintLineup();
+  }
+  $('vDepth').addEventListener('click', function () { setView('depth'); });
+  $('vWeek').addEventListener('click', function () { setView('week'); });
+  try { setView(localStorage.getItem('wpial-roster-view') || 'depth'); } catch (e) { setView('depth'); }
   document.addEventListener('wpial-profiles', function () {
     buildTeamSelect();
     if (state.fid) repaint();

@@ -15,50 +15,21 @@
 <title>WPIAL All Stars — 2026 Keeper Draftboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="cbmode.js"></script>
 <style>
-:root{
-  --bg:#0b0e13; --panel:#12161d; --panel2:#0f1319; --line:#232a35;
-  --text:#e8eaee; --muted:#9aa3b0; --accent:#d8b45c; --accent2:#f0d488;
-  --otc:#d8b45c; --danger:#e0644f; --ok:#57b26a;
-  --qb:#e0644f; --rb:#57b26a; --wr:#5b9bd5; --te:#e39b3b; --k:#a97fd1; --def:#8a93a0;
-  --cellbg:#12161d; --cellfill:#1a212b;
-}
-body.theme-chalk{
-  --bg:#1d2b23; --panel:#24362c; --panel2:#1f3026; --line:#3a5244;
-  --text:#f2f0e4; --muted:#a8bcae; --accent:#f5e6a8; --accent2:#fff3c0;
-  --cellbg:#24362c; --cellfill:#2d4436;
-}
-body.theme-light{
-  --bg:#f2f0ea; --panel:#ffffff; --panel2:#faf8f2; --line:#d8d3c4;
-  --text:#1c2333; --muted:#6b7280; --accent:#a8842c; --accent2:#8a6a1c;
-  --otc:#a8842c;
-  --cellbg:#ffffff; --cellfill:#f4efe2;
-}
-/* ---- Colorblind mode (design handoff item 2) ------------------------------
-   Ported from index.html so the setting finally reaches the draft board — the
-   highest-stakes screen in the product previously had no colorblind support at
-   all. Preference is the SAME localStorage key as the homepage ('wpial-cb-mode')
-   and both pages are same-origin, so toggling either one carries across.
-   Positions use the Okabe-Ito palette specified in the handoff.
-
-   --danger lands on the same vermillion as --qb, and --accent on the same sky
-   blue as --wr. That is safe *because of* the fill/outline law: positions are
-   only ever solid fills, statuses only ever outlines, so no glance compares
-   like with like. If that law is ever broken, these pairs are where it bites. */
-body.colorblind{
-  --accent:#56B4E9; --accent2:#F0E442; --otc:#F0E442; --muted:#b9c4d1;
-  --danger:#D55E00; --ok:#009E73;
-  --qb:#D55E00; --rb:#009E73; --wr:#56B4E9; --te:#E69F00; --k:#CC79A7; --def:#8a93a0;
-}
-body.colorblind a{text-decoration:underline;}
-#cbToggle.on{background:var(--accent2);border-color:var(--accent2);color:#04121f;font-weight:700;}
+/* Every colour token on this page — the broadcast/chalk/light themes AND the
+   colorblind palette — now lives in theme.css, shared with every other page.
+   They were moved out (not copied) so the cascade order is guaranteed: the
+   colorblind overrides MUST come after the theme blocks, and they cannot if the
+   theme blocks live in a page <style> that loads after theme.css. */
 
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:'Barlow',-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;}
 h1,h2,h3,.oswald{font-family:'Oswald',sans-serif;letter-spacing:.5px;}
 button{font-family:'Barlow',sans-serif;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:6px 12px;font-size:13px;}
 button:hover{border-color:var(--accent);}
-button.primary{background:var(--accent);color:#14110a;border-color:var(--accent);font-weight:700;}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700;}
 button.small{padding:3px 8px;font-size:11px;}
 input,select{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 10px;font-size:13px;font-family:'Barlow',sans-serif;}
 input:focus,select:focus{outline:none;border-color:var(--accent);}
@@ -73,7 +44,7 @@ header{display:flex;align-items:center;gap:16px;padding:10px 16px;border-bottom:
 .hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .mode-toggle{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
 .mode-toggle button{border:none;border-radius:0;background:transparent;padding:6px 14px;font-weight:600;}
-.mode-toggle button.active{background:var(--accent);color:#14110a;}
+.mode-toggle button.active{background:var(--accent);color:var(--accent-ink);}
 #statusbar{width:100%;display:flex;gap:14px;align-items:center;font-size:13px;color:var(--muted);padding-top:6px;flex-wrap:wrap;}
 #statusbar .otc-label{color:var(--accent2);font-weight:700;font-family:'Oswald';letter-spacing:1px;text-transform:uppercase;}
 #datasrc{font-size:11px;}
@@ -90,7 +61,7 @@ header{display:flex;align-items:center;gap:16px;padding:10px 16px;border-bottom:
 /* ---------- board grid ---------- */
 table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width:100%;min-width:1100px;}
 #board thead th{font-family:'Oswald';font-weight:600;font-size:12px;letter-spacing:.5px;padding:6px 4px;background:var(--panel);border-radius:6px;position:sticky;top:-12px;z-index:20;box-shadow:0 2px 0 var(--bg);}
-#board th .ord{display:inline-block;background:var(--accent);color:#14110a;border-radius:4px;font-size:10px;padding:0 5px;margin-right:4px;font-weight:700;}
+#board th .ord{display:inline-block;background:var(--accent);color:var(--accent-ink);border-radius:4px;font-size:10px;padding:0 5px;margin-right:4px;font-weight:700;}
 #board th.rdcol,#board td.rdcol{width:34px;min-width:34px;max-width:34px;font-family:'Oswald';color:var(--muted);font-size:12px;text-align:center;position:sticky;left:-12px;background:var(--bg);z-index:10;}
 #board thead th.rdcol{z-index:30;top:-12px;left:-12px;}
 #board td{background:var(--cellbg);border:1px solid var(--line);border-radius:6px;padding:4px 6px;height:44px;vertical-align:top;font-size:11.5px;line-height:1.25;position:relative;}
@@ -133,7 +104,7 @@ table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width
 #suggest .sg .tm{color:var(--muted);font-size:10px;margin-left:auto;}
 .posfilters{display:flex;gap:4px;margin:8px 0;flex-wrap:wrap;}
 .posfilters button{padding:3px 9px;font-size:11px;border-radius:12px;}
-.posfilters button.active{background:var(--accent);color:#14110a;border-color:var(--accent);font-weight:700;}
+.posfilters button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700;}
 #balist .ba{display:flex;gap:7px;align-items:baseline;padding:5px 6px;border-radius:6px;cursor:pointer;border:1px solid transparent;}
 #balist .ba:hover{border-color:var(--accent);background:var(--cellfill);}
 #balist .rk{color:var(--muted);font-size:10.5px;min-width:26px;font-family:'Oswald';}
@@ -240,7 +211,7 @@ table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width
 #board td.cand .cnm .kp{white-space:nowrap;flex:0 0 auto;}
 #board td.cand .cnm:first-of-type{margin-top:10px;}
 #board td.cand .cnm .kp{font-size:9px;padding:0 4px;border-radius:7px;border-color:var(--accent);color:var(--accent);line-height:1.5;}
-#board td.cand .cnm .kp:hover{background:var(--accent);color:#14110a;}
+#board td.cand .cnm .kp:hover{background:var(--accent);color:var(--accent-ink);}
 #board td .cbtns{display:block;margin-top:2px;}
 #board td .cbtns .ps{font-size:8.5px;padding:0 5px;border-radius:7px;color:var(--muted);line-height:1.5;}
 #board td .cbtns .ps:hover{border-color:var(--danger);color:var(--danger);}
@@ -251,7 +222,7 @@ table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width
 /* keeper-eligible pool view */
 #balist .ba .kpr{color:var(--accent);font-size:9.5px;min-width:24px;font-family:'Oswald';}
 #balist .kpbtn{font-size:9px;padding:1px 6px;border-radius:8px;border-color:var(--accent);color:var(--accent);}
-#balist .kpbtn:hover{background:var(--accent);color:#14110a;}
+#balist .kpbtn:hover{background:var(--accent);color:var(--accent-ink);}
 #balist .ba.dim{opacity:.5;cursor:default;}
 #balist .ba.dim:hover{border-color:transparent;background:transparent;}
 /* ---------- season sim ---------- */
@@ -265,7 +236,7 @@ table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width
 .simtbl td{padding:3px 6px;border-bottom:1px solid var(--line);}
 .simtbl tr.me td{color:var(--accent2);font-weight:700;}
 .simtbl tr.elim td{opacity:.45;}
-.simtbl .sdchip{display:inline-block;background:var(--accent);color:#14110a;border-radius:4px;font-size:9px;padding:0 4px;margin-right:4px;font-weight:700;}
+.simtbl .sdchip{display:inline-block;background:var(--accent);color:var(--accent-ink);border-radius:4px;font-size:9px;padding:0 4px;margin-right:4px;font-weight:700;}
 .mch{display:flex;justify-content:space-between;gap:8px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;margin-bottom:5px;font-size:11.5px;align-items:center;}
 .mch .wn{font-weight:700;color:var(--ok);}
 .mch .sc{font-family:'Oswald';white-space:nowrap;}
@@ -294,7 +265,7 @@ table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width
 .wizbox .rdlab{font-family:'Oswald';color:var(--accent);min-width:30px;font-size:12px;}
 .wizbox .verdict{font-size:10px;margin-left:auto;white-space:nowrap;}
 .wizbox button{font-size:11px;padding:3px 10px;border-radius:12px;}
-.wizbox button.on{background:var(--accent);color:#14110a;border-color:var(--accent);font-weight:700;}
+.wizbox button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700;}
 .wizbox button.nok.on{background:var(--danger);border-color:var(--danger);color:#fff;}
 .wizprogbar{height:6px;background:var(--cellbg);border-radius:3px;overflow:hidden;margin:6px 0 10px;}
 .wizprogbar i{display:block;height:100%;background:var(--accent);transition:width .3s;}
@@ -358,8 +329,6 @@ footer{padding:10px 16px;color:var(--muted);font-size:11px;border-top:1px solid 
       <option value="chalk">Chalkboard</option>
       <option value="light">Print / Light</option>
     </select>
-    <button id="cbToggle" class="small" aria-pressed="false"
-      title="Colorblind-safe palette (Okabe-Ito). Shared with the homepage setting.">👓 Colorblind</button>
     <button id="undoBtn" class="small" title="Undo last pick">↩ Undo</button>
     <button id="resetBtn" class="small" title="Clear this mode's draft">Reset</button>
     <button id="commishBtn" class="small">🔐 Commish</button>
@@ -2772,20 +2741,10 @@ $('#themeSel').onchange=e=>{
   store.set('wpial_theme',e.target.value);
 };
 /* ---- Colorblind mode ----
-   CB_KEY is the homepage's key, verbatim, and the two pages are same-origin, so
-   the preference is genuinely shared rather than duplicated. The homepage owns the
-   toggle ceremony; here it's just a switch. */
-const CB_KEY='wpial-cb-mode';
-function setCbMode(on){
-  document.body.classList.toggle('colorblind',on);
-  const b=$('#cbToggle');
-  if(b){ b.classList.toggle('on',on); b.setAttribute('aria-pressed',on?'true':'false');
-         b.textContent=on?'👓 Colorblind: ON':'👓 Colorblind'; }
-  try{ localStorage.setItem(CB_KEY,on?'1':'0'); }catch(e){}
-}
-if($('#cbToggle')) $('#cbToggle').onclick=()=>setCbMode(!document.body.classList.contains('colorblind'));
-/* Toggled in another tab (e.g. on the homepage) — follow it live. */
-window.addEventListener('storage',e=>{ if(e.key===CB_KEY) setCbMode(e.newValue==='1'); });
+   Owned entirely by cbmode.js now — the toggle, the storage, the cross-tab sync
+   and the per-owner default. This page had its own copy; that copy is exactly
+   why the mode could be on here and absent on the H2H page. See the note in the
+   INIT block for the one thing this page still has to do about it. */
 $('#undoBtn').onclick=undo;
 $('#resetBtn').onclick=()=>confirmBox('Reset '+mode+' draft?','This clears every pick on the '+mode+' board (keepers stay locked).',()=>{ picks={};cursor=0;undoStack=[];stopMock(); saveState(); render(); });
 $('#mockGo').onclick=startMock;
@@ -3323,8 +3282,12 @@ function fetchLivePool(){
 (function init(){
   document.body.className='theme-'+store.get('wpial_theme','broadcast');
   $('#themeSel').value=store.get('wpial_theme','broadcast');
-  /* After the theme class is set, never before — className= above clobbers it. */
-  try{ setCbMode(localStorage.getItem(CB_KEY)==='1'); }catch(e){}
+  /* `body.className=` on the line above wipes EVERY other class, including
+     `colorblind`. That is a live bug this page has already shipped once. cbmode.js
+     holds the real state, so ask it to put the class back rather than re-deriving
+     it from storage — re-deriving is how the two implementations drifted.
+     Guarded because cbmode.js must never be load-bearing for the board rendering. */
+  try{ if(window.WPIAL_CB) window.WPIAL_CB.reassert(); }catch(e){}
   myTeamSel.value=myTeam;
   loadKeepersFromList(KEEPERS_SNAPSHOT,'live');            // embedded fallback
   const manual=store.get('wpial_keepers_v1',[]);

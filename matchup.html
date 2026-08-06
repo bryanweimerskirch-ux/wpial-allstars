@@ -7,16 +7,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<!-- Not deferred: sets html.colorblind before <body> exists, so no flash of gold. -->
+<script src="cbmode.js"></script>
 <style>
 /* Palette translated from the design mock per the handoff's "Palette note — read first":
    the mock was drawn in draftboard black/#FFB612 gold; this page runs the draft-board
    palette, so #FFB612 -> --accent, #0a0a0a -> --bg, #141414 -> --panel, #2a2a2a -> --line,
    #9a9a95 -> --muted. Layout and type are 1:1. */
+/* Colour tokens come from theme.css, shared with every page. This block keeps only
+   what is genuinely local to this page. Do not re-add a palette here — six copies of
+   one palette is what made colorblind mode work on some pages and not others. */
 :root{
-  --bg:#0b0e13; --panel:#12161d; --panel2:#0f1319; --line:#232a35;
-  --text:#e8eaee; --muted:#9aa3b0; --accent:#d8b45c; --accent2:#f0d488;
-  --danger:#e0644f; --ok:#57b26a;
-  --qb:#e0644f; --rb:#57b26a; --wr:#5b9bd5; --te:#e39b3b; --k:#a97fd1; --def:#8a93a0;
   --hdr-h:96px;
 }
 *{box-sizing:border-box}

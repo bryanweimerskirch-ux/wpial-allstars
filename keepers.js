@@ -46,9 +46,9 @@
       'background:#12171e;color:var(--muted);}' +
     '.wk-bar b{color:var(--text);}' +
     '.wk-bar.done b{color:#3fb950;}' +
-    '.wk-bar .wk-msg{color:#ff9f4d;}' +
-    '.wk-bar .wk-lock{color:#9aa4b2;}' +
-    '.wk-bar .wk-cap{color:#9aa4b2;font-weight:400;}' +
+    '.wk-bar .wk-msg{color:var(--danger,#e0644f);}' +
+    '.wk-bar .wk-lock{color:var(--muted,#9aa3b0);}' +
+    '.wk-bar .wk-cap{color:var(--muted,#9aa3b0);font-weight:400;}' +
 
     /* One player per line, never wrapping mid-name. The board was laid out as a
        wrapping flex row; adding a pill pushed long names onto a second line. */

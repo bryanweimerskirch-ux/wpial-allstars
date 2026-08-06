@@ -159,7 +159,7 @@
     $('#hS').textContent = st.colors.secondary.toUpperCase();
     $('#hA').textContent = st.colors.accent.toUpperCase();
 
-    $('#bPreview').innerHTML = FX.logoSVG(logoSpec());
+    if (HAS_LOGO_UI) $('#bPreview').innerHTML = FX.logoSVG(logoSpec());
     document.querySelectorAll('#shapeChips button').forEach(function (b) {
       b.classList.toggle('on', !st.useMono && b.dataset.id === st.shape);
     });
@@ -369,7 +369,7 @@
     $('#cP').value = st.colors.primary;
     $('#cS').value = st.colors.secondary;
     $('#cA').value = st.colors.accent;
-    $('#fMono').value = st.mono;
+    if (HAS_LOGO_UI) $('#fMono').value = st.mono;
     $('#fNum').value = st.jersey.number;
     $('#fWord').value = st.jersey.wordmark;
     $('#fSleeve').value = st.jersey.sleeves;
@@ -414,7 +414,19 @@
   }
 
   /* ---------- build the controls ---------- */
+  /* The logo builder was removed from profile.html on 2026-08-06 (Bryan: "remove
+     logos from profile section"). Everything about the logo MODEL is untouched —
+     logo_kind / logo_data still round-trip to the sheet, and franchise.js still
+     renders whatever is stored — so restoring the feature is purely putting the
+     markup back.
+
+     This flag guards the ~10 places that assume the editor's elements exist.
+     Without it, one null deref takes the WHOLE profile page down with it: colors,
+     jersey, motto and save state are all in the same script. */
+  var HAS_LOGO_UI = !!document.getElementById('logoTabs');
+
   function buildChips() {
+    if (HAS_LOGO_UI) {
     $('#shapeChips').innerHTML = FX.shapes().map(function (s) {
       return '<button type="button" data-id="' + s.id + '" title="' + s.id + '" aria-label="' + s.id + '">' +
         '<svg viewBox="0 0 64 64"><path d="' + s.d64 + '" fill="none" stroke="currentColor" stroke-width="4"/></svg></button>';
@@ -435,6 +447,7 @@
       var b = e.target.closest('button[data-id]'); if (!b) return;
       st.icon = b.dataset.id; st.useMono = false; saveLogo();
     };
+    }
 
     $('#presets').innerHTML = FX.presets().map(function (p, i) {
       return '<button type="button" data-i="' + i + '"><span class="sw">' +
@@ -449,10 +462,12 @@
       mark({ color_primary: p.p, color_secondary: p.s, color_accent: p.a });
     };
 
-    $('#fillRow').innerHTML =
-      '<button type="button" disabled><i style="background:var(--fx-primary)"></i>Fill = primary</button>' +
-      '<button type="button" disabled><i style="background:var(--fx-secondary)"></i>Ink = secondary</button>' +
-      '<button type="button" disabled><i style="background:var(--fx-accent)"></i>Ring = accent</button>';
+    if (HAS_LOGO_UI) {
+      $('#fillRow').innerHTML =
+        '<button type="button" disabled><i style="background:var(--fx-primary)"></i>Fill = primary</button>' +
+        '<button type="button" disabled><i style="background:var(--fx-secondary)"></i>Ink = secondary</button>' +
+        '<button type="button" disabled><i style="background:var(--fx-accent)"></i>Ring = accent</button>';
+    }
 
     $('#jerseys').innerHTML = [['classic','Classic'],['throwback','Throwback'],['colorrush','Color Rush'],['pinstripe','Pinstripe']]
       .map(function (t) { return '<button type="button" data-id="' + t[0] + '"><span class="j"></span>' + t[1] + '</button>'; }).join('');
@@ -473,12 +488,14 @@
         mark(patch);
       };
     });
-    $('#fMono').oninput = function () {
-      st.mono = this.value.toUpperCase();
-      st.useMono = !!st.mono;
-      saveLogo();
-    };
-    $('#fMono').onfocus = function () { if (st.mono) { st.useMono = true; saveLogo(); } };
+    if (HAS_LOGO_UI) {
+      $('#fMono').oninput = function () {
+        st.mono = this.value.toUpperCase();
+        st.useMono = !!st.mono;
+        saveLogo();
+      };
+      $('#fMono').onfocus = function () { if (st.mono) { st.useMono = true; saveLogo(); } };
+    }
     $('#fNum').oninput = function () {
       st.jersey.number = this.value.replace(/[^0-9]/g, '').slice(0, 2); saveJersey();
     };
@@ -488,6 +505,7 @@
     $('#undoBtn').onclick = undo;
     $('#resetBtn').onclick = resetToDefaults;
 
+    if (HAS_LOGO_UI) {
     $('#logoTabs').onclick = function (e) {
       var b = e.target.closest('button[data-pane]'); if (!b || b.disabled) return;
       document.querySelectorAll('#logoTabs button').forEach(function (x) { x.classList.toggle('on', x === b); });
@@ -507,6 +525,7 @@
         setSave('error', err.message);
       });
     };
+    }
 
   }
 

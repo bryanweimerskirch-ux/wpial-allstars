@@ -42,8 +42,8 @@
       'border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted,#9aa4b2);}' +
     '.dk-bar b{color:var(--text,#e6edf3);}' +
     '.dk-bar.done b{color:#3fb950;}' +
-    '.dk-bar .dk-msg{color:#ff9f4d;}' +
-    '.dk-bar .dk-cap{color:#9aa4b2;font-weight:400;}' +
+    '.dk-bar .dk-msg{color:var(--danger,#e0644f);}' +
+    '.dk-bar .dk-cap{color:var(--muted,#9aa3b0);font-weight:400;}' +
     /* our pill states it — don't also show the list's own "⭐ kept" chip */
     '.ba.dk-done .pill.ok{display:none !important;}';
   document.head.appendChild(css);
