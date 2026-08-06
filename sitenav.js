@@ -284,7 +284,11 @@
       /* On the draft board the header is a wrapping flex row that already carries the
          mode toggle, the clock and a scrolling control strip. Let the slot take its
          own line rather than squeezing in beside them and forcing a scroll. */
-      '  #snHdrSlot:not(.sn-float){margin-left:auto;}',
+      /* The header is a wrapping flex row, so the slot lands on its own line under
+         the nav. `margin-left:auto` alone does not push it to the right edge there —
+         give it the full line and align its contents, or the chip floats stranded in
+         the middle of an empty row looking like a layout accident. */
+      '  #snHdrSlot:not(.sn-float){width:100%;justify-content:flex-end;margin-left:0;}',
       '}'
     ].join('');
     document.head.appendChild(css);
