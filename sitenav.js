@@ -73,12 +73,14 @@
       retires: true },
     { tab: null,         page: 'roster.html',     label: 'Depth Chart',
       title: 'Your team by position after the draft — starters, flex and bench' },
-    { tab: 'rules',      page: 'index.html',      label: 'Rules',
-      title: 'Keeper rules and the league constitution' },
-    { tab: 'history',    page: 'index.html',      label: 'League History' },
     { tab: 'schedule',   page: 'index.html',      label: '2026 NFL Schedule' },
     { tab: 'scoreboard', page: 'index.html',      label: 'Scoreboard' },
-    { tab: 'standings',  page: 'index.html',      label: 'Standings' }
+    { tab: 'standings',  page: 'index.html',      label: 'Standings' },
+    /* Reference, not week-to-week. Bryan, 2026-08-06: both go after Standings —
+       they are the things you look up once, not the things you check on Sunday. */
+    { tab: 'rules',      page: 'index.html',      label: 'Rules',
+      title: 'Keeper rules and the league constitution' },
+    { tab: 'history',    page: 'index.html',      label: 'League History' }
   ];
 
   /* Keepers is deliberately NOT a nav item. Keeper declaration lives inside
@@ -174,7 +176,10 @@
       '#siteNav a.here:hover{color:var(--accent-ink,#14110a);}',
 
       /* ---- the identity chip ---- */
-      '#wpialId{position:relative;margin-left:auto;flex:0 0 auto;}',
+      /* The slot owns the alignment. #wpialId must NOT carry margin-left:auto —
+         see the note on menuHost(). */
+      '#snHdrSlot{display:flex;align-items:center;gap:7px;margin-left:auto;flex:0 0 auto;}',
+      '#wpialId{position:relative;flex:0 0 auto;}',
       '#wpialIdBtn{display:inline-flex;align-items:center;gap:8px;background:none;',
       '  border:1px solid var(--line);border-radius:22px;padding:4px 10px 4px 4px;',
       '  color:var(--text);font:inherit;font-size:12.5px;cursor:pointer;max-width:230px;}',
@@ -239,8 +244,8 @@
          Absolutely positioned so the page's centred title is left exactly as it
          was on desktop. The header is the positioning context. */
       'body > header{position:relative;}',
-      '.sn-float{position:absolute;right:14px;top:50%;transform:translateY(-50%);',
-      '  display:flex;gap:7px;align-items:center;}',
+      '#snHdrSlot.sn-float{position:absolute;right:14px;top:50%;transform:translateY(-50%);',
+      '  margin-left:0;}',
 
       /* ---- the mobile menu button ---- */
       '#siteNavBurger{display:none;align-items:center;gap:7px;background:none;',
@@ -253,9 +258,17 @@
          vertical space on the surface where there is least of it. */
       '@media (max-width:760px){',
       '  #siteNavBurger{display:inline-flex;}',
-      '  #siteNav{display:none;flex-wrap:wrap;overflow:visible;gap:7px;padding-top:9px;}',
-      '  #siteNav.sheet-open{display:flex;}',
-      '  #siteNav a{padding:7px 12px;font-size:13px;}',       /* bigger tap targets in the sheet */
+      /* VISIBLE BY DEFAULT. This was collapsed-by-default for one commit and that was
+         wrong: on a site people open a few times a year, a nav hidden behind a glyph
+         is a confusion tax paid by everyone, every visit, to buy back header height
+         that only matters on one screen on one day. Bryan, 2026-08-06: "on mobile,
+         menu items should be displayed, ability to hide for draft, dont want people
+         getting confused."
+         The hide is now an opt-in the owner chooses — and it sticks, so someone who
+         collapses it on draft morning stays collapsed. */
+      '  #siteNav{display:flex;flex-wrap:wrap;overflow:visible;gap:7px;padding-top:9px;}',
+      '  #siteNav.nav-collapsed{display:none;}',
+      '  #siteNav a{padding:7px 12px;font-size:13px;}',       /* bigger tap targets */
       '  #wpialIdBtn{max-width:150px;}',
       '  #wpialIdBtn .nm{display:none;}',                      /* avatar carries it; the menu spells it out */
       '  #wpialIdMenu{min-width:0;width:min(84vw,300px);}',
@@ -267,7 +280,11 @@
       '  body > header{padding:10px 132px 10px 13px !important;text-align:left !important;}',
       '  body > header h1{font-size:19px !important;}',
       '  body > header > p{display:none !important;}',
-      '  .sn-float{right:9px;}',
+      '  #snHdrSlot.sn-float{right:9px;}',
+      /* On the draft board the header is a wrapping flex row that already carries the
+         mode toggle, the clock and a scrolling control strip. Let the slot take its
+         own line rather than squeezing in beside them and forcing a scroll. */
+      '  #snHdrSlot:not(.sn-float){margin-left:auto;}',
       '}'
     ].join('');
     document.head.appendChild(css);
@@ -292,16 +309,27 @@
 
      Every page except index already has `.hdr-right`. index gets one created for
      it, floated to the right of its centred title. */
+  /* NEVER put the chip inside `.hdr-right`. On a phone mobilehdr.js turns that into
+     a horizontal scroller (`width:100%; flex-wrap:nowrap; overflow-x:auto`), and a
+     `margin-left:auto` child inside a scroll container pushes the LEADING content
+     out of the scrollable area entirely — LIVE/MOCK, Undo, Reset and Commish became
+     unreachable, with "Commish" rendering as "mmish" clipped at the left edge. That
+     was a real reported bug on the live draft board.
+
+     So the chip and the nav control live in their own slot, a direct child of
+     <header>. It cannot be scrolled away, which is also what the nav spec asked for:
+     "the identity chip pins at the right edge and never scrolls away." */
   function menuHost() {
-    var existing = document.querySelector('.hdr-right');
-    if (existing) return existing;
+    var made = document.getElementById('snHdrSlot');
+    if (made) return made;
     var header = document.querySelector('header');
     if (!header) return null;
-    var made = document.getElementById('snHdrRight');
-    if (made) return made;
     made = document.createElement('div');
-    made.id = 'snHdrRight';
-    made.className = 'hdr-right sn-float';
+    made.id = 'snHdrSlot';
+    /* index.html's header is a centred title with no control row, so the slot floats
+       against the right edge there. Every other page has a real header flex row and
+       the slot is just the last item in it. */
+    if (!document.querySelector('.hdr-right')) made.className = 'sn-float';
     header.appendChild(made);
     return made;
   }
@@ -611,38 +639,80 @@
   }
 
   /* ---------------------------------------------------------------------
-   * 6. The phone sheet
+   * 6. The phone nav — shown by default, hideable for draft day
+   *
+   * The control is a HIDE control, not a reveal. Its label says which way it
+   * goes ("Hide menu" / "Show menu") rather than being a bare ☰, because a
+   * hamburger next to an already-visible menu reads as decoration and a
+   * hamburger next to a hidden one reads as "something is missing".
+   *
+   * The choice is remembered per device under `wpial-nav-collapsed`. That is the
+   * whole point: an owner collapses it once on draft morning to get the board
+   * back, and it stays collapsed for the rest of the draft without them
+   * re-deciding on every page.
    * ------------------------------------------------------------------ */
+  var NAV_COLLAPSE_KEY = 'wpial-nav-collapsed';
+
+  function navCollapsed() {
+    try { return localStorage.getItem(NAV_COLLAPSE_KEY) === '1'; } catch (e) { return false; }
+  }
+
   function buildBurger() {
     if (document.getElementById('siteNavBurger')) return;
+    /* The draft board already has a header-collapse control (mobilehdr.js's
+       "▴ Hide"), and its collapsed rule ALREADY hides #siteNav along with everything
+       else. Adding a second, differently-worded hide button next to it in the most
+       crowded header on the site is the confusion, not the cure — so on that page we
+       add nothing and let the existing control own it. */
+    if (document.getElementById('wpial-mhdr-toggle') ||
+        currentPage() === 'draftboard.html') return;
     var host = menuHost();
     if (!host) return;
     var b = document.createElement('button');
     b.id = 'siteNavBurger';
     b.type = 'button';
-    b.setAttribute('aria-expanded', 'false');
     b.setAttribute('aria-controls', 'siteNav');
-    b.innerHTML = '<span aria-hidden="true">☰</span> Menu';
     b.onclick = function (e) { e.stopPropagation(); toggleSheet(); };
     /* Before the identity chip, so the reading order is: brand · menu · you. */
     var id = document.getElementById('wpialId');
     if (id && id.parentNode === host) host.insertBefore(b, id); else host.appendChild(b);
+    applyNavState(navCollapsed(), false);
   }
 
   function sheetEl() {
     return document.getElementById('siteNav') || document.querySelector('header nav') || document.querySelector('nav');
   }
+
+  function applyNavState(collapsed, remember) {
+    var s = sheetEl(), b = document.getElementById('siteNavBurger');
+    if (s) s.classList.toggle('nav-collapsed', !!collapsed);
+    if (b) {
+      b.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      b.innerHTML = collapsed
+        ? '<span aria-hidden="true">\u2630</span> Show menu'
+        : '<span aria-hidden="true">\u2715</span> Hide menu';
+      b.title = collapsed
+        ? 'Show the navigation menu'
+        : 'Hide the menu to give the board more room \u2014 stays hidden until you show it again';
+    }
+    if (remember) { try { localStorage.setItem(NAV_COLLAPSE_KEY, collapsed ? '1' : '0'); } catch (e) {} }
+  }
+
   function toggleSheet() {
-    var s = sheetEl(), b = document.getElementById('siteNavBurger');
+    var s = sheetEl();
     if (!s) return;
-    var open = s.classList.toggle('sheet-open');
-    if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    applyNavState(!s.classList.contains('nav-collapsed'), true);
   }
-  function closeSheet() {
-    var s = sheetEl(), b = document.getElementById('siteNavBurger');
-    if (s) s.classList.remove('sheet-open');
-    if (b) b.setAttribute('aria-expanded', 'false');
-  }
+
+  /* Tapping a tab on index used to close the menu. It does not any more — the menu
+     is the page's own tab bar there, and collapsing it on every tap would fight the
+     preference the owner just set. */
+  function closeSheet() { /* intentionally a no-op; see above */ }
+
+  /* Another tab collapsed or expanded it — follow, without re-writing the key. */
+  window.addEventListener('storage', function (e) {
+    if (e && e.key === NAV_COLLAPSE_KEY) applyNavState(e.newValue === '1', false);
+  });
 
   /* ---------------------------------------------------------------------
    * 7. --hdr-h, published from a MEASUREMENT (gotcha 33-A)
