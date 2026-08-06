@@ -288,7 +288,12 @@
          the nav. `margin-left:auto` alone does not push it to the right edge there —
          give it the full line and align its contents, or the chip floats stranded in
          the middle of an empty row looking like a layout accident. */
-      '  #snHdrSlot:not(.sn-float){width:100%;justify-content:flex-end;margin-left:0;}',
+      /* `flex: 1 1 100%`, not `width:100%`. The base rule sets `flex:0 0 auto`, which
+         pins flex-basis to the content size and clamps a `width:100%` to whatever the
+         slot's contents happen to measure — it came out 497px in a 642px header and
+         the chip stayed stranded mid-row. Growing the item is what actually claims
+         the line; justify-content then puts the chip on its right edge. */
+      '  #snHdrSlot:not(.sn-float){flex:1 1 100%;justify-content:flex-end;margin-left:0;}',
       '}'
     ].join('');
     document.head.appendChild(css);
