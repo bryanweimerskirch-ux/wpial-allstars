@@ -121,6 +121,10 @@
     if (p.indexOf('profile') !== -1) return 'profile.html';
     if (p.indexOf('matchup') !== -1) return 'matchup.html';
     if (p.indexOf('roster') !== -1) return 'roster.html';
+    /* press.html USED TO FALL THROUGH to index.html, and that one line cost the paper
+       its entire navigation — see the init() note below. currentPage() is also what
+       marks the current chip, so without this the paper highlighted the wrong entry. */
+    if (p.indexOf('press') !== -1) return 'press.html';
     return 'index.html';
   }
 
@@ -799,9 +803,24 @@
   function init() {
     injectStyles();
 
-    if (currentPage() === 'index.html') {
+    /* WHICH BRANCH IS DECIDED BY WHAT THE PAGE HAS, NOT BY WHAT IT IS CALLED.
+       This read `currentPage() === 'index.html'`, and currentPage() returns
+       'index.html' for every page it does not recognise — press.html included. So the
+       paper took the shell branch: renderStrip() never ran and THE PAPER SHIPPED WITH
+       NO SITE NAV AT ALL. The only way off it was the identity menu.
+
+       It also explains the dead "Hide menu" button. buildBurger() runs on every page,
+       so the control existed; sheetEl() looks for #siteNav, which was never created,
+       and fell through to `querySelector('nav')` — on the paper that is the page
+       INDEX, `nav.pager`. Tapping the button toggled .nav-collapsed onto the pager,
+       which nothing styles, so nothing happened.
+
+       Asking what the page HAS also survives the filenames changing, which they are
+       about to: the shell is whichever page carries the hardcoded tab bar. */
+    var shellTabs = document.querySelector('nav button[data-tab]');
+    if (shellTabs) {
       wireIndex();
-      /* index's nav IS the sheet on a phone — it is the page's own tab bar. */
+      /* the shell's nav IS the sheet on a phone — it is the page's own tab bar. */
       var n = document.querySelector('header nav') || document.querySelector('nav');
       if (n && !document.getElementById('siteNav')) n.id = n.id || 'siteNav';
     } else {
