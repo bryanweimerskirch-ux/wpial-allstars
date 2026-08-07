@@ -20,6 +20,10 @@
   --hdr-h:96px;
   --fx-primary:#d8b45c;
 }
+.srcnote{max-width:760px;margin:0 auto 12px;padding:8px 11px;border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:7px;background:rgba(255,255,255,.03);
+  color:var(--muted);font-size:12px;line-height:1.55;}
+.srcnote b{color:var(--text);font-weight:600;}
 .viewsw{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:0 0 12px;}
 .viewsw button{background:none;border:0;color:var(--muted);font:inherit;font-size:12.5px;
   padding:7px 14px;cursor:pointer;}
@@ -108,6 +112,18 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
     <select id="weekSel" aria-label="Week"></select>
   </div>
 
+  <!-- The read-only note has to be ABOVE the roster, not in the footer. It was in the
+       footer and the footer sits ~1400px down a full depth chart, so the one person it
+       exists for — someone about to try to change their lineup here — had already
+       scrolled past the point of forming the expectation. It states the SOURCE too:
+       "read-only" alone does not tell you where the numbers came from or where to go
+       to change them. -->
+  <p class="srcnote">
+    <b>Read-only.</b> Rosters, projections and injury designations come from
+    <b>ESPN</b> and are the league's system of record. Set your lineup in the ESPN app
+    &mdash; changes show up here on the next load.
+  </p>
+
   <div class="hero" id="hero"></div>
 
   <!-- Two views of the same fifteen players. Depth chart is the default because
@@ -128,7 +144,7 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
 
 <footer>
   WPIAL All Stars &middot; powered by Wadi Solutions &middot;
-  Read-only &mdash; lineups are set in the ESPN app.
+  Read-only &mdash; roster and scoring data provided by ESPN. Lineups are set in the ESPN app.
 </footer>
 
 <script src="env.js"></script>

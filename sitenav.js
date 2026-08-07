@@ -244,8 +244,9 @@
          Absolutely positioned so the page's centred title is left exactly as it
          was on desktop. The header is the positioning context. */
       'body > header{position:relative;}',
-      '#snHdrSlot.sn-float{position:absolute;right:14px;top:50%;transform:translateY(-50%);',
-      '  margin-left:0;}',
+      '#snHdrSlot.sn-float{position:absolute;right:14px;top:10px;margin-left:0;z-index:2;}',
+      /* Reserve the space the pinned slot occupies so the brand can never run under it. */
+      'body > header:has(> #snHdrSlot.sn-float){padding-right:190px;}',
 
       /* ---- the mobile menu button ---- */
       '#siteNavBurger{display:none;align-items:center;gap:7px;background:none;',
@@ -293,7 +294,16 @@
          slot's contents happen to measure — it came out 497px in a 642px header and
          the chip stayed stranded mid-row. Growing the item is what actually claims
          the line; justify-content then puts the chip on its right edge. */
-      '  #snHdrSlot:not(.sn-float){flex:1 1 100%;justify-content:flex-end;margin-left:0;}',
+      /* The slot claims the right of line one; `.hdr-right`'s own auto margin has to
+         stand down or the two fight over the same free space and the slot loses. */
+      '  #snHdrSlot:not(.sn-float){margin-left:auto;flex:0 0 auto;}',
+      '  header > .hdr-right{margin-left:0;}',
+      /* Compact the brand so the chip fits beside it. mobilehdr.js already does exactly
+         this, but only on the draft board — which is why the controls sat on line one
+         there and wrapped to line two on the other four pages. Same rule, applied
+         everywhere, so the header reads the same wherever you are. */
+      '  header .logo b{font-size:15px;}',
+      '  header .logo span{display:none;}',
       '}'
     ].join('');
     document.head.appendChild(css);
@@ -338,7 +348,15 @@
     /* index.html's header is a centred title with no control row, so the slot floats
        against the right edge there. Every other page has a real header flex row and
        the slot is just the last item in it. */
-    if (!document.querySelector('.hdr-right')) made.className = 'sn-float';
+    /* PINNED, not flowed — on every page except the draft board.
+       Three attempts to place this with flex sizing all behaved differently across the
+       six headers, because each one has a different mix of children and mobilehdr.js
+       rewrites one of them on phones. Absolute positioning against the header does not
+       care: top-right is top-right, whatever wraps below it — including on the draft
+       board, whose header is a genuine multi-row control surface. The reserved
+       padding-right below is what keeps its scrolling control strip from running under
+       the pinned slot. */
+    made.className = 'sn-float';
     header.appendChild(made);
     return made;
   }
@@ -723,6 +741,29 @@
     if (e && e.key === NAV_COLLAPSE_KEY) applyNavState(e.newValue === '1', false);
   });
 
+  /* The slot is created before #siteNav on index (no strip there) but AFTER it on
+     every page that gets one, because renderStrip() appends the strip first. That put
+     the chip and the hide control on their own line *under* the nav on five of six
+     pages, while index had them up beside the title — the same two controls in two
+     different places depending on which page you were on.
+
+     #siteNav is width:100% on a phone, so anything after it necessarily wraps below.
+     Putting the slot before it is the whole fix: both then sit on the header's first
+     line, next to the brand, everywhere. */
+  function placeSlot() {
+    var header = document.querySelector('header');
+    var slot = document.getElementById('snHdrSlot');
+    if (!header || !slot || slot.classList.contains('sn-float')) return;
+    /* Immediately after the brand. Being merely "before the nav strip" was not enough:
+       `.hdr-right` sits between them with `margin-left:auto`, which eats all the free
+       space on line one and pushes anything after it onto line two. Sitting directly
+       after `.logo` is the only position that does not depend on how much free space
+       some other element decides to claim. */
+    var logo = header.querySelector('.logo');
+    var after = logo ? logo.nextSibling : header.firstChild;
+    if (slot.previousSibling !== logo) header.insertBefore(slot, after);
+  }
+
   /* ---------------------------------------------------------------------
    * 7. --hdr-h, published from a MEASUREMENT (gotcha 33-A)
    * ------------------------------------------------------------------ */
@@ -754,12 +795,13 @@
       if (n && !document.getElementById('siteNav')) n.id = n.id || 'siteNav';
     } else {
       renderStrip();
-      document.addEventListener('wpial-auth', renderStrip);
+      document.addEventListener('wpial-auth', function () { renderStrip(); placeSlot(); });
     }
 
     buildIdentity();
     buildBurger();
     hideAuthChip();
+    placeSlot();
 
     /* Identity arrives from a network round trip; so does the commish flag, which
        decides whether the menu has a Commish section at all. */
