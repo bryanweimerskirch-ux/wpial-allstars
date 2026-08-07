@@ -415,7 +415,10 @@
          filled yellow pill it was the loudest element on the page, which is the
          wrong rank for a set-once preference sitting next to a draft. -->
 <nav>
-  <button data-tab="board" class="active">League News</button>
+  <!-- Labelled "Gelly Feed", not "League News": sitenav.js injects a League News chip
+       pointing at press.html into this same <nav>, so two buttons here read the same and
+       the old one wins because it is first. The paper owns that name now. -->
+  <button data-tab="board" class="active">Gelly Feed</button>
   <button data-tab="rosters">Rosters and Round Values</button>
   <button data-tab="schedule">2026 NFL Schedule</button>
   <button data-tab="scoreboard">Scoreboard</button>
@@ -760,8 +763,8 @@
 </section>
 
 <section id="board" class="active">
-  <h2>League News</h2>
-  <p class="sub">Where the league gets its news &mdash; straight from The Gelly, our completely unbiased, extremely credentialed NFL insider.</p>
+  <h2>Gelly Feed</h2>
+  <p class="sub">The Gelly's running commentary &mdash; our completely unbiased, extremely credentialed NFL insider, posting as it happens. The full edition lives in <a href="press.html">League News</a>.</p>
 
   <div class="gelly-strip">
     <div class="gelly-strip-avatar">🖤💛</div>
@@ -867,7 +870,7 @@
       <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
       <div class="tweet-body">
         <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-15T19:23:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">2/ Year one: Bench Taylor Swift went 2-12 in 2023. Paid the price. Ate the worm. Set the bar for accountability in this league, honestly.</div>
+        <div class="tweet-text">2/ Year one: Bench Taylor Swift went 1-11 in 2023. Paid the price. Ate the worm. Set the bar for accountability in this league, honestly.</div>
         <div class="tweet-stats"><span>💬 8</span><span>❤️ 44</span><span>👀 780</span></div>
       </div>
     </div>
