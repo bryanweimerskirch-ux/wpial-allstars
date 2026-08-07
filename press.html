@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>League News — The Press Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<!-- Not deferred: sets html.colorblind before <body> exists, so no flash of gold. -->
+<script src="cbmode.js"></script>
+<style>
+/* ===========================================================================
+   press.html — The Press Room, and the paper inside it.
+
+   Two palettes live in this file and they must never be confused:
+     .paper and everything inside it  -> print palette (--pt-*), Georgia
+     everything outside it            -> site chrome, dark, Barlow/Oswald
+
+   The paper is a fixed DESIGN width (--paper-w) that gets transform:scale()d to
+   fit whatever column it is given. Nothing inside the paper may be sized from the
+   viewport: it does not know how big it will be drawn. Measure with offsetWidth,
+   never getBoundingClientRect() — the transform lies to the latter, and that has
+   already cost one build a day (press-room-build-notes §8).
+   =========================================================================== */
+:root{
+  /* Colour tokens come from theme.css, shared with every page — including the
+     --pt-* print palette, which lives there as section 3b and is deliberately
+     invariant under theme and colorblind mode. This block keeps only what is
+     genuinely local: geometry, and three heights that are MEASURED at runtime.
+     Do not re-add a palette here. Six copies of one palette is what made
+     colorblind mode work on some pages and not others. */
+  --hdr-h:96px; --env-bar-h:0px; --bar-h:0px;
+  --paper-w:1210px;
+  --rail-w:340px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-size:14px;
+     font-family:'Barlow',-apple-system,'Segoe UI',Roboto,sans-serif;}
+a{color:var(--accent2)}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+
+/* sitenav injects its strip INSIDE this header, which is what makes --hdr-h honest
+   here in a way it is not on index.html (R-C2/R-Q9). */
+header{background:var(--panel2);border-bottom:2px solid var(--accent);padding:10px 16px;
+       display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{display:flex;flex-direction:column;line-height:1.05}
+.logo b{font-family:'Oswald';font-size:20px;color:var(--accent);letter-spacing:1.5px}
+.logo span{font-size:10px;color:var(--muted);letter-spacing:2.5px;text-transform:uppercase}
+
+/* ---------------------------------------------------------------- shell */
+.shell{display:grid;grid-template-columns:minmax(0,1fr) auto;
+       height:calc(100vh - var(--hdr-h));min-height:520px}
+.main{min-width:0;overflow-y:auto;display:flex;flex-direction:column}
+
+/* ---------------------------------------------------------------- channel bar */
+.channel{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;
+         padding:12px 22px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.ch-av{width:48px;height:48px;border-radius:50%;flex-shrink:0;display:flex;
+       align-items:center;justify-content:center;font-size:19px;
+       background:linear-gradient(135deg,var(--accent2),var(--accent));
+       box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.ch-who{min-width:0}
+.ch-name{display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700}
+.ch-name .vf{color:var(--accent2);font-size:13px}
+.ch-bio{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.ch-sp{flex:1}
+.ch-new{display:inline-flex;align-items:center;gap:6px;background:var(--pt-red);
+        color:var(--pt-paper);font-size:11px;font-weight:700;letter-spacing:1.5px;
+        text-transform:uppercase;padding:4px 10px;border-radius:4px}
+.ch-new i{width:7px;height:7px;border-radius:50%;background:var(--pt-paper);
+          animation:edpulse 1.6s ease infinite}
+@keyframes edpulse{0%,100%{opacity:1}50%{opacity:.55}}
+.ch-readers{font-size:12px;color:var(--muted)}
+
+/* ---------------------------------------------------------------- stage + pager */
+.stage{background:var(--bg);position:relative;flex:1 0 auto;padding:18px 0 26px}
+.stagewrap{display:flex;gap:0;align-items:flex-start;justify-content:center}
+
+/* The page rail. This is the "pagination on scroll": five sheets stacked in the
+   scroll flow, and a sticky index that tracks which one you are on. It is an index,
+   not a control that hides pages — every page is always in the document, so Ctrl-F,
+   print and screen readers see the whole paper. */
+.pager{position:sticky;top:12px;align-self:flex-start;flex:0 0 auto;
+       width:56px;padding:6px 0;display:flex;flex-direction:column;gap:4px;
+       margin-left:10px;z-index:5}
+.pager b{font-family:'Oswald';font-size:9px;letter-spacing:1.5px;color:var(--muted);
+         text-transform:uppercase;text-align:center;font-weight:600;padding-bottom:4px}
+.pg-btn{display:block;width:44px;height:44px;margin:0 auto;border:1px solid var(--line);
+        background:var(--panel2);color:var(--muted);border-radius:6px;
+        font-family:'Oswald';font-size:13px;font-weight:600;line-height:1;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.pg-btn small{font-size:7.5px;letter-spacing:.6px;text-transform:uppercase;opacity:.8}
+.pg-btn[aria-current="true"]{border-color:var(--accent);color:var(--text);background:var(--panel)}
+.pg-btn:hover{border-color:var(--accent2)}
+
+.scaler{flex:1 1 auto;min-width:0;overflow:hidden}
+.paper{width:var(--paper-w);transform-origin:0 0;
+       font-family:Georgia,'Times New Roman',serif;color:var(--pt-ink)}
+
+/* ---------------------------------------------------------------- the sheets */
+.sheet{background:var(--pt-paper);border:1px solid var(--pt-rule);
+       box-shadow:0 24px 60px rgba(0,0,0,.6);padding:26px 36px 0;margin-bottom:26px;
+       position:relative}
+.sheet:last-child{margin-bottom:0}
+.folio{border-top:1px solid var(--pt-rule);margin-top:20px;padding:8px 0 14px;
+       display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:1.5px;
+       text-transform:uppercase;color:var(--pt-tan)}
+.folio b{color:var(--pt-ink);font-weight:700;letter-spacing:2px}
+
+/* dateline ears */
+.ears{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:1.5px;
+      text-transform:uppercase;color:var(--pt-tan);padding-bottom:6px}
+/* nameplate */
+.np-wrap{border-top:1px solid var(--pt-ink)}
+.np{text-align:center;border-bottom:3px double var(--pt-ink);padding:14px 0 9px}
+.np-tt{font-size:30px;font-weight:700;letter-spacing:7px;text-transform:uppercase;line-height:1}
+.np-sub{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--pt-date);margin-top:6px}
+.dateline{display:flex;justify-content:space-between;align-items:center;font-size:11px;
+          text-transform:uppercase;letter-spacing:1.5px;color:var(--pt-date);
+          border-bottom:1px solid var(--pt-rule);padding:8px 0;margin-bottom:18px}
+.ed-chip{background:var(--pt-ink);color:var(--pt-paper);padding:2px 10px;font-size:10px;letter-spacing:2px}
+
+/* two-column page grid: body + 312px agate rail */
+.pgrid{display:grid;grid-template-columns:minmax(0,1fr) 312px;gap:0}
+.pgrid>.gcol{padding-right:22px;border-right:1px solid var(--pt-rule);min-width:0}
+.pgrid>.grail{padding-left:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+
+/* section furniture */
+.kicker{font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+        color:var(--pt-red);margin-bottom:8px}
+.sect-rule{border-top:2px solid var(--pt-ink);margin-top:20px;padding-top:10px}
+.sect-h{font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px}
+.box{border:1px solid var(--pt-ink)}
+.box>.bh{border-bottom:1px solid var(--pt-ink);font-size:11px;font-weight:700;letter-spacing:2px;
+         text-transform:uppercase;padding:5px 10px;display:flex;justify-content:space-between;gap:8px}
+.box>.bh em{font-style:normal;color:var(--pt-tan);letter-spacing:.5px;font-weight:500}
+.box>.bb{padding:8px 10px;font-size:12.5px;line-height:1.55}
+.box.solid>.bh{background:var(--pt-ink);color:var(--pt-paper)}
+.box.solid{border:2px solid var(--pt-ink)}
+.box.red{border:2px solid var(--pt-red);background:var(--pt-worm)}
+.box.red>.bh{background:var(--pt-red);color:var(--pt-paper);border-bottom:none}
+.agate{font-family:'Barlow Semi Condensed',sans-serif}
+.foot-note{font-size:10px;color:var(--pt-tan);padding-top:5px;line-height:1.5}
+/* Provenance line — the PRINT dialect of theme.css's shared .srcnote.
+   Same statement, same voice, different typography, and a DIFFERENT CLASS NAME on
+   purpose. We each invented `.srcnote` for this within two hours of each other; the
+   shared one is a rounded card in --line / --accent / --muted, which is correct for
+   dark chrome and wrong on newsprint, and the paper is invariant by decision. Since
+   this stylesheet loads after theme.css, keeping the same name would have silently
+   shadowed the shared component on this page — so anyone later editing .srcnote in
+   theme.css would find the paper ignoring them, with nothing to explain why.
+   The paper reports lineups; it does not set them, and an owner who tries to fix a
+   start/sit here has misread what this page is. */
+.pt-srcnote{font-family:'Barlow Semi Condensed',sans-serif;font-size:10px;line-height:1.45;
+         color:var(--pt-tan);border-top:1px solid var(--pt-rule);margin-top:10px;padding-top:6px}
+.pt-srcnote b{color:var(--pt-ink);font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.lock{background:var(--pt-ink);color:var(--pt-paper);font-size:9px;letter-spacing:1.5px;
+      padding:1px 6px;vertical-align:1px}
+
+/* lead story */
+.lead-hed{font-size:40px;line-height:1.06;margin:0 0 10px;font-weight:700}
+.lead-deck{font-size:16px;font-style:italic;color:var(--pt-date);line-height:1.45;margin-bottom:10px}
+.byline{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--pt-tan);
+        border-top:1px solid var(--pt-rule);border-bottom:1px solid var(--pt-rule);
+        padding:6px 0;margin-bottom:14px}
+.byline b{color:var(--pt-ink)}
+.lead-flow{font-size:13.5px;line-height:1.62;column-count:2;column-gap:22px;
+           column-rule:1px solid var(--pt-colrule);text-align:justify}
+.lead-flow p{margin:0 0 11px}
+.lead-flow p:last-child{margin:0}
+.crosshead{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+           text-align:center;border-top:1px solid var(--pt-rule);border-bottom:1px solid var(--pt-rule);
+           padding:5px 0;margin:4px 0 11px;color:var(--pt-ink);
+           /* A crosshead is a promise about what comes next. Left to itself the
+              multicol flow strands it at the foot of column one with its section
+              starting in column two, which is the one place it must never sit. */
+           break-inside:avoid;break-after:avoid;-webkit-column-break-after:avoid}
+.dropcap{float:left;font-size:50px;line-height:.82;font-weight:700;padding:4px 7px 0 0}
+
+/* Word-style "Square" wrap: the cut sits IN the flow and the copy runs around it.
+   Width is px, not %, so the remaining measure cannot collapse as the column narrows
+   (press-room-build-notes §8). 150px here leaves ~220px of measure. */
+/* break-inside:avoid is load-bearing, not decoration. A float inside a multicol
+   container FRAGMENTS across the column break when the columns are shorter than
+   the float — the harness caught a 150px cut rendering as a 562px-wide box split
+   across both columns of a short preseason lead. */
+.cut{margin:0 14px 8px 0;float:left;width:150px;break-inside:avoid}
+/* When even that cannot fit — a two-paragraph edition leaves ~75px columns — the
+   cut is demoted to a block above the flow rather than shipped fragmented. */
+.cut.block{float:none;width:190px;margin:0 auto 12px}
+.cut.block figcaption{text-align:center}
+.cut .plate{border:1px solid var(--pt-ink);padding:8px;background:var(--pt-box)}
+.cut .plate svg,.cut .plate img{display:block;width:100%;height:auto}
+.cut figcaption{font-size:10px;color:var(--pt-tan);line-height:1.45;margin-top:6px}
+.cut figcaption i{color:var(--pt-date)}
+
+/* standings agate */
+.agate-row{display:grid;grid-template-columns:1fr 22px 20px 42px 42px 30px;gap:2px;
+           font-size:11.5px;padding:3.5px 0;border-bottom:1px dotted var(--pt-dot);align-items:center}
+.agate-row>span:not(:first-child){text-align:right}
+.agate-head{display:grid;grid-template-columns:1fr 22px 20px 42px 42px 30px;gap:2px;
+            font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+            color:var(--pt-tan);border-bottom:1px solid var(--pt-ink);padding-bottom:3px}
+.agate-head>span:not(:first-child){text-align:right}
+.tm{display:flex;align-items:center;gap:5px;min-width:0}
+.tm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* the spot colour: a 3px bar of the owner's primary, never a text background */
+.chip{flex:0 0 auto;width:3px;height:13px;background:var(--pt-ink);border-radius:1px}
+.top4{font-weight:700}
+.sW{color:var(--pt-ink)} .sL{color:var(--pt-red)}
+
+/* finals strip */
+.finals{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--pt-rule)}
+.final{padding:8px 10px;border-right:1px solid var(--pt-rule);font-family:'Barlow Semi Condensed',sans-serif}
+.final:last-child{border-right:none}
+.final .fl{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--pt-red);margin-bottom:4px}
+.final .fr{display:flex;justify-content:space-between;gap:6px;font-size:12.5px;font-weight:700;padding:1.5px 0}
+.final .fr.lose{color:var(--pt-date);font-weight:500}
+.final .fr span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.final .fn{font-size:10px;color:var(--pt-tan);margin-top:4px;border-top:1px dotted var(--pt-dot);padding-top:4px}
+
+/* honour roll / boneyard tables */
+.roll{width:100%;border-collapse:collapse;font-family:'Barlow Semi Condensed',sans-serif;font-size:12px}
+.roll th{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--pt-tan);
+         text-align:left;border-bottom:1px solid var(--pt-ink);padding:0 6px 3px 0}
+.roll th.n,.roll td.n{text-align:right;padding-right:0}
+.roll td{padding:4px 6px 4px 0;border-bottom:1px dotted var(--pt-dot);vertical-align:middle}
+.roll .rk{font-family:Georgia,serif;font-weight:700;font-size:13px;width:22px;color:var(--pt-red)}
+.roll .who b{font-weight:700}
+.roll .who i{font-style:normal;color:var(--pt-tan);font-size:11px}
+.roll .pts{font-weight:700;font-size:13px}
+.roll .kit{width:26px}
+.roll .kit svg{display:block;width:26px;height:auto}
+
+/* around the league — one brief per franchise, with the owner's kit */
+.atl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 22px}
+.brief{display:flex;gap:10px;padding:9px 0;border-bottom:1px dotted var(--pt-dot);break-inside:avoid}
+.brief .kit{flex:0 0 44px;border:1px solid var(--pt-ink);background:var(--pt-box);padding:3px}
+.brief .kit svg{display:block;width:100%;height:auto}
+.brief .txt{min-width:0;flex:1}
+.brief h4{margin:0;font-size:13px;font-weight:700;line-height:1.2}
+.brief .rec{font-family:'Barlow Semi Condensed',sans-serif;font-size:10.5px;letter-spacing:.8px;
+            text-transform:uppercase;color:var(--pt-tan);margin:2px 0 3px}
+.brief p{margin:0;font-size:11.5px;line-height:1.5}
+/* Round chips in the keeper list. A keeper is a bet on a round, so the round is
+   the load-bearing half of the fact and it should not read as body copy. */
+.brief .rd{font-family:'Barlow Semi Condensed',sans-serif;font-size:10px;font-weight:700;
+           letter-spacing:.5px;color:var(--pt-red)}
+
+/* transaction wire */
+.wire-row{padding:5px 0;border-bottom:1px dotted var(--pt-dot);
+          font-family:'Barlow Semi Condensed',sans-serif;font-size:11.5px;line-height:1.5}
+.wire-row:last-child{border-bottom:none}
+.wire-row .wt{font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+              display:flex;justify-content:space-between;gap:8px}
+.wire-row .wt em{font-style:normal;color:var(--pt-tan);font-weight:500;letter-spacing:0;
+                 text-transform:none;flex:0 0 auto}
+.wire-row .wa{color:var(--pt-ink)}
+.wire-row .wd{color:var(--pt-tan)}
+.wire-kicker{padding-top:6px;font-size:10.5px;color:var(--pt-tan);line-height:1.5;font-style:italic}
+
+/* franchise kit plate — the thing that fills a short column on page 4. Owner art
+   drawn live from their profile, not a stock engraving printed twice. */
+.kitplate{border:1px solid var(--pt-ink);background:var(--pt-box);padding:0;margin:10px 0 0;
+          break-inside:avoid}
+.kitplate .kp-h{background:var(--pt-ink);color:var(--pt-paper);font-size:9.5px;font-weight:700;
+                letter-spacing:2px;text-transform:uppercase;padding:4px 10px;text-align:center}
+.kitplate .kp-art{display:flex;align-items:center;justify-content:center;gap:14px;padding:12px 10px 8px}
+.kitplate .kp-j{flex:0 0 auto;width:64px}
+.kitplate .kp-l{flex:0 0 auto;width:58px}
+.kitplate svg{display:block;width:100%;height:auto}
+.kitplate figcaption{border-top:1px solid var(--pt-rule);padding:6px 10px 8px;text-align:center}
+.kitplate figcaption b{display:block;font-size:12px;font-weight:700;line-height:1.2}
+.kitplate figcaption span{display:block;font-family:'Barlow Semi Condensed',sans-serif;
+                          font-size:10px;letter-spacing:.8px;text-transform:uppercase;
+                          color:var(--pt-tan);margin-top:2px}
+/* In the body column it is filling a short column, not becoming the page. */
+.gcol>.kitplate{max-width:260px;margin:14px auto 0}
+
+/* back page — full-bleed out of the sheet padding */
+.backpage{padding:0;overflow:hidden}
+.bp-top,.bp-bot{display:flex;justify-content:space-between;align-items:baseline;
+                background:var(--pt-ink);color:var(--pt-plate-hi);font-size:9.5px;letter-spacing:2px;
+                text-transform:uppercase;padding:10px 36px}
+.bp-top b{font-size:13px;letter-spacing:5px}
+.bp-bot{color:var(--pt-plate-lo);font-size:10.5px;letter-spacing:1.5px}
+.bp-art{display:block;width:100%;height:auto;background:var(--pt-ink)}
+.bp-fallback{padding:60px 36px;text-align:center;background:var(--pt-ink);color:var(--pt-plate-hi);
+             font-size:12px;letter-spacing:2px;text-transform:uppercase}
+
+/* skeletons + empties */
+.skel{display:block;height:16px;margin:6px 0;background:var(--pt-rule);opacity:.5;
+      animation:sk 1.4s ease-in-out infinite}
+@keyframes sk{0%,100%{opacity:.35}50%{opacity:.65}}
+@media (prefers-reduced-motion:reduce){.skel,.ch-new i{animation:none}}
+.empty{font-size:11.5px;color:var(--pt-tan);font-style:italic;line-height:1.5}
+
+/* ---------------------------------------------------------------- below stage */
+.below{padding:16px 22px 26px;border-top:1px solid var(--line)}
+.ed-title{font-size:17px;font-weight:700}
+.ed-meta{font-size:12.5px;color:var(--muted);margin-top:3px}
+.tags{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.tags span{font-size:11.5px;font-weight:600;color:var(--muted);border:1px solid var(--line);
+           border-radius:12px;padding:2px 10px}
+.past-l{font-family:'Oswald';font-size:14px;font-weight:600;text-transform:uppercase;
+        letter-spacing:1px;color:var(--muted);margin:18px 0 10px}
+.past{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pcard{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;
+       text-align:left;padding:0;color:inherit;width:100%}
+.pthumb{background:var(--pt-paper);padding:12px 14px;border-bottom:1px solid var(--line);height:74px}
+.pthumb .pn{font-family:Georgia,serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;
+            color:var(--pt-tan);text-align:center;border-bottom:2px double var(--pt-ink);
+            padding-bottom:3px;margin-bottom:5px}
+.pthumb .ph{font-family:Georgia,serif;font-size:12px;font-weight:700;color:var(--pt-ink);
+            line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pcard .pf{padding:9px 12px}
+.pcard .pf b{font-size:12.5px;font-weight:600;line-height:1.35;display:block}
+.pcard .pf span{font-size:11px;color:var(--muted);margin-top:3px;display:block}
+.about{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;
+       margin-top:16px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.about p{font-size:13px;color:var(--muted);line-height:1.55;flex:1;min-width:240px;margin:0}
+.stat{font-size:11.5px;font-weight:600;background:var(--panel2);border:1px solid var(--line);
+      border-radius:6px;padding:5px 10px}
+.stat b{color:var(--accent)}
+
+/* ---------------------------------------------------------------- rail */
+.rail{width:var(--rail-w);height:calc(100vh - var(--hdr-h));display:flex;flex-direction:column;
+      background:var(--panel);border-left:1px solid var(--line)}
+.rail-h{display:flex;align-items:center;justify-content:space-between;gap:8px;
+        padding:10px 14px;border-bottom:1px solid var(--line)}
+.rail-h .rt{font-family:'Oswald';font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase}
+.icobtn{background:none;border:none;color:var(--muted);font-size:15px;padding:11px;
+        min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
+.icobtn:hover{color:var(--text)}
+.rail-count{font-size:12.5px;color:var(--muted)}
+.strip{width:34px;height:calc(100vh - var(--hdr-h));background:var(--panel);
+       border-left:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding-top:6px}
+.strip .vl{writing-mode:vertical-rl;font-family:'Oswald';font-size:11px;letter-spacing:2px;
+           text-transform:uppercase;color:var(--muted);margin-top:6px}
+.yueng{margin:10px 12px;background:var(--panel2);border:1px solid var(--line);
+       border-radius:8px;padding:10px 12px}
+.yueng .yh{font-size:12px;font-weight:600;text-align:center}
+.yueng .yt{height:6px;background:var(--line);border-radius:3px;margin:8px 0 7px;overflow:hidden}
+.yueng .yf{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
+.yueng .yr{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.yueng .yr span{font-size:11px;color:var(--muted)}
+.yueng button{background:var(--accent);color:var(--accent-ink);border:none;border-radius:14px;
+              padding:8px 12px;font-size:11.5px;font-weight:700;min-height:44px}
+.feed{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:12px}
+.post{display:flex;gap:9px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.post .av{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;
+          align-items:center;justify-content:center;font-size:13px;
+          background:linear-gradient(135deg,var(--accent2),var(--accent))}
+.post .bd{min-width:0;flex:1}
+.post .nm{font-size:12px}
+.post .nm span{color:var(--muted)}
+.post .tx{font-size:12.5px;line-height:1.45;margin-top:2px;word-break:break-word}
+.post .src{border-left:2px solid var(--line);padding-left:8px;margin-top:5px;
+           font-size:12px;color:var(--muted);line-height:1.4}
+.post .mx{display:flex;gap:14px;color:var(--muted);font-size:11px;margin-top:5px;align-items:center}
+.post .mx button{background:none;border:none;color:var(--muted);font-size:11px;
+                 min-height:44px;min-width:44px;display:inline-flex;align-items:center;gap:4px;padding:0}
+.post .mx button[disabled]{opacity:.55;cursor:default}
+.popout .post .nm{font-size:13px}
+.popout .post .tx{font-size:14px;line-height:1.5}
+.popout .post .mx{gap:22px;font-size:12px;border-top:1px solid var(--line);padding-top:8px;margin-top:8px}
+
+/* pop-out */
+.pop-scrim{position:fixed;inset:0 0 var(--env-bar-h) 0;background:rgba(0,0,0,.62);z-index:900}
+.popout{position:fixed;top:0;right:0;bottom:var(--env-bar-h);width:600px;max-width:92vw;
+        background:var(--panel);border-left:1px solid var(--line);
+        box-shadow:-16px 0 40px rgba(0,0,0,.5);z-index:901;display:flex;flex-direction:column}
+.popout .feed{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+[hidden]{display:none !important}
+
+/* tip FAB — copied from index.html:168, not restyled, so the two surfaces are the
+   same control and not two dialects of it. */
+.tip-fab{position:fixed;right:18px;bottom:calc(18px + var(--env-bar-h) + var(--bar-h));
+         width:56px;height:56px;border-radius:50%;border:none;background:var(--accent);
+         color:var(--accent-ink);font-size:22px;z-index:600;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+
+/* mobile bar */
+.mobilebar{position:fixed;left:0;right:0;bottom:var(--env-bar-h);z-index:500;display:none;
+           gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+           background:var(--panel2);border-top:1px solid var(--line)}
+.mobilebar button{flex:1;min-height:44px;background:var(--panel);border:1px solid var(--line);
+                  color:var(--text);border-radius:8px;font-size:13px;font-weight:600}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;
+       align-items:center;justify-content:center;padding:18px}
+.modal .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+             padding:16px;width:100%;max-width:460px}
+.modal h3{font-family:'Oswald';margin:0 0 8px;font-size:17px;letter-spacing:.5px}
+.modal p{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0 0 10px}
+.modal textarea{width:100%;min-height:110px;background:var(--panel2);border:1px solid var(--line);
+                border-radius:8px;color:var(--text);font-family:inherit;font-size:16px;padding:10px}
+.modal .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.modal .acts button{min-height:44px;padding:8px 16px;border-radius:8px;border:1px solid var(--line);
+                    background:var(--panel2);color:var(--text);font-size:13px;font-weight:600}
+.modal .acts .go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+/* ================================================================ 900px
+   Two-column breakpoint. Rail goes, bottom bar arrives, paper still scales. */
+@media (max-width:899px){
+  .rail,.strip{display:none}
+  .mobilebar{display:flex}
+  .shell{grid-template-columns:minmax(0,1fr);height:auto;min-height:0}
+  .main{overflow:visible;height:auto}
+  .pager{width:50px;margin-left:4px}
+  .cut{width:130px}
+}
+
+/* ================================================================ 700px
+   The mobile edition (R-Q10). Real type in a single column — no scaling. A
+   broadsheet shrunk to 390px is skimmable, not readable, and this is the surface
+   most of the league actually reads on. */
+@media (max-width:699px){
+  .stage{padding:10px 0 20px}
+  .stagewrap{display:block}
+  .pager{position:sticky;top:0;width:auto;margin:0 0 10px;flex-direction:row;
+         justify-content:center;background:var(--stage);padding:6px 0;gap:6px}
+  .pager b{display:none}
+  .scaler{overflow:visible}
+  .paper{width:100% !important;transform:none !important}
+  .sheet{padding:14px 14px 0;margin-bottom:14px}
+  .np-tt{font-size:21px;letter-spacing:3px}
+  .np-sub{font-size:8.5px;letter-spacing:2px}
+  .dateline{flex-direction:column;align-items:flex-start;gap:4px;font-size:10px}
+  .ears{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;font-size:9px}
+  .ears .ear-est{display:none}
+  .pgrid{grid-template-columns:minmax(0,1fr)}
+  .pgrid>.gcol{padding-right:0;border-right:none}
+  .pgrid>.grail{padding-left:0;margin-top:16px;border-top:2px solid var(--pt-ink);padding-top:14px}
+  .lead-hed{font-size:26px}
+  .lead-deck{font-size:14px}
+  .lead-flow,.col-flow{column-count:1;text-align:left;font-size:15px;line-height:1.6}
+  /* No float leaves a readable measure in a 360px column, so the cut becomes a
+     centred block and the wrap is dropped rather than shipped as a 130px gutter. */
+  .cut{float:none;width:190px;margin:0 auto 10px}
+  .cut figcaption{text-align:center}
+  .finals{grid-template-columns:minmax(0,1fr)}
+  .final{border-right:none;border-bottom:1px solid var(--pt-rule)}
+  .final:last-child{border-bottom:none}
+  .atl{grid-template-columns:minmax(0,1fr)}
+  .past{grid-template-columns:minmax(0,1fr)}
+  .bp-top,.bp-bot{padding:8px 14px;font-size:8.5px;letter-spacing:1px}
+  .bp-top b{font-size:11px;letter-spacing:3px}
+  .popout{width:100vw;max-width:100vw}
+  .roll .kit{display:none}
+}
+
+/* Site-wide undersized controls, corrected from this page's stylesheet because a
+   44px rule that only applies on one page is not a rule. Both are worth fixing at
+   source (auth.js, env.js). */
+@media (pointer:coarse){
+  #wpial-env-banner a{display:inline-block;padding:10px 6px;min-height:44px}
+  /* auth.js's "log out" chip renders at 14px tall and env.js's "switch to
+     production" link at 14px. Both are site-wide and both are worth fixing at
+     source; corrected here because a 44px rule that only holds on one page is not
+     a rule. */
+  header a,header button,header span>button,nav a,nav button{
+    min-height:44px;min-width:44px;display:inline-flex;align-items:center;
+    justify-content:center;padding:6px 8px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><b>WPIAL ALL STARS</b><span>League News</span></div>
+</header>
+
+<div class="shell">
+  <div class="main" id="main">
+
+    <div class="channel">
+      <div class="ch-av" aria-hidden="true">🖤</div>
+      <div class="ch-who">
+        <div class="ch-name">Gelly <span class="vf" title="Verified by nobody">✔</span></div>
+        <div class="ch-bio">Insider analyst covering the league for The Rocky Mountain Valley Dispatch</div>
+      </div>
+      <div class="ch-sp"></div>
+      <div class="ch-new" id="newChip" hidden><i></i>New Edition</div>
+      <div class="ch-readers">👥 10 readers · all of them furious</div>
+    </div>
+
+    <div class="stage">
+      <div class="stagewrap">
+        <nav class="pager" id="pager" aria-label="Pages in this edition">
+          <b>Edition</b>
+        </nav>
+        <div class="scaler" id="scaler">
+          <div class="paper" id="paper">
+
+            <!-- ========================================= PAGE 1 · FRONT PAGE -->
+            <section class="sheet" id="pg1" data-page="1" data-title="Front">
+              <div class="ears">
+                <span>Today: 100% chance of smack talk</span>
+                <span class="ear-est" id="earEst">Est. 2019</span>
+                <span>Price: One (1) Yuengling</span>
+              </div>
+              <div class="np-wrap"><div class="np">
+                <div class="np-tt" id="npTitle">WPIAL Insider Report</div>
+                <div class="np-sub" id="npSub">The Rocky Mountain Valley Dispatch · Official League Wire</div>
+              </div></div>
+              <div class="dateline">
+                <span id="dlVol">Vol. — · No. —</span>
+                <span id="dlDate">—</span>
+                <span class="ed-chip" id="dlChip">EDITION</span>
+              </div>
+
+              <div class="pgrid">
+                <div class="gcol">
+                  <div class="kicker" id="leadKicker">The Lead</div>
+                  <h1 class="lead-hed" id="leadHed"><span class="skel" style="height:34px"></span></h1>
+                  <div class="lead-deck" id="leadDeck"></div>
+                  <div class="byline" id="leadByline">
+                    By <b>Gelly</b> · Insider Analyst, The Rocky Mountain Valley Dispatch
+                  </div>
+                  <div class="lead-flow" id="leadFlow">
+                    <span class="skel"></span><span class="skel"></span><span class="skel"></span>
+                  </div>
+                </div>
+                <div class="grail">
+                  <div class="box solid">
+                    <div class="bh">League Standings</div>
+                    <div class="bb agate" id="standings"><span class="skel"></span><span class="skel"></span></div>
+                  </div>
+                  <div class="box red">
+                    <div class="bh">🪱 Worm Watch</div>
+                    <div class="bb" id="worm"><span class="skel"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="folio">
+                <span>The Rocky Mountain Valley Dispatch</span>
+                <b>Page 1</b>
+                <span id="folio1">Front Page</span>
+              </div>
+            </section>
+
+            <!-- ================================== PAGE 2 · THE NUMBERS -->
+            <section class="sheet" id="pg2" data-page="2" data-title="Numbers">
+              <div class="kicker" id="numKicker">The Numbers</div>
+              <h2 class="lead-hed" style="font-size:30px" id="numHed">Honor Roll &amp; Boneyard</h2>
+              <div class="byline" id="numByline">Weekly scoring, both ends of it · Compiled by the Dispatch desk</div>
+
+              <div class="pgrid">
+                <div class="gcol">
+                  <div class="sect-h" id="honorH">🏅 Top Fantasy Players</div>
+                  <div id="honor"><span class="skel"></span><span class="skel"></span></div>
+
+                  <div class="sect-rule">
+                    <div class="sect-h" id="losersH">💀 The Biggest Losers</div>
+                    <div id="losers"><span class="skel"></span><span class="skel"></span></div>
+                  </div>
+                </div>
+                <div class="grail">
+                  <div class="box">
+                    <div class="bh" id="benchH">Bench Ledger <em id="benchWks"></em></div>
+                    <div class="bb agate" id="benchBox"><span class="skel"></span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sect-rule" id="finalsWrap">
+                <div class="sect-h" id="finalsH">Week Finals</div>
+                <div class="finals" id="finals"></div>
+              </div>
+
+              <div class="folio">
+                <span>Scoring · <span id="folioWk">—</span></span>
+                <b>Page 2</b>
+                <span>The Numbers</span>
+              </div>
+            </section>
+
+            <!-- ================================== PAGE 3 · AROUND THE LEAGUE -->
+            <section class="sheet" id="pg3" data-page="3" data-title="Around">
+              <div class="kicker">Around the League</div>
+              <h2 class="lead-hed" style="font-size:30px" id="atlHed">Ten Franchises, One Worm</h2>
+              <div class="byline" id="atlByline">Every club, every week · Kit cuts drawn from each owner's own builder</div>
+              <div class="atl" id="atl"><span class="skel"></span><span class="skel"></span></div>
+              <div class="folio">
+                <span>Club Notes</span>
+                <b>Page 3</b>
+                <span>Around the League</span>
+              </div>
+            </section>
+
+            <!-- ================================== PAGE 4 · COLUMN + LINE + WIRE -->
+            <section class="sheet" id="pg4" data-page="4" data-title="Column">
+              <div class="pgrid">
+                <div class="gcol">
+                  <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
+                    <div class="cut" id="colCut" style="float:none;margin:0;flex:0 0 84px;width:84px">
+                      <div class="plate"></div>
+                    </div>
+                    <div style="min-width:0">
+                      <div class="kicker" style="margin-bottom:2px">The Column</div>
+                      <h2 id="colHed" style="font-size:24px;margin:2px 0 3px;font-weight:700">The Gelly Column</h2>
+                      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--pt-tan)"
+                           id="colByline">By Gelly · Completely unbiased · Extremely credentialed</div>
+                    </div>
+                  </div>
+                  <div class="lead-flow col-flow" id="colFlow"><span class="skel"></span><span class="skel"></span></div>
+                </div>
+                <div class="grail">
+                  <div class="box">
+                    <div class="bh">🔮 The Gelly Line <em id="lineRec"></em></div>
+                    <div class="bb" id="lineBox"><span class="skel"></span></div>
+                  </div>
+                  <div class="box">
+                    <div class="bh">The Transaction Wire</div>
+                    <div class="bb" id="wire" style="padding:8px 10px"><span class="skel"></span></div>
+                  </div>
+                  <div id="kitSlot4"></div>
+                </div>
+              </div>
+              <div class="folio">
+                <span>Opinion &amp; Movement</span>
+                <b>Page 4</b>
+                <span>The Column</span>
+              </div>
+            </section>
+
+            <!-- ================================== PAGE 5 · BACK PAGE -->
+            <section class="sheet backpage" id="pg5" data-page="5" data-title="Back">
+              <div class="bp-top">
+                <span>The Rocky Mountain Valley Dispatch</span>
+                <b>Full Page Plate</b>
+                <span id="bpDate">—</span>
+              </div>
+              <img class="bp-art" id="bpArt" alt="The Rocky Mountain Valley Dispatch — full colour plate" hidden>
+              <div class="bp-fallback" id="bpFallback">Plate not available</div>
+              <div class="bp-bot">
+                <span>Printed on 100% recycled takes</span>
+                <b>Page 5</b>
+                <span>© WPIAL All Stars · Est. 2019</span>
+              </div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="below">
+      <div class="ed-title" id="edTitle">—</div>
+      <div class="ed-meta" id="edMeta">—</div>
+      <div class="tags"><span>#HereWeGo</span><span>#WormWatch</span><span>#IveDoneTheResearch</span></div>
+      <div class="past-l">Past editions</div>
+      <div class="past" id="past"></div>
+      <div class="about">
+        <p id="aboutTxt">Gelly is the Dispatch's insider analyst on the WPIAL All Stars beat. Tips are read,
+          judged, and printed. Credentials pending.</p>
+        <div class="stat">Editions <b id="stEd">—</b></div>
+        <div class="stat" id="stLineWrap" hidden>Gelly Line <b id="stLine">—</b></div>
+        <div class="stat">Credentials <b>Pending</b></div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="rail" id="rail">
+    <div class="rail-h">
+      <button class="icobtn" id="railHide" title="Hide the feed" aria-label="Hide the league feed">⇥</button>
+      <span class="rt">League Feed</span>
+      <button class="icobtn" id="railPop" title="Pop out" aria-label="Pop out the league feed">⧉</button>
+      <span class="rail-count">👥 10</span>
+    </div>
+    <div class="yueng">
+      <div class="yh">🍺 Yuengling Fund — keep Gelly hydrated</div>
+      <div class="yt"><div class="yf" style="width:30%"></div></div>
+      <div class="yr"><span>7 of 10 owners have NOT bought</span>
+        <button id="yuengBtn">🍺 Buy one · $5.99</button></div>
+    </div>
+    <div class="feed" id="feedList"></div>
+  </aside>
+
+  <div class="strip" id="strip" hidden>
+    <button class="icobtn" id="railShow" title="Show the feed" aria-label="Show the league feed">⇤</button>
+    <span class="vl">League Feed</span>
+  </div>
+</div>
+
+<div class="mobilebar" id="mobilebar">
+  <button id="mobFeed">💬 League Feed</button>
+</div>
+
+<button class="tip-fab" id="tipFab" title="Send Gelly a tip" aria-label="Send Gelly a tip">✉️</button>
+
+<div class="pop-scrim" id="popScrim" hidden></div>
+<aside class="popout" id="popout" role="dialog" aria-modal="true" aria-label="League feed" hidden>
+  <div class="rail-h">
+    <span class="rt">League Feed</span>
+    <button class="icobtn" id="popClose" aria-label="Close the league feed">✕</button>
+  </div>
+  <div class="feed" id="popBody"></div>
+</aside>
+
+<div class="modal" id="tipModal" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="tipH">
+    <h3 id="tipH">Send Gelly a tip</h3>
+    <p id="tipNote">Tips publish straight to the league feed — there is no review step. Write accordingly.</p>
+    <textarea id="tipText" maxlength="1000" placeholder="What did you see?"></textarea>
+    <div class="acts">
+      <button id="tipCancel">Cancel</button>
+      <button class="go" id="tipSend">Send it</button>
+    </div>
+  </div>
+</div>
+
+<script src="env.js"></script>
+<script src="franchise.js"></script>
+<script src="auth.js"></script>
+<script src="matchrow.js"></script>
+<script src="sitenav.js"></script>
+<script src="press.js"></script>
+</body>
+</html>

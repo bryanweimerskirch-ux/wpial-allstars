@@ -165,6 +165,42 @@ body.colorblind a.spotlight-link .spotlight-go{text-decoration:underline;}
 body.colorblind .standings-table .tm-link{text-decoration:underline;}
 
 /* ---------------------------------------------------------------------------
+ * 3b. PRINT PALETTE — the newspaper (press.html), and deliberately INVARIANT.
+ *
+ *     These tokens do not move with the theme and they do not move in colorblind
+ *     mode. That is not an oversight, it is the point: the Gazette is meant to
+ *     read as a physical object — ink on newsprint — and a broadsheet that goes
+ *     dark when the rest of the site does stops being a newspaper and becomes a
+ *     panel with serifs on it. There is no such thing as a chalk-green newspaper.
+ *
+ *     Accessibility is satisfied by LAW 2 rather than by hue: every state inside
+ *     the paper carries a word or a glyph. A losing streak reads "L3", not just
+ *     red; a winner carries a check, not just weight. --pt-red is decoration on
+ *     kickers and rules, never the sole carrier of meaning, so re-inking it for
+ *     colorblind mode would buy nothing and cost the whole conceit.
+ *
+ *     Owner colours inside the paper still follow LAW 3 — they are --fx-* on a
+ *     container (the standings chip, the kit plate), never these tokens.
+ *
+ *     Verified against index.html's original .wire-card block. --pt-box is the
+ *     one token this palette introduced.
+ * ------------------------------------------------------------------------ */
+:root{
+  --pt-paper:#f5f1e6;         /* newsprint */
+  --pt-ink:#1c2333;           /* body ink, rules, reversed bars */
+  --pt-rule:#c9c2ae;          /* hairline rules and the sheet edge */
+  --pt-red:#7a1f1f;           /* kickers, Worm Watch, losing streaks */
+  --pt-tan:#8a8266;           /* agate and furniture grey */
+  --pt-date:#6d6650;          /* dateline and deck */
+  --pt-box:#efe9d8;           /* cut plates and tinted boxes (new token) */
+  --pt-dot:#d8d2c0;           /* dotted row rules */
+  --pt-colrule:#ddd6c2;       /* the rule between columns of type */
+  --pt-worm:#f1e8dc;          /* Worm Watch fill */
+  --pt-plate-hi:#e8e1cd;      /* back-page strip, primary */
+  --pt-plate-lo:#b7b09a;      /* back-page strip, secondary */
+}
+
+/* ---------------------------------------------------------------------------
  * 4. THE TOGGLE — one button, one look, every page.
  *    cbmode.js injects it wherever the page has not hand-written one.
  * ------------------------------------------------------------------------ */

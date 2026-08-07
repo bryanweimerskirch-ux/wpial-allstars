@@ -2067,7 +2067,23 @@ function insiderMd(src) {
   s = s.replace(/^### (.*)$/gm, '');                 // edition line handled by dateline
   s = s.replace(/^# (.*)$/gm, '');                   // H1 handled by masthead
   s = s.replace(/^---+$/gm, '<hr>');
-  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  /* SECURITY. This used to be a string replacement putting $2 straight into
+     href="$2". escapeHtml() above is a textContent round-trip, which deliberately
+     does NOT escape quotes — a text node never needs it — so a body containing
+     [x](https://a" onmouseover="...) closed the attribute and injected a handler
+     that ran on hover, and [x](javascript:...) passed straight through.
+
+     escapeAttr() has existed since line 1854 BECAUSE OF THIS EXACT BUG; the lesson
+     was applied to linkify() and missed here. Same contract as press.js safeUrl():
+     http(s) only, reject any unencoded whitespace or quoting, and a rejected link
+     degrades to its own label text rather than vanishing — losing the words is a
+     content bug in its own right. */
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (m0, label, url) {
+    const u = String(url || '').trim();
+    if (!/^https?:\/\//i.test(u)) return label;
+    if (/[\s<>"']/.test(u)) return label;
+    return '<a href="' + escapeAttr(u) + '" target="_blank" rel="noopener noreferrer">' + label + '</a>';
+  });
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
   return s.split(/\n{2,}/).map(p => {

@@ -64,8 +64,19 @@
   function rostersRetired() { return Date.now() >= ROSTERS_RETIRE_AT; }
 
   var NAV = [
-    { tab: 'board',      page: 'index.html',      label: 'League News',
-      title: 'The Gelly — league news, insider reports and the weekly gazette' },
+    /* League News IS the paper. It used to be index.html#board — the Gelly feed with
+       the insider card on top — and press.html now carries both: the edition as the
+       stage, that same live feed as the rail. Two nav items called League News would
+       be worse than either name alone, so this maps rather than adds.
+
+       CONSEQUENCE, deliberately taken: validTabs() is derived from the entries that
+       have a `tab`, so 'board' leaves it and an old index.html#board bookmark falls
+       through to the default tab — the same graceful degradation `rosters` takes via
+       `retires`. Nothing is lost: the feed those bookmarks were for is on this page,
+       in the rail, live. The #board section itself is untouched and still reachable
+       by direct link. */
+    { tab: null,         page: 'press.html',      label: 'League News',
+      title: 'The Dispatch — the edition, standings, top scorers, the waiver wire and Gelly\'s column' },
     { tab: null,         page: 'draftboard.html', label: 'Draftboard',
       title: 'Interactive keeper draftboard — mock drafts, keeper decisions and a full season simulator' },
     { tab: 'rosters',    page: 'index.html',      label: 'Rosters and Round Values',
