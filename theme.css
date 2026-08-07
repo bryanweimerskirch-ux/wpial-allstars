@@ -195,3 +195,41 @@ body.colorblind .standings-table .tm-link{text-decoration:underline;}
 /* The draft board's toggle is a .small button in a dense header bar; it opts out
    of the pill shape but keeps the ON treatment. */
 #cbToggle.small{border-radius:6px;padding:3px 8px;font-size:11px;}
+
+/* ---------------------------------------------------------------------------
+ * 5. DATA PROVENANCE — say where the numbers came from, in one voice
+ *
+ * Bryan, 2026-08-07: "when data is pulled from ESPN we should tell the user."
+ *
+ * Two forms of the same statement, so every surface says it the same way:
+ *   .srcnote   — a block, for a whole page (Depth Chart, box score)
+ *   .srcbadge  — an inline chip, for one section among several (the homepage tabs)
+ *
+ * The rule this encodes: a badge names the ACTUAL source of what is on screen. It
+ * is not decoration and it is not a logo. Two surfaces on this site are NOT ESPN —
+ * League History and the all-time head-to-head come from hand-maintained script
+ * properties that the project's own audit found wrong for nine of ten franchises —
+ * and putting an ESPN badge on those would be worse than saying nothing, because it
+ * would lend ESPN's authority to numbers ESPN never produced.
+ * ------------------------------------------------------------------------ */
+.srcnote{
+  max-width:760px;margin:0 auto 12px;padding:8px 11px;
+  border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:7px;
+  background:rgba(255,255,255,.03);color:var(--muted);font-size:12px;line-height:1.55;
+}
+.srcnote b{color:var(--text);font-weight:600;}
+
+.srcbadge{
+  display:inline-flex;align-items:center;gap:5px;vertical-align:middle;
+  margin-left:8px;padding:1px 8px;border:1px solid var(--line);border-radius:999px;
+  font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap;cursor:help;
+}
+/* The dot is a bullet, never the message — the badge always spells the source out
+   in words so it survives greyscale and colorblind mode untouched. */
+.srcbadge::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);flex:0 0 auto;}
+.srcbadge b{color:var(--text);font-weight:700;}
+@media (max-width:700px){
+  .srcbadge{margin-left:0;margin-top:5px;}
+  h2 .srcbadge{display:flex;width:max-content;}
+}

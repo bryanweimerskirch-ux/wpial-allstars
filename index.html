@@ -425,7 +425,7 @@
 </nav>
 
 <section id="rosters">
-  <h2>Rosters and Round Values</h2>
+  <h2>Rosters and Round Values <span class="srcbadge" title="Round values and keeper declarations live in the league sheet. Team names are synced from ESPN every hour, so a rename in the ESPN app shows up here.">Data: <b>League sheet + ESPN</b></span></h2>
   <!-- Keeper declaration lives HERE, on the roster card it applies to (keepers.js
        decorates each card). There is deliberately no separate Keepers tab: the
        decision and the data it rests on are the same screen, and a second tab
@@ -606,6 +606,15 @@
 <section id="history">
   <h2>League history</h2>
   <p class="sub">Seven seasons, seven different champions. Nobody has repeated &mdash; yet.</p>
+  <!-- Deliberately NO ESPN badge here. These all-time totals come from hand-maintained
+       league records, not from ESPN, and the project's own audit found them wrong for
+       nine of ten franchises. An ESPN badge would lend ESPN's authority to numbers ESPN
+       never produced — the worst possible outcome for a provenance feature. -->
+  <p class="srcnote" style="max-width:none;">
+    <b>League records, not ESPN.</b> All-time totals are kept by hand and are still being
+    reconciled &mdash; treat the season-by-season results as authoritative and the all-time
+    tallies as provisional.
+  </p>
 
   <div class="card">
     <h3>Records worth talking about</h3>
@@ -708,8 +717,8 @@
 </section>
 
 <section id="schedule">
-  <h2>2026 NFL Schedule</h2>
-  <p class="sub">The NFL slate, straight from ESPN &mdash; updates automatically. Fantasy matchups live on the Scoreboard tab.</p>
+  <h2>2026 NFL Schedule <span class="srcbadge" title="Game times, results and injury designations are pulled live from ESPN on every page load.">Data: <b>ESPN</b></span></h2>
+  <p class="sub">The NFL slate, straight from ESPN &mdash; game times, results and injury designations refresh on every load. Fantasy matchups live on the Scoreboard tab.</p>
 
   <div class="card" id="nfl-week-card" style="margin-top:16px;">
     <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
@@ -729,8 +738,8 @@
 </section>
 
 <section id="scoreboard">
-  <h2>Scoreboard</h2>
-  <p class="sub">WPIAL matchups week by week &mdash; who plays who, and live scores once the games count.</p>
+  <h2>Scoreboard <span class="srcbadge" title="Matchups, scores and rosters come from ESPN, the league&#39;s system of record. Win probability is calculated here from those numbers.">Data: <b>ESPN</b></span></h2>
+  <p class="sub">WPIAL matchups week by week &mdash; who plays who, and live scores once the games count. Matchups and scores come from <b>ESPN</b>; the win probability is ours, calculated from them.</p>
       <div id="gelly-picks-card" class="card" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
           <h3 style="margin:0;border-bottom:none;padding-bottom:0;">🔮 The Gelly Line <span style="font-weight:400;font-size:12px;color:var(--muted);">&mdash; Gelly&#39;s calling it</span></h3>
@@ -743,8 +752,8 @@
 </section>
 
 <section id="standings">
-  <h2>Standings</h2>
-  <p class="sub">Computed from the ESPN schedule feed &mdash; updates as games go final.</p>
+  <h2>Standings <span class="srcbadge" title="Records, points for and bench points are computed here from ESPN&#39;s schedule and box scores. ESPN is the source; the arithmetic is ours.">Data: <b>ESPN</b></span></h2>
+  <p class="sub">Computed here from ESPN's schedule and box scores &mdash; records, points and bench points update as games go final.</p>
   <div class="card" style="margin-top:16px;">
     <div id="standings-body"><p class="placeholder">Loading standings&hellip;</p></div>
   </div>
