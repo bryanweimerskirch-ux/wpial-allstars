@@ -242,7 +242,13 @@
   var S = {
     schedule: null, bench: null, reports: [], line: null, wire: null,
     weeks: {}, currentWeek: 1, standings: [], playedWeek: null, posts: [], lastSig: '',
-    leads: [], columns: [], rankings: null, keepers: null
+    leads: [], columns: [], rankings: null, keepers: null,
+    /* reportsOk distinguishes "the desk filed nothing" from "the wire did not answer".
+       soft() returns its fallback on failure, and the fallback for insider_reports is
+       an empty array — so without this flag a dropped request renders as an empty
+       newspaper, which is a lie about the newsroom rather than about the network. */
+    reportsOk: true,
+    h2h: null
   };
 
   /* An edition is TWO InsiderReports rows: the front-page lead, and the bylined
@@ -311,6 +317,18 @@
   function renderLead() {
     var r = S.leads[0];
     if (!r) {
+      /* Two different failures used to print the same sentence. An empty desk is a
+         newsroom fact; a dropped request is a network fact, and telling a reader the
+         paper has never been written because their phone lost a packet is the worse
+         of the two lies. */
+      if (!S.reportsOk) {
+        $('leadHed').textContent = 'The wire is down, not the newsroom';
+        $('leadDeck').textContent = 'The edition could not be fetched just now. Editions already filed are ' +
+          'unaffected — this is the connection, not the copy.';
+        $('leadFlow').innerHTML = '<p class="empty">Reload the page. If it keeps happening the feed service ' +
+          'is not answering, and nothing you do on this page will change that.</p>';
+        return;
+      }
       $('leadHed').textContent = 'The presses are warm, the desk is empty';
       $('leadDeck').textContent = 'No edition has been filed yet. Gelly is reportedly "doing the research."';
       $('leadFlow').innerHTML = '<p class="empty">When an insider report is published it lands here as the ' +
@@ -460,8 +478,61 @@
     box.innerHTML = h;
   }
 
+  /* LAST SEASON'S BASEMENT, rebuilt from the meeting log.
+     h2h_log carries every meeting the league has ever played, so the finish order for
+     a completed season is derivable rather than stored. Playoff games are excluded —
+     the worm is a regular-season punishment and a team can lose in the bracket
+     without finishing last. Returns null if the log is missing or a season cannot be
+     reconstructed, and the caller falls back to saying nothing. */
+  function lastSeasonBasement() {
+    var pairs = S.h2h && S.h2h.pairs;
+    if (!pairs || !pairs.length) return null;
+    var season = 0;
+    pairs.forEach(function (p) {
+      (p.meetings || []).forEach(function (m) { if (m && m.season > season) season = m.season; });
+    });
+    if (!season) return null;
+
+    var rec = {};
+    function bump(n) { if (!rec[n]) rec[n] = { team: n, w: 0, l: 0 }; return rec[n]; }
+    pairs.forEach(function (p) {
+      (p.meetings || []).forEach(function (m) {
+        if (!m || m.season !== season || m.playoff) return;
+        var win = m.winner === 'A' ? p.teamA : p.teamB;
+        var lose = m.winner === 'A' ? p.teamB : p.teamA;
+        if (!win || !lose) return;
+        bump(win).w++; bump(lose).l++;
+      });
+    });
+    var rows = Object.keys(rec).map(function (k) { return rec[k]; });
+    if (rows.length < 2) return null;
+    /* Fewest wins, then most losses — a team that played fewer games should not
+       inherit the basement on win count alone. */
+    rows.sort(function (a, b) { return (a.w - b.w) || (b.l - a.l); });
+    return { season: season, team: rows[0].team, w: rows[0].w, l: rows[0].l, runnerUp: rows[1] };
+  }
+
   function renderWorm() {
     var box = $('worm');
+
+    /* BEFORE WEEK 1 THERE IS NO BASEMENT. Every club is 0-0, so sorting the table
+       returns whoever happens to sort last and prints their name under a red rule as
+       though they had earned it — which is how THE Vagitarians got named for a worm
+       Drake owes. The same all-zero sort already had to be taken out of page 3.
+       Until a game is played, the only true answer is last season's. */
+    if (!S.playedWeek) {
+      var b = lastSeasonBasement();
+      if (!b) {
+        box.innerHTML = '<div class="empty">The worm is undefeated in the preseason. Standings open with Week 1.</div>';
+        return;
+      }
+      box.innerHTML = '<p style="margin:0 0 7px"><b>' + esc(b.team) + '</b> owes the worm, ' +
+        b.w + '–' + b.l + ' and last in ' + b.season + '.</p>' +
+        '<p style="margin:0">Nobody has played a down in ' + (b.season + 1) + ', so the debt still stands ' +
+        'from ' + b.season + '. The ' + (b.season + 1) + ' basement opens for business in Week 1.</p>';
+      return;
+    }
+
     if (!S.standings.length) {
       box.innerHTML = '<div class="empty">The worm is undefeated in the preseason. Standings open with Week 1.</div>';
       return;
@@ -1279,9 +1350,15 @@
       soft('bench_points', { ok: false, teams: {} }),
       soft('insider_reports', { ok: false, reports: [] }),
       soft('gelly_picks', null),
-      soft('transactions', { ok: false, reason: 'espn-unavailable' })
+      soft('transactions', { ok: false, reason: 'espn-unavailable' }),
+      /* Only Worm Watch needs this, and only before Week 1 — but it has to be in the
+         same batch or the front page paints a wrong basement first and corrects
+         itself in front of the reader. */
+      soft('h2h_log', null)
     ]).then(function (r) {
       S.schedule = r[0]; S.bench = r[1];
+      S.reportsOk = !!(r[2] && r[2].ok);
+      S.h2h = r[5] && r[5].ok ? r[5] : null;
       S.reports = (r[2] && r[2].reports) || [];
       var split = splitReports(S.reports);
       S.leads = split.leads; S.columns = split.columns;
