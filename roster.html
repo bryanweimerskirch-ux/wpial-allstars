@@ -202,7 +202,13 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
   function $(id) { return document.getElementById(id); }
   function qp(k) {
     var m = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search);
-    return m ? decodeURIComponent(m[1]) : '';
+    if (!m) return '';
+    /* decodeURIComponent throws URIError on a malformed escape — `?team=100%` is enough.
+       URL_NAMED_TEAM below calls this at IIFE top level, so an uncaught throw binds no
+       listeners and never reaches boot(): the page sits on skeletons forever with dead
+       dropdowns. Falling back to the raw match degrades instead — an unresolvable team
+       name returns null from fidOf() and the page opens on the default team. */
+    try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
   }
   function fx() { return window.WPIAL_FX; }
   function fidOf(n) { return (fx() && fx().resolve(n)) || null; }
@@ -230,9 +236,16 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
   }
 
   function opponentFor(week, fid) {
+    /* Every comparison below is guarded on BOTH sides. fidOf() returns null for a name the
+       registry has not resolved yet, and state.fid is null until it does — so an unguarded
+       `a === fid` is `null === null`, which is true, and the page adopts whichever matchup
+       it hit first as the owner's own game. matchup.html:430 has always guarded this; this
+       page did not. */
+    if (!fid) return null;
     var list = (state.weeks && state.weeks[week]) || [];
     for (var i = 0; i < list.length; i++) {
       var a = fidOf(list[i].away), b = fidOf(list[i].home);
+      if (!a || !b) continue;
       if (a === fid) return { opp: b, mu: list[i], home: false };
       if (b === fid) return { opp: a, mu: list[i], home: true };
     }
@@ -241,7 +254,12 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
 
   function gameState(mu) {
     if (!mu) return 'pre';
-    if (mu.winner === 'AWAY' || mu.winner === 'HOME') return 'final';
+    /* "Decided" is the backend's own predicate — matchup.gs:221 is
+       `!!(mu.winner && mu.winner !== 'UNDECIDED')`. Testing only AWAY/HOME missed ESPN's
+       TIE, so a finished 112.4-112.4 game read "Live" forever, and because it never
+       reached 'final' the ball stayed frozen at the pregame win probability. board.html
+       already counts that same case as a tie (a.t++/h.t++), so the two pages disagreed. */
+    if (mu.winner && mu.winner !== 'UNDECIDED') return 'final';
     if (Number(mu.awayScore) > 0 || Number(mu.homeScore) > 0) return 'live';
     return 'pre';
   }
@@ -259,13 +277,26 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
     document.documentElement.style.setProperty('--fx-primary', c.primary || '#d8b45c');
 
     var f = state.form[R.teamKey(nameOf(fid))];
-    var rec = f && f.g ? (f.w + '-' + f.l + ' · ' + (f.pf / f.g).toFixed(1) + ' pts/gm') : 'no games played yet';
+    /* seasonForm tracks g/w/l only, so ties are implicit: g - w - l. Printing w-l alone
+       showed a 5-5-1 team as "5-5" — eleven games rendered as ten, while board.html's
+       standings printed 5-5-1 for the same team on the same day. */
+    var rec = 'no games played yet';
+    if (f && f.g) {
+      var ties = f.g - f.w - f.l;
+      rec = f.w + '-' + f.l + (ties > 0 ? '-' + ties : '') +
+            ' · ' + (f.pf / f.g).toFixed(1) + ' pts/gm';
+    }
     var opp = opponentFor(state.week, fid);
     var vs = '';
     if (opp && opp.opp) {
       vs = '<a href="matchup.html?week=' + encodeURIComponent(state.week) +
            '&a=' + encodeURIComponent(fid) + '&b=' + encodeURIComponent(opp.opp) + '">' +
            (opp.home ? 'vs ' : 'at ') + R.esc(nameOf(opp.opp)) + ' — box score &rsaquo;</a>';
+    } else if (!state.weeks) {
+      /* Not the same claim. With no schedule loaded we do not KNOW the opponent; saying
+         "no opponent scheduled" told an owner they had a bye whenever Apps Script 500'd,
+         while the block directly below correctly said the feed was unavailable. */
+      vs = '<span class="note">Opponent unknown — the schedule feed has not answered yet.</span>';
     } else {
       vs = '<span class="note">No opponent scheduled in week ' + R.esc(state.week) + '.</span>';
     }
@@ -279,11 +310,13 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
   }
 
   function sideFor(fid) {
+    if (!fid) return null;   /* see opponentFor — null === null matches every row */
     if (!state.detail || state.detail === 'pending' || !state.detail.ok || !state.detail.hasRosters) return null;
     var found = null;
     state.detail.matchups.forEach(function (m) {
-      if (fidOf(m.away.name) === fid) found = m.away;
-      if (fidOf(m.home.name) === fid) found = m.home;
+      var a = fidOf(m.away.name), h = fidOf(m.home.name);
+      if (a && a === fid) found = m.away;
+      if (h && h === fid) found = m.home;
     });
     return found;
   }
@@ -429,16 +462,22 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
     el.innerHTML = html;
   }
 
+  /* Only writes back what it actually knows. repaint() can now run before the schedule
+     feed has answered (the wpial-profiles handler stopped gating itself on state.fid), and
+     the old unconditional form put `?week=null&team=null` in the address bar — which is
+     then what the reader bookmarks or shares. */
   function syncURL() {
+    var parts = [];
+    if (state.week != null) parts.push('week=' + encodeURIComponent(state.week));
+    if (state.fid) parts.push('team=' + encodeURIComponent(state.fid));
     try {
-      history.replaceState(null, '',
-        'roster.html?week=' + state.week + '&team=' + state.fid);
+      history.replaceState(null, '', 'roster.html' + (parts.length ? '?' + parts.join('&') : ''));
     } catch (e) {}
   }
 
   function repaint() {
     $('teamSel').value = state.fid || '';
-    $('weekSel').value = String(state.week);
+    $('weekSel').value = state.week == null ? '' : String(state.week);
     syncURL();
     paintHero();
     paintLineup();
@@ -450,10 +489,15 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
     repaint();
     json(WEB_APP_URL + '?action=matchup_detail&week=' + encodeURIComponent(w))
       .then(function (d) {
+        /* Guard the ASSIGNMENT, not just the repaint. json() retries at 500ms and 2000ms,
+           so a response for a week the reader has already left is routine — and writing it
+           into state.detail anyway meant the next paint from any source (the view switch,
+           a wpial-profiles event) rendered week 5's starters under week 6's label. */
+        if (state.week !== w) return;
         if (!d || (d.ok === undefined && d.error)) state.detail = null;
         else state.detail = R.normalizeWeek(d);
       })
-      .catch(function () { state.detail = null; })
+      .catch(function () { if (state.week === w) state.detail = null; })
       .then(function () { if (state.week === w) paintLineup(); });
   }
 
@@ -485,6 +529,11 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
     }).catch(function () {
       /* Feed down: the page still names the franchise and says what is missing. */
       state.week = parseInt(qp('week'), 10) || 1;
+      /* Leaving state.detail on 'pending' meant the honest error written below survived
+         only until the reader touched the view switch: setView() calls paintLineup(),
+         whose pending branch replaced it with loading skeletons that could never resolve,
+         because no fetch was in flight. null is the state that renders as "unavailable". */
+      state.detail = null;
       $('weekSel').innerHTML = '<option value="' + state.week + '">Week ' + state.week + '</option>';
       paintHero();
       $('lineup').innerHTML = '<p class="note">The schedule feed is unavailable right now.' +
@@ -516,7 +565,13 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
   try { setView(localStorage.getItem('wpial-roster-view') || 'depth'); } catch (e) { setView('depth'); }
   document.addEventListener('wpial-profiles', function () {
     buildTeamSelect();
-    if (state.fid) repaint();
+    /* state.fid is null when boot() ran before the registry landed — allFids() was empty,
+       so every fallback in that chain returned nothing. Gating the repaint on state.fid
+       therefore disabled the one event that can repair it: the dropdown refilled and
+       appeared to select a team while the chart below showed a different one. Resolve the
+       fid here, then repaint unconditionally. */
+    if (!state.fid) state.fid = (fidOf(qp('team')) || myFid() || allFids()[0]) || null;
+    repaint();
   });
   /* Signing in mid-visit should land you on your own team if the URL did not name one.
      Also fires for the reverse case: a visitor who arrives signed in but whose identity

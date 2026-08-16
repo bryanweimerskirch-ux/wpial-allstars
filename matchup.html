@@ -246,7 +246,12 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
   function $(id) { return document.getElementById(id); }
   function qp(k) {
     var m = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search);
-    return m ? decodeURIComponent(m[1]) : '';
+    if (!m) return '';
+    /* decodeURIComponent throws URIError on a malformed escape ("?week=%zz"). Here that
+       only kills boot(), not the whole IIFE, so the page degrades to an empty week select
+       and a permanent skeleton rather than dying outright — roster.html had the same call
+       at top level and did die. Same guard on both, same reason. */
+    try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
   }
   function fx() { return window.WPIAL_FX; }
   function fidOf(name) { return (fx() && fx().resolve(name)) || null; }
@@ -303,12 +308,19 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
   function recordOf(fid) {
     var f = state.form[R.teamKey(nameOf(fid))];
     if (!f || !f.g) return 'no games yet';
-    return f.w + '-' + f.l + (f.g !== f.w + f.l ? '' : '');
+    /* Both branches of the old ternary returned '' — the tie count was computed and then
+       thrown away, so 5-5-1 printed as "5-5" while board.html's standings printed 5-5-1.
+       seasonForm tracks g/w/l only, so ties are g - w - l. */
+    var ties = f.g - f.w - f.l;
+    return f.w + '-' + f.l + (ties > 0 ? '-' + ties : '');
   }
 
   function gameState(mu) {
     if (!mu) return 'pre';
-    if (mu.winner === 'AWAY' || mu.winner === 'HOME') return 'final';
+    /* Reuse the backend's own definition of decided (matchup.gs:221) rather than testing
+       AWAY/HOME, which missed ESPN's TIE: a finished tied game read "Live" indefinitely,
+       and never reaching 'final' left the ball frozen at the pregame win probability. */
+    if (mu.winner && mu.winner !== 'UNDECIDED') return 'final';
     if (Number(mu.awayScore) > 0 || Number(mu.homeScore) > 0) return 'live';
     return 'pre';
   }
@@ -443,6 +455,13 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     var box = $('box');
     var st = gameState(mu);
 
+    /* The strip is stale the moment we start repainting the box. paintStrip() had exactly
+       one caller — the success tail below, always with a truthy detail — so its own
+       `hidden = true` branch was dead code and every early return here left the previous
+       week's "3 live · 4 to play" sitting above the new week's team names. Hide it up
+       front; paintStrip() shows it again when it has real counts. */
+    $('strip').hidden = true;
+
     if (state.detail === 'pending') {
       box.innerHTML = '<span class="skel"></span><span class="skel"></span><span class="skel"></span>';
       return;
@@ -545,6 +564,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     $('weekSel').value = String(w);
     if (!state.list.length) {
       $('field').hidden = true; $('pill').hidden = true;
+      $('strip').hidden = true;   /* or last week's live counts headline an empty week */
       $('head-msg').innerHTML = '<p class="note">No matchups scheduled for week ' + R.esc(w) + '.</p>';
       $('box').innerHTML = '';
       $('series').innerHTML = '';
@@ -573,10 +593,16 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
       .then(function (d) {
         /* An undeployed action answers {"error":"Unknown action"} — valid JSON, no ok.
            That is "absent", not "failed", and it has its own sentence. */
+        /* Guard the ASSIGNMENT, not just the repaint below. json() retries at 500ms and
+           2000ms, so a late answer for a week the reader has already left is routine, and
+           writing it into state.detail regardless meant the next paint from any other
+           source — the resize debounce, wpial-profiles, loadSeries' tail — rendered one
+           week's starters and projections under another week's team names. */
+        if (state.week !== w) return;
         if (!d || (d.ok === undefined && d.error)) { state.detail = null; }
         else { state.detail = R.normalizeWeek(d); }
       })
-      .catch(function () { state.detail = null; })
+      .catch(function () { if (state.week === w) state.detail = null; })
       .then(function () {
         if (state.week === w && state.list.length) { paintBox(state.list[state.idx]); paintHeader(state.list[state.idx]); }
       });
@@ -631,6 +657,13 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
   $('weekSel').addEventListener('change', function () { setWeek(parseInt(this.value, 10)); });
   /* Identity can land after the first paint; repaint names, kits and colors when it does. */
   document.addEventListener('wpial-profiles', function () {
+    /* matchupsForWeek() drops every matchup whose two names the registry cannot resolve.
+       If espn_schedule answers before wpial-profiles fires, that is ALL of them, and the
+       page prints "No matchups scheduled for week N". Gating recovery on state.list.length
+       meant the empty list could never refill — the one event that proves the registry has
+       arrived did nothing, permanently, until a manual reload won the race. Re-derive the
+       list first; only then decide whether there is anything to repaint. */
+    if (!state.list.length && state.week != null) { setWeek(state.week, state.fidA, state.fidB); return; }
     if (state.list.length) { paintHeader(state.list[state.idx]); paintSeries(); }
   });
   /* Kit size is a function of the viewport, so it has to be recomputed when that changes —

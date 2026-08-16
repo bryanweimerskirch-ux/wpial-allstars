@@ -419,7 +419,10 @@ header{background:var(--panel2);border-bottom:2px solid var(--accent);padding:10
   .stage{padding:10px 0 20px}
   .stagewrap{display:block}
   .pager{position:sticky;top:0;width:auto;margin:0 0 10px;flex-direction:row;
-         justify-content:center;background:var(--stage);padding:6px 0;gap:6px}
+         /* --stage is defined nowhere in theme.css (checked against the repo at HEAD), so
+            the bare var() was invalid-at-computed-value and the bar fell to transparent —
+            newsprint scrolling through the sticky page index on a phone. */
+         justify-content:center;background:var(--stage, var(--bg));padding:6px 0;gap:6px}
   .pager b{display:none}
   .scaler{overflow:visible}
   .paper{width:100% !important;transform:none !important}

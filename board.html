@@ -175,7 +175,14 @@
   .tip-fab:active{transform:scale(0.96);}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:600;padding:20px;}
   .modal-overlay.open{display:flex;}
-  .modal-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;max-width:440px;width:100%;position:relative;}
+  /* max-height + its own scroll, rather than overflow on the overlay: the overlay is a
+     centering flex container, and a flex item taller than an `align-items:center` parent
+     overflows in BOTH directions with the top unreachable even when the parent scrolls.
+     Capping the card keeps centering honest and lets the card scroll inside itself.
+     Without this, a phone in landscape (~300px of viewport against a ~350px card) clipped
+     the × off the top and the Submit tip button off the bottom, with no way to reach
+     either — the tip could be typed and never sent. */
+  .modal-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;max-width:440px;width:100%;position:relative;max-height:calc(100vh - 40px);overflow-y:auto;}
   .modal-card h3{margin:0 0 8px;font-size:16px;}
   .modal-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:4px;}
   .modal-close:hover{color:var(--text);}.quote-block{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:6px 0 8px;background:#0f1319;}.quote-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;font-weight:700;}.quote-text{font-size:13px;color:var(--text);line-height:1.5;font-style:italic;}
@@ -1566,8 +1573,15 @@ function jerseyFor(name) {
    them from a lot of places and a `const` here would change when they become available. */
 function teamKey(name) { return WPIAL_ROW.teamKey(name); }
 function seasonForm(weeks) { return WPIAL_ROW.seasonForm(weeks); }
-function projectWin(awayName, homeName, form, h2hRec) {
-  return WPIAL_ROW.projectWin(awayName, homeName, form, h2hRec);
+/* SIX parameters, not four. WPIAL_ROW.projectWin's first and strongest input is the pair of
+   projected starter totals (matchrow.js:88-94) — the one call site here has always passed
+   them, and this wrapper silently dropped them on the floor. The scoreboard therefore
+   priced every spotlight card on form + all-time H2H while matchup.html priced the same
+   game on projections, so the two surfaces printed different percentages for one game and
+   could name opposite favorites. It also made fetchProj()'s extra matchup_detail request
+   per week pure waste: the data arrived, triggered a repaint, and changed nothing. */
+function projectWin(awayName, homeName, form, h2hRec, projAway, projHome) {
+  return WPIAL_ROW.projectWin(awayName, homeName, form, h2hRec, projAway, projHome);
 }
 function kitWidth(p) { return WPIAL_ROW.kitWidth(p); }
 /* Stable franchise id for a name, or null. Every cross-page link on this site travels as a
@@ -2409,7 +2423,14 @@ function loadSchedule() {
             if (h2hRec.winsA === h2hRec.winsB) {
               h2hText = 'All-time: series tied ' + h2hRec.winsA + '-' + h2hRec.winsB + (h2hRec.ties ? '-' + h2hRec.ties : '');
             } else {
-              const leader = h2hRec.winsA > h2hRec.winsB ? h2hRec.teamA : h2hRec.teamB;
+              /* Through teamDisplayName(), like every other name on this card. The h2h feed
+                 and the ESPN schedule are two independent name spaces that agree only by
+                 luck (see the note at the top of this block) — the KEY is canonicalized but
+                 the printed name was not, so one card could call the same franchise
+                 "Najee Germany" here and "Drake Draaaake?" in the two rows above it. Also
+                 escapes: this is the only value in the string that went into innerHTML raw. */
+              const leader = escapeHtml(teamDisplayName(
+                h2hRec.winsA > h2hRec.winsB ? h2hRec.teamA : h2hRec.teamB));
               const leadW = Math.max(h2hRec.winsA, h2hRec.winsB);
               const trailW = Math.min(h2hRec.winsA, h2hRec.winsB);
               h2hText = 'All-time: ' + leader + ' leads ' + leadW + '-' + trailW + (h2hRec.ties ? '-' + h2hRec.ties : '');

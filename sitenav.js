@@ -602,8 +602,16 @@
       (function (btn) {
         btn.addEventListener('click', function () {
           var t = btn.dataset.tab;
-          if (validTabs().indexOf(t) === -1) return;
+          /* The hash follows the VISIBLE tab, including the shell's own 'board' (Gelly
+             Feed), which is deliberately absent from validTabs(). Bailing before the
+             replaceState left the URL pointing at whatever tab the reader came from: open
+             board.html#rosters, click Gelly Feed, refresh — and you are back on Rosters,
+             having apparently lost your click. selectTab() still refuses an unknown
+             incoming hash, so writing this one costs nothing on the way back in. */
           try { history.replaceState(null, '', '#' + t); } catch (e) {}
+          /* Closes for EVERY tab, 'board' included. The old early return skipped this too,
+             so on a phone tapping Gelly Feed in the sheet left the sheet open on top of
+             the tab it had just switched to. */
           closeSheet();
         });
       })(buttons[j]);
@@ -680,8 +688,14 @@
 
     addExtraLinks();
     retireRosters();
-    document.addEventListener('wpial-auth', addExtraLinks);
-    document.addEventListener('wpial-profiles', addExtraLinks);
+    /* Both, on both events. retireRosters() used to run once at init, so a tab left open
+       across the 6am Aug 31 boundary kept serving last season's round values from a
+       section this constant exists to hide — while index.html's strip DID drop the chip,
+       because renderStrip() re-runs on wpial-auth. The two pages disagreed about whether
+       the tab existed. */
+    function refresh() { addExtraLinks(); retireRosters(); }
+    document.addEventListener('wpial-auth', refresh);
+    document.addEventListener('wpial-profiles', refresh);
   }
 
   /* ---------------------------------------------------------------------
@@ -873,7 +887,14 @@
        decides whether the menu has a Commish section at all. */
     document.addEventListener('wpial-auth', function () {
       hideAuthChip(); renderIdentity();
-      if (document.getElementById('wpialIdMenu').classList.contains('open')) renderMenu();
+      /* Guarded like every other lookup in this file. buildIdentity() bails when
+         querySelector('header') finds nothing, and then #wpialIdMenu does not exist —
+         so on any page without a <header> this line threw inside a wpial-auth listener.
+         Every page in the repo today HAS a header, so this is defensive rather than a
+         live fix; it is here because the identical unguarded shape took the paper down
+         on 2026-08-16 and the auth path fires on every page on draft night. */
+      var idMenu = document.getElementById('wpialIdMenu');
+      if (idMenu && idMenu.classList.contains('open')) renderMenu();
     });
     document.addEventListener('wpial-profiles', renderIdentity);
 
