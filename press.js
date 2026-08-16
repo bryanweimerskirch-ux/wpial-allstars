@@ -779,7 +779,7 @@
   function declaredCount() {
     var d = S.keepers;
     if (!d || !d.teams) return 0;
-    return Object.keys(d.teams).filter(function (k) { return !!d.teams[k].updated_at; }).length;
+    return Object.keys(d.teams).filter(function (k) { var t = d.teams[k] || {}; return !!t.updated_at && (t.players || []).some(function (p) { return p && String(p.name || '').trim(); }); }).length; /* An empty card is a SAVE, not a DECISION. waKeeperSave_ accepts players:[] with no confirmation, so "I thought about it and I am keeping nobody" and "I opened the page, did not finish, and hit save" are recorded identically. Counting updated_at alone called Mean Machine declared and printed a compliment about a card Bianco never filled in. See claude/keeper-declaration-provenance.md. */
   }
 
   function renderAroundLeague() {
@@ -838,7 +838,7 @@
             return (k.round ? '<span class="rd">R' + esc(k.round) + '</span> ' : '') + esc(k.name);
           }).join(' · ');
         } else if (kept && kept.updated) {
-          note = 'Declared, and keeping nobody. Ten clean rounds — the bravest thing on this page.';
+          note = 'Card started, nobody on it. Whether that is a choice or an unfinished job, the card reads the same — and the clock does not care which.';
         } else {
           /* Not the same as keeping nobody, and the paper must not conflate them.
              This is the line the commissioner actually wants printed. */
