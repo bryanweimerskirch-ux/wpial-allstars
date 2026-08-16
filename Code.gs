@@ -1165,7 +1165,7 @@ function listInsiderReports_(e) {
   return insiderJson_({ ok: true, reports: reports });
 }
 
-function setInsiderSecret() { PropertiesService.getScriptProperties().setProperty('INSIDER_SECRET', 'wpial-wire-2026-Kq8vZ3tXp9Rf6NcJhB4m'); }
+// setInsiderSecret was removed 2026-08-16. It hardcoded the INSIDER_SECRET value, and this file is committed to a PUBLIC repo, so that secret was readable on the internet from 2026-08-04 until today. The value has been rotated and the property is now set by hand in Project Settings > Script properties. Never put a secret in this file.
 
 // ============================================================
 // PLAYER INTEREST (anonymous "signal interest" clicks from the
