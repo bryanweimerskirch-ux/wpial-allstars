@@ -157,6 +157,38 @@ function geKeepers_() {
 }
 
 /**
+ * OWNER FIRST NAMES, so the paper can call a manager by name.
+ *
+ * Bryan, 2026-08-16: "when I say Nick has yet to select his keepers, Gelly should call him
+ * out on that." The brief only ever carried franchise names, so a tip phrased in first
+ * names — which is how the league actually talks — had nothing to bind to.
+ *
+ * Reads ONLY first_name and team_name out of Profiles. `email` sits between them in
+ * WA_PROFILE_HEADERS and is deliberately not read: geKeeperCards_ exists precisely so no
+ * address reaches a prompt, and that promise is not being weakened to add a nickname. A
+ * first name is already public — it is printed on the owner's own profile card.
+ */
+function geOwnerNames_() {
+  var out = {};
+  try {
+    var sh = waProfSS_().getSheetByName(WA_PROFILE_TAB);
+    if (!sh) return out;
+    var last = sh.getLastRow();
+    if (last < 2) return out;
+    var idx = {};
+    WA_PROFILE_HEADERS.forEach(function (h, i) { idx[h] = i; });
+    sh.getRange(2, 1, last - 1, WA_PROFILE_HEADERS.length).getValues().forEach(function (v) {
+      var team = String(v[idx.team_name] || '').replace(/^\s+|\s+$/g, '');
+      var first = String(v[idx.first_name] || '').replace(/^\s+|\s+$/g, '');
+      if (team && first) out[team] = first;
+    });
+  } catch (err) {
+    console.error('geOwnerNames_ failed: ' + err);
+  }
+  return out;
+}
+
+/**
  * LAST SEASON'S FINAL STANDINGS, rebuilt from the meeting log.
  *
  * Playoff games are excluded: the worm is a regular-season punishment, and a club can
@@ -231,6 +263,11 @@ function geKeeperCards_() {
           team: team,
           players: players,
           count: players.length,
+          /* When the card was last written. waWritePicks_ OVERWRITES the row, so the
+             previous selection is gone the moment it is saved — this timestamp is the
+             only trace that a card changed at all, which is why the paper can say
+             "re-cut today" but cannot say what came off it. */
+          updated: v[4] || null,
           byOwner: !!(by && ownerOf[team] && by === ownerOf[team])
         });
       });
@@ -297,7 +334,7 @@ function geBrief_(state) {
           return (Number(a.round) || 99) - (Number(b.round) || 99);
         }).map(function (p) {
           return 'R' + p.round + ' ' + p.name;
-        }).join(', ') + '  [' + who + ']');
+        }).join(', ') + '  [' + who + '; card last saved ' + geWhen_(c.updated) + ']');
       });
 
       var missing = (prov.teams || []).filter(function (t) { return !filed[t]; });
@@ -327,10 +364,46 @@ function geBrief_(state) {
                'dramatic, or build a column on the motive.');
       }
       if (missing.length || byCommish) {
-        L.push('DO NOT CALL A MISSING CARD LAZY. ' + byCommish + ' of the cards above were entered by ' +
-               'the commissioner rather than the owner, so what is on file measures data entry as ' +
-               'much as owner engagement, and a club with no card may simply be one nobody has ' +
-               'entered yet.');
+        L.push('DO NOT CALL A MISSING CARD LAZY, AND DO NOT READ ENGAGEMENT OFF WHO TYPED A CARD. ' +
+               byCommish + ' of the cards above were entered by the commissioner rather than the ' +
+               'owner, so what is on file measures data entry as much as owner engagement. A club ' +
+               'with no card may simply be one nobody has entered yet, and a card entered by the ' +
+               'commissioner does NOT mean its owner could not be bothered — you may not say, or ' +
+               'imply, that they failed to file it themselves, did not care, or had to be chased. ' +
+               'This is not hypothetical: on 2026-08-16 the paper ran exactly that line about a ' +
+               'manager who had in fact been trying to file, and could not, because a stale build ' +
+               'of the app on his phone never showed him the keeper button. He reached out; the ' +
+               'commissioner entered the card for him. Commissioner entry is as likely to mean an ' +
+               'owner asked for help as anything else, and asking for help is engagement.');
+      }
+
+      /* WHAT A CHANGED CARD CAN AND CANNOT SUPPORT. Bryan asked that re-cut cards get
+         called out. The save time supports that; the sheet does not support more.
+         waWritePicks_ overwrites the row, so a dropped keeper leaves no trace anywhere —
+         inviting the writer to name one is inviting him to invent one, which is the
+         failure this whole brief exists to prevent. */
+      L.push('');
+      L.push('EACH CARD ABOVE CARRIES WHEN IT WAS LAST SAVED. A card saved TODAY or ' +
+             'yesterday is fresh news and is worth a line — a manager re-cutting his keepers ' +
+             'this close to the lock is a story. But the sheet keeps only the CURRENT card: ' +
+             'the previous version is overwritten and gone. You may say a club changed its ' +
+             'card and when. You may NOT say which player came off, what it was before, how ' +
+             'many times it has changed, or that anyone was dropped — none of that is ' +
+             'recorded and you would be inventing it.');
+
+      /* WHO RUNS WHAT. Bryan, 2026-08-16: a tip that says "Nick has yet to select his
+         keepers" or "Tyler is sweating the worm" has to land on a franchise, and until
+         now the brief carried no way to make that jump. First names only — see
+         geOwnerNames_ for why the email column is not read. */
+      var names = geOwnerNames_();
+      var runs = (prov.teams || []).filter(function (t) { return names[t]; })
+        .map(function (t) { return names[t] + ' runs ' + t; });
+      if (runs.length) {
+        L.push('');
+        L.push('WHO RUNS WHAT: ' + runs.join('; ') + '.');
+        L.push('You may call a manager by first name — the league does, and a tip that names a ' +
+               'person means the club listed beside it. First names only: never print a surname, ' +
+               'an email address or any other contact detail.');
       }
     }
     return L.join('\n');
@@ -496,6 +569,25 @@ function geGenerate_(state) {
 }
 
 function geTrim_(s) { return String(s == null ? '' : s).replace(/^\s+|\s+$/g, ''); }
+
+/**
+ * A keeper card's save time, as something a columnist can use.
+ *
+ * Relative, not absolute, because "today" is the only version of this fact worth a
+ * sentence — "re-cut his card this morning" is a story, "saved 2026-08-16T19:04Z" is not.
+ * Degrades to '' rather than guessing when the cell is blank or unparseable, and the
+ * caller prints nothing in that case.
+ */
+function geWhen_(v) {
+  if (!v) return 'unknown';
+  var d = (v instanceof Date) ? v : new Date(v);
+  if (isNaN(d.getTime())) return 'unknown';
+  var days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days <= 0) return 'TODAY';
+  if (days === 1) return 'yesterday';
+  if (days <= 7) return days + ' days ago';
+  return Utilities.formatDate(d, Session.getScriptTimeZone(), 'MMM d');
+}
 
 /* ------------------------------------------------------------------ publish */
 
