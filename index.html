@@ -341,15 +341,11 @@ header{background:var(--panel2);border-bottom:2px solid var(--accent);padding:10
        border-left:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding-top:6px}
 .strip .vl{writing-mode:vertical-rl;font-family:'Oswald';font-size:11px;letter-spacing:2px;
            text-transform:uppercase;color:var(--muted);margin-top:6px}
-.yueng{margin:10px 12px;background:var(--panel2);border:1px solid var(--line);
-       border-radius:8px;padding:10px 12px}
-.yueng .yh{font-size:12px;font-weight:600;text-align:center}
-.yueng .yt{height:6px;background:var(--line);border-radius:3px;margin:8px 0 7px;overflow:hidden}
-.yueng .yf{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
-.yueng .yr{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.yueng .yr span{font-size:11px;color:var(--muted)}
-.yueng button{background:var(--accent);color:var(--accent-ink);border:none;border-radius:14px;
-              padding:8px 12px;font-size:11.5px;font-weight:700;min-height:44px}
+/* The Yuengling Fund tip bar was removed 2026-08-16 at Bryan's request, markup and
+   styles together. It was never wired to anything — press.js has no reference to
+   #yuengBtn, the 30% fill and "7 of 10 owners have NOT bought" were hardcoded, and
+   the button did nothing when pressed. Leaving the CSS behind would have left a
+   rule set nobody could find the markup for. */
 .feed{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:12px}
 .post{display:flex;gap:9px;border-bottom:1px solid var(--line);padding-bottom:10px}
 .post .av{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;
@@ -672,12 +668,6 @@ header{background:var(--panel2);border-bottom:2px solid var(--accent);padding:10
       <span class="rt">League Feed</span>
       <button class="icobtn" id="railPop" title="Pop out" aria-label="Pop out the league feed">⧉</button>
       <span class="rail-count">👥 10</span>
-    </div>
-    <div class="yueng">
-      <div class="yh">🍺 Yuengling Fund — keep Gelly hydrated</div>
-      <div class="yt"><div class="yf" style="width:30%"></div></div>
-      <div class="yr"><span>7 of 10 owners have NOT bought</span>
-        <button id="yuengBtn">🍺 Buy one · $5.99</button></div>
     </div>
     <div class="feed" id="feedList"></div>
   </aside>
