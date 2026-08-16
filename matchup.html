@@ -154,7 +154,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 
 <main>
   <div class="topbar">
-    <a class="back" id="back" href="index.html#scoreboard">&lsaquo; Scoreboard</a>
+    <a class="back" id="back" href="board.html#scoreboard">&lsaquo; Scoreboard</a>
     <label class="back" for="weekSel" style="margin-left:6px;">Week</label>
     <select id="weekSel" aria-label="Week"></select>
     <div class="switch">
@@ -217,7 +217,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
      story beats the verdict. Nothing else needs to change. */
   var FREEZE_CLOSING_ODDS_AT_FINAL = false;
 
-  /* Same throttle discipline as index.html: never more than four calls in flight at this
+  /* Same throttle discipline as board.html (formerly index.html): never more than four calls in flight at this
      one Apps Script deployment, and a non-JSON body is a retry rather than a surrender.
      `matchup.html` is a second front door to the same backend; without this it reproduces
      the stampede documented in backend-stampede-incident.md from a different page. */
@@ -520,7 +520,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
   function syncURL() {
     var u = 'matchup.html?week=' + state.week + '&a=' + state.fidA + '&b=' + state.fidB;
     try { history.replaceState(null, '', u); } catch (e) {}
-    $('back').href = 'index.html?week=' + state.week + '#scoreboard';
+    $('back').href = 'board.html?week=' + state.week + '#scoreboard';
   }
 
   function selectIndex(i) {

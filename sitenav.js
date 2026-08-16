@@ -22,8 +22,10 @@
  *
  * THE THREE CONSTRAINTS THIS FILE LIVES UNDER (all learned the hard way)
  *
- *   - index.html's <nav> is HARDCODED and its inline script binds
+ *   - The shell's <nav> is HARDCODED and its inline script binds
  *     `nav button[data-tab]`. Extend it; never rebuild it. (gotcha 33-B)
+ *     The shell is board.html since the 2026-08-16 root swap; it was index.html
+ *     before. Nothing in this file may spell that name inline — see SHELL.
  *   - The injected strip is a `div role="navigation"`, NOT a <nav>. auth.js
  *     parks its sign-out chip in `querySelector('nav') || .hdr-right`, so a real
  *     <nav> races it. (gotcha 15)
@@ -43,9 +45,18 @@
 
   /* ---------------------------------------------------------------------
    * 1. The nav. One source of truth, shared by every page.
-   *    `tab`  — section id on index.html (null for a standalone page)
+   *    `tab`  — section id on the SHELL page (null for a standalone page)
    *    `page` — where the link points
    * ------------------------------------------------------------------ */
+  /* THE SHELL IS A MOVING TARGET. It was index.html until the 2026-08-16 root swap;
+     it is board.html now. Every `tab` entry below points at whichever page carries
+     the hardcoded `nav button[data-tab]` bar, so name it ONCE.
+
+     This constant is why the swap broke: the six tab entries were spelled
+     'index.html' inline, so after the rename they aimed the paper's own nav at the
+     paper — six chips reloading the front page with a dead hash. Renaming the shell
+     again is now one line, not nine. */
+  var SHELL = 'board.html';
   /* Rosters and Round Values is a PRE-DRAFT surface. It shows 2026 keeper round
      values and it is where owners declare keepers; once the draft has run, both are
      history and the numbers on it are last season's. Bryan, 2026-08-06: it "will go
@@ -70,28 +81,33 @@
        be worse than either name alone, so this maps rather than adds.
 
        CONSEQUENCE, deliberately taken: validTabs() is derived from the entries that
-       have a `tab`, so 'board' leaves it and an old index.html#board bookmark falls
+       have a `tab`, so 'board' leaves it and an old board.html#board bookmark falls
        through to the default tab — the same graceful degradation `rosters` takes via
        `retires`. Nothing is lost: the feed those bookmarks were for is on this page,
        in the rail, live. The #board section itself is untouched and still reachable
-       by direct link. */
-    { tab: null,         page: 'press.html',      label: 'League News',
+       by direct link.
+
+       Note after the root swap: a bookmark saved as `index.html#board` BEFORE the swap
+       no longer reaches the shell at all — index.html is the paper now, and it has no
+       tabs to fall through to. That is the intended landing, not a regression: the feed
+       is on the paper, in the rail. */
+    { tab: null,         page: 'index.html',      label: 'League News',
       title: 'The Dispatch — the edition, standings, top scorers, the waiver wire and Gelly\'s column' },
     { tab: null,         page: 'draftboard.html', label: 'Draftboard',
       title: 'Interactive keeper draftboard — mock drafts, keeper decisions and a full season simulator' },
-    { tab: 'rosters',    page: 'index.html',      label: 'Rosters and Round Values',
+    { tab: 'rosters',    page: SHELL,             label: 'Rosters and Round Values',
       title: 'Every roster with its 2026 keeper round values — declare your keepers here',
       retires: true },
     { tab: null,         page: 'roster.html',     label: 'Depth Chart',
       title: 'Your team by position after the draft — starters, flex and bench' },
-    { tab: 'schedule',   page: 'index.html',      label: '2026 NFL Schedule' },
-    { tab: 'scoreboard', page: 'index.html',      label: 'Scoreboard' },
-    { tab: 'standings',  page: 'index.html',      label: 'Standings' },
+    { tab: 'schedule',   page: SHELL,             label: '2026 NFL Schedule' },
+    { tab: 'scoreboard', page: SHELL,             label: 'Scoreboard' },
+    { tab: 'standings',  page: SHELL,             label: 'Standings' },
     /* Reference, not week-to-week. Bryan, 2026-08-06: both go after Standings —
        they are the things you look up once, not the things you check on Sunday. */
-    { tab: 'rules',      page: 'index.html',      label: 'Rules',
+    { tab: 'rules',      page: SHELL,             label: 'Rules',
       title: 'Keeper rules and the league constitution' },
-    { tab: 'history',    page: 'index.html',      label: 'League History' }
+    { tab: 'history',    page: SHELL,             label: 'League History' }
   ];
 
   /* Keepers is deliberately NOT a nav item. Keeper declaration lives inside
@@ -118,12 +134,18 @@
     var p = (location.pathname || '').toLowerCase();
     if (p.indexOf('draftboard') !== -1) return 'draftboard.html';
     if (p.indexOf('dashboard') !== -1) return 'dashboard.html';
+    /* Root swap (2026-08-16): board.html is the old shell. This MUST sit after both
+       draftboard and dashboard — 'draftboard' and 'dashboard' both contain 'board' as a
+       substring, so testing board.html first would misclassify either of those pages. */
+    if (p.indexOf('board') !== -1) return 'board.html';
     if (p.indexOf('profile') !== -1) return 'profile.html';
     if (p.indexOf('matchup') !== -1) return 'matchup.html';
     if (p.indexOf('roster') !== -1) return 'roster.html';
     /* press.html USED TO FALL THROUGH to index.html, and that one line cost the paper
        its entire navigation — see the init() note below. currentPage() is also what
-       marks the current chip, so without this the paper highlighted the wrong entry. */
+       marks the current chip, so without this the paper highlighted the wrong entry.
+       press.html is now just the redirect stub, but keep this so a stray reference to
+       it (mid-redirect, or a cached tab) still highlights League News, not the shell. */
     if (p.indexOf('press') !== -1) return 'press.html';
     return 'index.html';
   }
@@ -546,7 +568,12 @@
   }
 
   /* ---------------------------------------------------------------------
-   * 4. index.html — hash routing + the page-links its hardcoded nav lacks
+   * 4. The shell — hash routing + the page-links its hardcoded nav lacks
+   *
+   * Named wireIndex() because the shell was index.html when it was written. The
+   * shell is board.html since the 2026-08-16 root swap; the function is unchanged
+   * because init() picks this branch by asking what the page HAS, not what it is
+   * called. The name is kept so the call site and gotcha 33-B still match.
    * ------------------------------------------------------------------ */
   function wireIndex() {
     var navEl = document.querySelector('nav');
@@ -586,15 +613,24 @@
       selectTab((location.hash || '').replace(/^#/, ''), false);
     });
 
-    /* index's <nav> is hardcoded, so a new NAV entry is invisible here unless we
+    /* The shell's <nav> is hardcoded, so a new NAV entry is invisible here unless we
        add it — which is exactly how the profile link went missing from the page
        most people open first. Add every entry that points at another page, then
        REORDER the whole bar to NAV order, so Draftboard and Depth Chart land in
-       their specified positions instead of being appended at the end. */
+       their specified positions instead of being appended at the end.
+
+       THE TEST IS "does the hardcoded bar already have this?", NOT a filename.
+       This read `item.page === 'index.html'` and skipped it, which was right only
+       while index.html WAS the shell. After the root swap that one line meant the
+       shell had no League News chip at all — the front page, unreachable from the
+       page carrying every other tab. An entry with a `tab` is by definition already
+       a button in this bar (that is what put us in this branch); everything else is
+       a foreign page and needs injecting. The currentPage() test is belt-and-braces
+       for a shell served under some other name. */
     function addExtraLinks() {
       if (!navEl) return;
       navItems().forEach(function (item) {
-        if (item.page === 'index.html') return;
+        if (item.tab || item.page === currentPage()) return;
         var id = 'sn-' + item.page.replace(/[^a-z0-9]/gi, '');
         if (document.getElementById(id)) return;
         var b = document.createElement('button');

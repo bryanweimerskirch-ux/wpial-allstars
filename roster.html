@@ -102,7 +102,7 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
 
 <main>
   <div class="topbar">
-    <a class="back" id="back" href="index.html#standings">&lsaquo; Standings</a>
+    <a class="back" id="back" href="board.html#standings">&lsaquo; Standings</a>
     <label class="back" for="teamSel" style="margin-left:6px;">Team</label>
     <select id="teamSel" aria-label="Team"></select>
     <label class="back" for="weekSel">Week</label>
@@ -399,7 +399,7 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
          what is actually true and when it changes. */
       el.innerHTML = '<p class="note">Depth charts fill in once the draft is done &mdash; ' +
                      '<b>Sunday, Aug 30 at 5:30 PM Mountain</b>. Until then, keeper round values ' +
-                     'live on <a href="index.html#rosters">Rosters and Round Values</a>.</p>';
+                     'live on <a href="board.html#rosters">Rosters and Round Values</a>.</p>';
       return;
     }
     if (state.view === 'depth') { $('lineupT').textContent = 'DEPTH CHART'; paintDepth(el); return; }
@@ -468,7 +468,7 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
     buildTeamSelect();
     var wantTeam = qp('team');
     /* Defaults to the signed-in owner's franchise — the same "your team first" rule the
-       roster grid on index.html follows, so the two surfaces agree about whose team the
+       roster grid on board.html (formerly index.html) follows, so the two surfaces agree about whose team the
        site opens on. */
     state.fid = (fidOf(wantTeam) || myFid() || allFids()[0]) || null;
 
