@@ -467,14 +467,14 @@
             '<span>PF</span><span>PA</span><span>Strk</span></div>';
     S.standings.forEach(function (s, i) {
       var c = fcolors(s.fid || s.name);
-      h += '<div class="agate-row' + (i < 4 ? ' top4' : '') + '">' +
+      h += '<div class="agate-row' + (i < 6 ? ' top4' : '') + '">' +
         '<span class="tm"><i class="chip" style="background:' + escAttr(c.primary) + '"></i>' +
         '<span>' + esc(s.label) + '</span></span>' +
         '<span>' + s.w + '</span><span>' + s.l + '</span>' +
         '<span>' + fmt(s.pf) + '</span><span>' + fmt(s.pa) + '</span>' +
         '<span class="' + (s.streak.charAt(0) === 'W' ? 'sW' : 'sL') + '">' + esc(s.streak) + '</span></div>';
     });
-    h += '<div class="foot-note">Top 4 make the postseason. Last place eats the worm. These are the rules.</div>';
+    h += '<div class="foot-note">Top 6 make the postseason. Last place eats the worm. These are the rules.</div>';
     box.innerHTML = h;
   }
 
