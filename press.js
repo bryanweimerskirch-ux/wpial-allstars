@@ -1166,7 +1166,7 @@
     $('mobFeed').onclick = function () { openPop($('mobFeed')); };
     $('popClose').onclick = closePop;
     $('popScrim').onclick = closePop;
-    $('yuengBtn').onclick = function () { openTip(); };
+    /* The Yuengling tip bar was removed 2026-08-16 (index.html). openTip() is still reached from the tip FAB; this line wired the button that no longer exists, and left unguarded it threw inside initRail() and took boot() down with it. */
   }
 
   var popOpener = null, popTrap = null;
