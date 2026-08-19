@@ -315,7 +315,22 @@
          rather than rebuilding the markup, which would risk its tab bindings. */
       /* Title goes left and the controls sit against the right edge, so the two
          never collide the way a centred title and a floated chip would. */
-      '  body > header{padding:10px 132px 10px 13px !important;text-align:left !important;}',
+      /* The 132px right reservation is ONLY for the centred-title header (board.html,
+         the one with an <h1>). It used to apply to every `body > header` — but the
+         draftboard header is a WRAPPING flex row, and padding squeezes every wrapped
+         line, not just the brand line. On a 412px phone that left 267px for the
+         mode toggle, the on-the-clock ticker, the draft clock and the nav: all of
+         them clipped at a hard edge two-thirds across the screen (reported from a
+         live phone screenshot, 2026-08-19). Flex-row headers now keep slim padding;
+         only the brand line needs to clear the pinned chip, handled below. */
+      '  body > header{padding:10px 13px !important;text-align:left !important;}',
+      '  body > header:has(> h1){padding-right:132px !important;}',
+      /* mobilehdr.js compacts the collapsed draftboard header; the !important above
+         would undo it, so restate the collapsed padding at equal weight. */
+      '  body.mhdr-min header{padding:6px 12px !important;}',
+      /* The draftboard Hide/Show toggle is margin-left:auto on the brand line — give
+         it clearance so it cannot slide under the pinned identity chip. */
+      '  #wpial-mhdr-toggle{margin-right:84px;}',
       '  body > header h1{font-size:19px !important;}',
       '  body > header > p{display:none !important;}',
       '  #snHdrSlot.sn-float{right:9px;}',

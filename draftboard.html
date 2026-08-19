@@ -225,6 +225,8 @@ table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width
 #balist .kpbtn:hover{background:var(--accent);color:var(--accent-ink);}
 #balist .ba.dim{opacity:.5;cursor:default;}
 #balist .ba.dim:hover{border-color:transparent;background:transparent;}
+#baMore{display:block;width:100%;margin-top:8px;padding:8px;border-radius:8px;font-size:12px;color:var(--muted);}
+#baMore:hover{color:var(--accent);}
 /* ---------- season sim ---------- */
 #simModal .modal{width:min(880px,96vw);}
 .simctl{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
@@ -2323,6 +2325,9 @@ function stopMock(msg){ mockRunning=false; clearTimeout(mockTimer); $('#mockGo')
 
 /* ================= RENDER ================= */
 let posFilter='ALL';
+/* How many Best Available rows are rendered. Grows via the Show-more button,
+   snaps back to 18 whenever the position filter changes. */
+let baShown=18;
 function render(){
   // In mock mode, while the draft hasn't started (no picks, not running), keep keeper
   // slots as editable ghosts instead of auto-committing them — so keep/unkeep/pass
@@ -2414,7 +2419,12 @@ function renderStatus(){
 }
 function renderBA(){
   if(posFilter==='KEEP'){ renderKeepable(); return; }
-  const list=available(posFilter).slice(0,18);
+  /* The list used to hard-stop at 18 rows with nothing saying so — on a phone it
+     read as "the pool ends here" (reported 2026-08-19). Still start at 18 so a
+     re-render on every pick stays cheap, but say what's below the fold and let
+     the owner page through the whole pool. */
+  const avail=available(posFilter);
+  const list=avail.slice(0,baShown);
   /* One bye report for the whole list, not one per row — byeReport() walks SLOTS
      and rebuilds keeperMap()/poolByNorm(), and renderBA() reruns on every pick. */
   const ct=ctxTeam(), rep=ct?byeReport(ct):{};
@@ -2422,6 +2432,11 @@ function renderBA(){
   $('#balist').innerHTML=list.map(p=>
     '<div class="ba" data-id="'+p.id+'"><span class="rk">'+p.r+'</span><span class="nm">'+esc(p.n)+(p.rk?' <span title="rookie">🐣</span>':'')+'</span><span class="poschip '+p.p+'">'+p.p+'</span><span class="batm">'+esc(p.t)+'</span>'+byeChip(p.t,clashOf(p.t),'pool')+'<span class="pt">'+(p.pts?p.pts+' pts':'')+(p.adp?' · '+p.adp:'')+'</span></div>'
   ).join('') || (posFilter==='ROOK'&&!POOL.some(p=>p.rk)?'<div class="hint">No rookie flags in the current data source — the live league feed provides them (embedded snapshot doesn’t).</div>':'<div class="hint">No players left at this position.</div>');
+  if(avail.length>list.length){
+    $('#balist').insertAdjacentHTML('beforeend',
+      '<button id="baMore" type="button">Show 30 more · '+(avail.length-list.length)+' below</button>');
+    $('#baMore').onclick=()=>{ baShown+=30; renderBA(); };
+  }
 }
 function keepViewTeam(){
   /* The ⭐ Keep pool is about YOUR keepers, not whoever is on the clock.
@@ -2675,6 +2690,7 @@ $('#board').addEventListener('click',e=>{
 $('#posfilters').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b)return;
   posFilter=b.dataset.p;
+  baShown=18;
   document.querySelectorAll('#posfilters button').forEach(x=>x.classList.toggle('active',x===b));
   renderBA();
 });
@@ -2754,9 +2770,11 @@ $('#speedSel').onchange=()=>{};
 
 function tickCountdown(){
   const ms=DRAFT_DATE-new Date();
-  if(ms<=0){ $('#countdown').innerHTML='🏈 <b>DRAFT DAY</b>'; return; }
+  if(ms<=0){ $('#countdown').innerHTML='🏈 <b>DRAFT DAY</b> · 5:30 PM MT'; return; }
   const d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4);
-  $('#countdown').innerHTML='Draft: Aug 30 · <b>'+d+'d '+h+'h '+m+'m</b>';
+  /* Date AND time — "Aug 30" alone sent owners to board.html to find the start time.
+     5:30 PM MT matches board.html's banner and DRAFT_DATE above; change them together. */
+  $('#countdown').innerHTML='Draft: Sun Aug 30 · 5:30 PM MT · <b>'+d+'d '+h+'h '+m+'m</b>';
 }
 setInterval(tickCountdown,30000);
 
