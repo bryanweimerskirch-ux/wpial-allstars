@@ -170,6 +170,42 @@ console.log('\nsitenav.js');
   });
 }
 
+/* ---------------------------------------------------------------------------
+ * 6. The 2026-08-19 phone-screenshot batch (commit 28d6836). Static source
+ *    checks in the same spirit as the rest of this file: each one names the
+ *    ORIGINAL failure, so a revert fails loudly here instead of shipping.
+ * ------------------------------------------------------------------------- */
+console.log('\n2026-08-19 batch — mobile header squeeze, countdown time, pool cap');
+{
+  const NAV = read('sitenav.js');
+  /* 6a. THE SQUEEZE. An unscoped mobile `body > header{...132px...}` rule (meant
+     for board.html's centred-title header) shrank every WRAPPED draftboard header
+     row to 267px on a 412px phone — mode toggle, ticker, clock and nav all
+     clipped at a hard edge two-thirds across the screen. The 132px reservation
+     may only exist scoped to the header that has an <h1>. */
+  check('sitenav: no unscoped body>header 132px padding rule',
+    !/body > header\{[^}]*132px/.test(NAV),
+    'an unscoped 132px reservation squeezes every wrapped header row on phones');
+  check('sitenav: 132px reservation is scoped to :has(> h1)',
+    NAV.indexOf('body > header:has(> h1){padding-right:132px') >= 0);
+  check('sitenav: draftboard Hide toggle keeps clearance from the pinned chip',
+    NAV.indexOf('#wpial-mhdr-toggle{margin-right:') >= 0);
+
+  const DB = read('draftboard.html');
+  /* 6b. The countdown chip said "Aug 30" with no start time; owners had to go
+     find it on board.html's banner. Date AND time, matching DRAFT_DATE. */
+  check('draftboard: countdown carries the draft start time',
+    /Draft: Sun Aug 30 · 5:30 PM MT/.test(DB));
+  check('draftboard: DRAFT_DATE unchanged (2026-08-30 17:30 -06:00)',
+    DB.indexOf("new Date('2026-08-30T17:30:00-06:00')") >= 0);
+  /* 6c. Best Available hard-stopped at a silent slice(0,18) — on a phone it read
+     as "the pool ends here". The cap must be pageable. */
+  check('draftboard: pool render is pageable (baShown), not a bare slice(0,18)',
+    DB.indexOf('avail.slice(0,baShown)') >= 0 && !/available\(posFilter\)\.slice\(0,18\)/.test(DB));
+  check('draftboard: Show-more button exists and grows the list',
+    DB.indexOf('id="baMore"') >= 0 && DB.indexOf('baShown+=30') >= 0);
+}
+
 /* jsdom defers DOMContentLoaded; sitenav's init() waits for it. */
 function return_after_load(dom, fn) {
   if (dom.window.document.readyState === 'loading') {
