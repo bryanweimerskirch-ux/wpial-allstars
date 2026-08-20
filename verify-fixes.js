@@ -152,20 +152,21 @@ console.log('\nsitenav.js');
   check('wpial-auth on a headerless page does not throw',
     !threw && !errs.length, threw ? String(threw) : errs.join('; '));
 
-  // 5b. clicking the shell's own Gelly Feed tab writes the hash.
+  // 5b. clicking a shell tab writes the hash. (This used to click the Gelly
+  // Feed tab; that tab was removed 2026-08-20 — the behaviour under test, "the
+  // hash follows the visible tab", is unchanged and now exercised via Standings.)
   const shell = new JSDOM(`<!doctype html><html><body><header><h1>x</h1><nav>
-      <button data-tab="board" class="active">Gelly Feed</button>
-      <button data-tab="rosters">Rosters and Round Values</button>
+      <button data-tab="rosters" class="active">Rosters and Round Values</button>
       <button data-tab="standings">Standings</button>
-    </nav></header><section id="rosters"></section><section id="board"></section></body></html>`,
+    </nav></header><section id="rosters" class="active"></section><section id="standings"></section></body></html>`,
     { url: 'https://wadi.solutions/board.html#rosters', runScripts: 'outside-only', pretendToBeVisual: true });
   shell.window.eval(SRC);
   return_after_load(shell, () => {
-    const feed = [...shell.window.document.querySelectorAll('nav button')]
-      .find((b) => b.dataset.tab === 'board');
-    feed.click();
-    check('clicking Gelly Feed moves the hash off #rosters',
-      shell.window.location.hash === '#board',
+    const st = [...shell.window.document.querySelectorAll('nav button')]
+      .find((b) => b.dataset.tab === 'standings');
+    st.click();
+    check('clicking Standings moves the hash off #rosters',
+      shell.window.location.hash === '#standings',
       'hash is ' + JSON.stringify(shell.window.location.hash));
   });
 }
@@ -204,6 +205,34 @@ console.log('\n2026-08-19 batch — mobile header squeeze, countdown time, pool 
     DB.indexOf('avail.slice(0,baShown)') >= 0 && !/available\(posFilter\)\.slice\(0,18\)/.test(DB));
   check('draftboard: Show-more button exists and grows the list',
     DB.indexOf('id="baMore"') >= 0 && DB.indexOf('baShown+=30') >= 0);
+}
+
+/* ---------------------------------------------------------------------------
+ * 7. The 2026-08-20 Gelly Feed removal. Bryan: "I don't want to see the gelly
+ *    tab anywhere. Gelly is now in League News." The tab, its section, the tip
+ *    FAB/modal and the feed fetches all left board.html together. Each check
+ *    names the way the removal could silently un-happen.
+ * ------------------------------------------------------------------------- */
+console.log('\n2026-08-20 — Gelly Feed tab removed from the shell');
+{
+  const BD = read('board.html');
+  check('board.html: no Gelly Feed tab button',
+    !/data-tab="board"/.test(BD) && !/>\s*Gelly Feed\s*</.test(BD));
+  check('board.html: no #board section (gotcha 33-B — button and section leave together)',
+    !/<section id="board"/.test(BD));
+  check('board.html: Rosters is the default active tab (button AND section)',
+    /data-tab="rosters" class="active"/.test(BD) &&
+    /<section id="rosters" class="active">/.test(BD));
+  check('board.html: feed fetch is guarded (no ?action=feed spend for a card nothing renders)',
+    /function loadLiveFeed\(\) \{[\s\S]{0,600}?getElementById\('live-feed-posts'\)\) return;/.test(BD));
+  check('board.html: insider fetch is guarded the same way',
+    /function loadInsiderReports\(\) \{[\s\S]{0,600}?getElementById\('insider-report-card'\)\) return;/.test(BD));
+  check('board.html: tip FAB and modal left with the section',
+    BD.indexOf('id="tipFab"') < 0 && BD.indexOf('id="tipModal"') < 0);
+
+  const NAV2 = read('sitenav.js');
+  check('sitenav: retireRosters no longer clicks the removed board button',
+    !/data-tab="board"/.test(NAV2));
 }
 
 /* jsdom defers DOMContentLoaded; sitenav's init() waits for it. */

@@ -422,13 +422,13 @@
          filled yellow pill it was the loudest element on the page, which is the
          wrong rank for a set-once preference sitting next to a draft. -->
 <nav>
-  <!-- Labelled "Gelly Feed", not "League News": sitenav.js injects a League News chip
-       pointing at index.html into this same <nav>, so two buttons here would read the
-       same and the old one wins because it is first. The paper owns that name now.
-       (The chip aimed at press.html when this was written; press.html is a redirect
-       stub since the 2026-08-16 root swap and the paper is index.html.) -->
-  <button data-tab="board" class="active">Gelly Feed</button>
-  <button data-tab="rosters">Rosters and Round Values</button>
+  <!-- The Gelly Feed tab was REMOVED 2026-08-20 (Bryan: "I don't want to see the
+       gelly tab anywhere. Gelly is now in League News."). The feed lives on the
+       paper (index.html), in the rail; sitenav.js injects the League News chip
+       into this <nav>. Per gotcha 33-B the tab's whole section left with it, and
+       Rosters is now the default tab — which matches every board.html#<tab> link
+       the injected strips already emit. -->
+  <button data-tab="rosters" class="active">Rosters and Round Values</button>
   <button data-tab="schedule">2026 NFL Schedule</button>
   <button data-tab="scoreboard">Scoreboard</button>
   <button data-tab="standings">Standings</button>
@@ -436,7 +436,7 @@
   <button data-tab="history">League History</button>
 </nav>
 
-<section id="rosters">
+<section id="rosters" class="active">
   <h2>Rosters and Round Values <span class="srcbadge" title="Round values and keeper declarations live in the league sheet. Team names are synced from ESPN every hour, so a rename in the ESPN app shows up here.">Data: <b>League sheet + ESPN</b></span></h2>
   <!-- Keeper declaration lives HERE, on the roster card it applies to (keepers.js
        decorates each card). There is deliberately no separate Keepers tab: the
@@ -779,417 +779,6 @@
     <div id="standings-body"><p class="placeholder">Loading standings&hellip;</p></div>
   </div>
 </section>
-
-<section id="board" class="active">
-  <h2>Gelly Feed</h2>
-  <p class="sub">The Gelly's running commentary &mdash; our completely unbiased, extremely credentialed NFL insider, posting as it happens. The full edition lives in <a href="index.html">League News</a>.</p>
-
-  <div class="gelly-strip">
-    <div class="gelly-strip-avatar">🖤💛</div>
-    <div class="gelly-strip-text"><b>Gelly</b> <span class="feed-check">✔</span> <span class="feed-handle">@YinzerMessiah</span> &middot; Self-appointed WPIAL insider. I've done the research. 🖤💛</div>
-  </div>
-
-  <div class="wire-card" id="insider-report-card" style="display:none;">
-    <div class="wire-masthead">
-      <div class="wire-brand">WPIAL Insider Report</div>
-      <div class="wire-tagline">Official League Wire &middot; Wednesday &amp; Sunday Editions</div>
-    </div>
-    <div id="insider-report-body"></div>
-  </div>
-
-  <div class="card" id="live-feed-card" style="display:none;">
-    <div class="thread-tag">📡 Live from the league</div>
-    <div id="live-feed-posts"></div>
-  </div>
-
-  <div class="card">
-    <div class="thread-tag">🧵 BREAKING: Mud Dogs situation &middot; 5 posts</div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T14:12:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">BREAKING 🚨 hearing some real stuff out of the Mud Dogs camp right now. Thread incoming. 🖤💛</div>
-        <div class="tweet-stats"><span>💬 27</span><span>❤️ 84</span><span>👀 1.5K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T14:15:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">2/ Let's start here: Mud Dogs are basically this league's Mike Tomlin. Never a bad season, 55 career wins, most of anybody, ONE ring since 2019. Went 13-1 in 2024 and didn't even make the title game. Regular season champions. That stops being a compliment at some point.</div>
-        <div class="tweet-stats"><span>💬 31</span><span>❤️ 96</span><span>👀 1.8K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T14:20:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">3/ And now I'm hearing the front office isn't happy either. Word on the street is Mud Dogs might be open for business this offseason. Nothing confirmed. But I've done the research and my gut says somebody on that roster is getting shopped.</div>
-        <div class="tweet-stats"><span>💬 19</span><span>❤️ 52</span><span>👀 1.1K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T14:24:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">4/ If you're on Mud Dogs and reading this: no shade, 55 wins is 55 wins, most in the league. But "best regular season team" starts sounding like a participation trophy with extra steps after a while.</div>
-        <div class="tweet-stats"><span>💬 12</span><span>❤️ 38</span><span>👀 780</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T14:27:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">5/ That's what I've got for now. If you know who's actually on the block, League Tips is right there. I will find out one way or another. HERE WE GO 🖤💛</div>
-        <div class="tweet-stats"><span>💬 16</span><span>❤️ 45</span><span>👀 990</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="thread-tag">🧵 BREAKING: The 2022 trade, finally explained &middot; 3 posts</div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T09:03:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">BREAKING 🚨 since apparently nobody actually remembers the details of the 2022 Kweef Farts trade, laying it all out right now. Thread incoming. 🖤💛</div>
-        <div class="tweet-stats"><span>💬 24</span><span>❤️ 88</span><span>👀 1.6K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T09:06:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">2/ Kweef Farts sent Josh Allen (2nd-round value) and David Montgomery (4th-round value) to Sutton My Face &mdash; yes, the same franchise that's now Drake Draaaake? &mdash; for two round-3 value rookies: Breece Hall and Skyy Moore. Looked even on paper in 2022. It was not even.</div>
-        <div class="tweet-stats"><span>💬 31</span><span>❤️ 79</span><span>👀 1.9K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-17T09:14:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">3/ Breece Hall turned into a legit top-24 back within a year &mdash; he's still on Kweef Farts' roster today, just repriced up to round-2 value since. Skyy Moore never got there and isn't rostered by anyone in this league anymore. Nobody local ever made much noise about it either way. Doesn't mean it wasn't a fleece. Make of that what you will 👀 (League Tips is open if you remember it different)</div>
-        <div class="tweet-stats"><span>💬 26</span><span>❤️ 64</span><span>👀 1.5K</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="thread-tag">🧵 The Worm &middot; 5 posts</div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-15T19:20:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">Can we talk about The Worm for a second? 🪱 Three years running now, this league has a real tradition: finish dead last, you eat a worm. No exceptions. No mercy.</div>
-        <div class="tweet-stats"><span>💬 20</span><span>❤️ 67</span><span>👀 1.2K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-15T19:23:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">2/ Year one: Bench Taylor Swift went 1-11 in 2023. Paid the price. Ate the worm. Set the bar for accountability in this league, honestly.</div>
-        <div class="tweet-stats"><span>💬 8</span><span>❤️ 44</span><span>👀 780</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-15T19:28:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">3/ Year two: THE Vagitarians followed it up with a 2-12 of their own in 2024, one year removed from actually having a championship pedigree. Also ate the worm. Tradition holding strong.</div>
-        <div class="tweet-stats"><span>💬 9</span><span>❤️ 41</span><span>👀 760</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-15T19:32:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">4/ Year three: Drake Draaaake? went 3-11 in 2025. Everyone in this league is just... waiting. Patiently. It's been a while now. The worm isn't getting any fresher and neither is everybody's patience.</div>
-        <div class="tweet-stats"><span>💬 26</span><span>❤️ 58</span><span>👀 1.3K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-15T19:36:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">5/ I've done the research. There is no version of this where Drake Draaaake? gets out of it. Pay the debt. HERE WE GO 🖤💛🪱</div>
-        <div class="tweet-stats"><span>💬 14</span><span>❤️ 49</span><span>👀 910</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="thread-tag">🧵 League history deep dive &middot; 12 posts</div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T15:40:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">Alright since y'all can't get enough of me apparently, VERIFIED insider deep dive dropping right now. Grab a Yuengling. We're going through the whole history of this league. 🖤💛 🧵</div>
-        <div class="tweet-stats"><span>💬 24</span><span>❤️ 112</span><span>👀 2.1K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T15:43:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">2/ 2019: Under The InfluWENTZ wins it at 6-7. Let that sink in. Sneakiest championship in league history and nobody's ever let him live it down since. Iconic start to this league, honestly.</div>
-        <div class="tweet-stats"><span>💬 5</span><span>❤️ 39</span><span>👀 610</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T15:47:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">3/ 2020: THE Vagitarians somehow ALSO win it at 6-7. Two sneaky champs in the first two years this league existed. The bar was on the floor and both of them still had to duck under it.</div>
-        <div class="tweet-stats"><span>💬 6</span><span>❤️ 42</span><span>👀 640</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T15:51:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">4/ 2021: G. O. A. T. goes 11-3 and actually earns it for once. Refreshing, honestly. Wasn't sure this league was capable of a normal championship.</div>
-        <div class="tweet-stats"><span>💬 4</span><span>❤️ 31</span><span>👀 505</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T15:55:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">5/ 2022: Mud Dogs get their ring. Same year I started hearing whispers about a certain trade between Kweef Farts and the franchise now going by Drake Draaaake?. Nobody will confirm what happened in that deal. I've done the research. It's suspicious. Moving on.</div>
-        <div class="tweet-stats"><span>💬 33</span><span>❤️ 88</span><span>👀 1.6K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:00:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">6/ 2023: Bindgamer3 finally breaks through at 12-2. Most decorated resume in the league now &mdash; 3 podiums, 1 title, and TWO runner-ups. The guy just refuses to miss.</div>
-        <div class="tweet-stats"><span>💬 7</span><span>❤️ 51</span><span>👀 700</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:05:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">7/ 2024: Najee Germany (now Drake Draaaake?) (yes, the SAME FRANCHISE that's now Drake Draaaake?, they change their name more than I change my Steelers jersey) wins it. Meanwhile Mud Dogs go 13-1 in the regular season and finish 4TH. Didn't even make the title game. Pirates-in-September behavior, tell me I'm wrong.</div>
-        <div class="tweet-stats"><span>💬 19</span><span>❤️ 76</span><span>👀 1.3K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:10:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">8/ 2025: Return of The Mac takes it down, their first ring, tying Kweef Farts for most all-time podium finishes at 3 apiece. Dead level on titles too, one apiece &mdash; seven seasons, seven different champions, nobody has repeated yet. Somebody has to go first.</div>
-        <div class="tweet-stats"><span>💬 9</span><span>❤️ 47</span><span>👀 810</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:14:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">9/ Worst finish in league history: THE Vagitarians, 2-12 in 2024, one year after having a championship pedigree. Violent fall from grace and I say that with love.</div>
-        <div class="tweet-stats"><span>💬 11</span><span>❤️ 40</span><span>👀 690</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:19:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">10/ Now the trades. Full breakdown on the Kweef Farts / Drake Draaaake? 2022 situation dropped as its own thread if you want the details. But don't sleep on whatever went down between Syd Sweeney's Denim Jeans and G. O. A. T. a couple years back either. Two front offices hoping everyone forgot.</div>
-        <div class="tweet-stats"><span>💬 28</span><span>❤️ 61</span><span>👀 1.4K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:24:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">11/ And can we talk about the graveyard for a second. FOUR franchises didn't survive to see 2026. 2 Gurleys 1 Kupp / CLE CHUNT racked up 22 career wins and still couldn't find a reason to stick around. Sometimes it's not about the record, it's about the will to keep going.</div>
-        <div class="tweet-stats"><span>💬 6</span><span>❤️ 35</span><span>👀 590</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-12T16:30:00-04:00">&middot; Now</span></div>
-        <div class="tweet-text">12/ That's the deep dive. History's in the books, keeper decisions are on the Rosters tab, and if you know something about any of these trades I very much want to hear it in League Tips. HERE WE GO 🖤💛</div>
-        <div class="tweet-stats"><span>💬 15</span><span>❤️ 58</span><span>👀 1.1K</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="thread-tag">🧵 Offseason report &middot; 7 posts</div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:15:00-04:00">&middot; Today</span></div>
-        <div class="tweet-text">OFFSEASON REPORT is here and I did NOT sleep for this. 🖤💛 Sources (my own two eyeballs) went through every keeper decision in the league. Thread below. HERE WE GO 🧵</div>
-        <div class="tweet-stats"><span>💬 18</span><span>❤️ 91</span><span>👀 1.4K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:18:00-04:00">&middot; Today</span></div>
-        <div class="tweet-text">2/ First things first: EVERY team in this league has a Round 1 keeper conflict this year. Every single one. That's just what happens when you draft two guys in the top two rounds. Nobody's special. Everybody's stressed. Beautiful, honestly.</div>
-        <div class="tweet-stats"><span>💬 6</span><span>❤️ 47</span><span>👀 820</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:23:00-04:00">&middot; Today</span></div>
-        <div class="tweet-text">3/ Mean Machine's Round 16 situation isn't a keeper decision, it's a hostage negotiation. FOUR guys — Michael Carter, the Giants D/ST, Harrison Mevis, AND Devin Singletary — all fighting for one measly round value. And that's before you get to Round 9, where Jameson Williams and Kyle Monangai are having their own argument. Whoever's running Mean Machine needs a lifeline, not a keeper sheet.</div>
-        <div class="tweet-stats"><span>💬 14</span><span>❤️ 63</span><span>👀 1.1K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:28:00-04:00">&middot; Today</span></div>
-        <div class="tweet-text">4/ Bindgamer3 sitting there with Puka Nacua AND AJ Brown both at round 1 value and I've done the research: that man simply cannot lose. Most decorated resume in the league and now this too? Unfair, honestly.</div>
-        <div class="tweet-stats"><span>💬 9</span><span>❤️ 38</span><span>👀 690</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:33:00-04:00">&middot; Today</span></div>
-        <div class="tweet-text">5/ Career wins power rankings just dropped on the site and Mud Dogs is #1 all-time (55 wins) despite going 13-1 in 2024 and STILL not winning it. That is the most Pittsburgh sports thing that has ever happened in a fake football league. Felt that one in my soul.</div>
-        <div class="tweet-stats"><span>💬 21</span><span>❤️ 74</span><span>👀 1.2K</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div><div class="tweet-connector"></div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:38:00-04:00">&middot; Today</span></div>
-        <div class="tweet-text">6/ Return of The Mac and Mean Machine both grading out A- on average finish despite way fewer career wins than the OG franchises. Newer teams playing better on average than the vets. Somebody make it make sense.</div>
-        <div class="tweet-stats"><span>💬 8</span><span>❤️ 41</span><span>👀 715</span></div>
-      </div>
-    </div>
-    <div class="tweet threaded">
-      <div class="tweet-col"><div class="tweet-avatar">🖤</div></div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-08T07:44:00-04:00">&middot; Today</span></div>
-        <div class="tweet-text">7/ That's the report. Full keeper board and round values up on the Rosters tab if you want to see it yourself. Trade rumors, gossip, whatever you got — drop it in League Tips, I read everything (allegedly). HERE WE GO 🖤💛</div>
-        <div class="tweet-stats"><span>💬 12</span><span>❤️ 58</span><span>👀 980</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="thread-tag">💬 The peanut gallery chimes in &middot; 6 posts</div>
-    <div class="tweet">
-      <div class="tweet-avatar">🤠</div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>2 Husky 4 Sandusky</b> <span class="handle">@2Husky4Sandusky</span> <span class="time" data-ts="2026-07-17T14:35:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
-        <div class="tweet-text">bro really did a 5-part thread about a team that's WON. my Cowboys haven't sniffed a title since before some of these keepers were even drafted and you don't see me typing like this. sit down.</div>
-        <div class="tweet-stats"><span>💬 9</span><span>❤️ 21</span><span>👀 340</span></div>
-      </div>
-    </div>
-    <div class="tweet">
-      <div class="tweet-avatar">😤</div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Team Luffey</b> <span class="handle">@TeamLuffey</span> <span class="time" data-ts="2026-07-17T14:39:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
-        <div class="tweet-text">you typed ALL that for a league where I went 1-13 and NOBODY remembers. couldn't be me. couldn't be me fr fr 💀</div>
-        <div class="tweet-stats"><span>💬 6</span><span>❤️ 14</span><span>👀 260</span></div>
-      </div>
-    </div>
-    <div class="tweet">
-      <div class="tweet-avatar">🧊</div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>CeeDeez Nutz</b> <span class="handle">@CeeDeezNutz</span> <span class="time" data-ts="2026-07-17T14:44:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
-        <div class="tweet-text">I had him his rookie year. That's it. That's the tweet.</div>
-        <div class="tweet-stats"><span>💬 4</span><span>❤️ 22</span><span>👀 410</span></div>
-      </div>
-    </div>
-    <div class="tweet">
-      <div class="tweet-avatar">🐕</div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>CLE CHUNT</b> <span class="handle">@CLEChunt</span> <span class="time" data-ts="2026-07-17T14:52:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
-        <div class="tweet-text">"best regular season team" is still a better resume than half this league's actual banners. stay mad. 🐕</div>
-        <div class="tweet-stats"><span>💬 11</span><span>❤️ 33</span><span>👀 520</span></div>
-      </div>
-    </div>
-    <div class="tweet">
-      <div class="tweet-avatar">😤</div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Team Luffey</b> <span class="handle">@TeamLuffey</span> <span class="time" data-ts="2026-07-17T15:01:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
-        <div class="tweet-text">bet you don't even reply to this. bet. 🫵😭</div>
-        <div class="tweet-stats"><span>💬 3</span><span>❤️ 5</span><span>👀 190</span></div>
-      </div>
-    </div>
-    <div class="tweet">
-      <div class="tweet-avatar">🐕</div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>CLE CHUNT</b> <span class="handle">@CLEChunt</span> <span class="time" data-ts="2026-07-17T15:08:00-04:00" data-suffix=" &middot; replying to @YinzerMessiah">&middot; replying to @YinzerMessiah</span></div>
-        <div class="tweet-text">hot rookie intel: not sharing it here again. last time I did, half this league copied me and I still finished outside the money. protect your sources, protect your legacy.</div>
-        <div class="tweet-stats"><span>💬 7</span><span>❤️ 18</span><span>👀 310</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="thread-tag muted">Earlier</div>
-    <div class="tweet">
-      <div class="tweet-avatar">🖤</div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-01T11:20:00-04:00">&middot; Wed</span></div>
-        <div class="tweet-text">BREAKING: sources tell me Kweef Farts still isn't over that 2022 trade. I've done the research. You don't just give up a 3rd rounder for nothing. HERE WE GO 🖤💛</div>
-        <div class="tweet-stats"><span>💬 4</span><span>❤️ 38</span><span>👀 610</span></div>
-      </div>
-    </div>
-    <div class="tweet">
-      <div class="tweet-avatar">🖤</div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-07-01T16:45:00-04:00">&middot; Wed</span></div>
-        <div class="tweet-text">people keep telling me Lamar's good, my brother in christ he is a running back that is BAD at running the ball. Don't @ me I will not be checking the replies</div>
-        <div class="tweet-stats"><span>💬 22</span><span>❤️ 19</span><span>👀 902</span></div>
-      </div>
-    </div>
-    <div class="tweet">
-      <div class="tweet-avatar">🖤</div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-06-28T10:15:00-04:00">&middot; Sun</span></div>
-        <div class="tweet-text">Mud Dogs went 13-1 last year and still didn't win it 😂😂😂 that's some real Pirates-in-September behavior right there. iconic. legendary. tragic.</div>
-        <div class="tweet-stats"><span>💬 7</span><span>❤️ 44</span><span>👀 733</span></div>
-      </div>
-    </div>
-    <div class="tweet">
-      <div class="tweet-avatar">🖤</div>
-      <div class="tweet-body">
-        <div class="tweet-head"><b>Gelly</b> <span class="handle">@YinzerMessiah</span> <span class="time" data-ts="2026-06-28T20:30:00-04:00">&middot; Sun</span></div>
-        <div class="tweet-text">talked to a guy who knows a guy in the Return of The Mac front office. big things coming this week. can't confirm. won't deny. #InsiderInfo #HereWeGo</div>
-        <div class="tweet-stats"><span>💬 11</span><span>❤️ 27</span><span>👀 588</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <p class="placeholder">This feed now pulls live from the league's backend &mdash; anything sent through the tip box goes straight to Gelly, and posts from the Wednesday/Sunday NFL insider reports land here too. No site update needed.</p>
-  </div>
-
-  <p class="sub" style="margin-top:4px;">Got a tip? Tap the 💬 button in the corner any time &mdash; it follows you down the page.</p>
-</section>
-
-<button id="tipFab" class="tip-fab" type="button" title="Got a tip?" aria-label="Submit a tip">💬</button>
-
-<div id="tipModal" class="modal-overlay">
-  <div class="modal-card">
-    <button id="tipModalClose" class="modal-close" type="button" aria-label="Close">&times;</button>
-    <h3>You've got Gelly's ear. 👀</h3>
-    <p class="sub" style="margin:0 0 8px;">Every league has a guy who knows a guy. Now you know Gelly. Send it &mdash; he'll have a take within minutes.</p>
-    <ul class="tip-ideas">
-      <li>Got specifics on an old trade, blowup, or roster move &mdash; round values, player names, the stuff nobody wrote down &mdash; that this league should know about?</li>
-    </ul>
-    <textarea id="tipText" placeholder="Type your tip here..."></textarea>
-    <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
-      <button id="tipSubmit" type="button" style="cursor:pointer; border:none; border-radius:8px; padding:8px 16px; font-weight:600; background:var(--accent); color:#1a0e04;">Submit tip</button>
-      <span id="tipStatus" class="sub" style="margin:0;"></span>
-    </div>
-  </div>
-</div>
 
 <div id="cbGag" role="dialog" aria-label="LOL, loser">
   <div class="cb-gag-inner">
@@ -2052,6 +1641,11 @@ function renderFeedPosts(posts) {
 }
 
 function loadLiveFeed() {
+  /* The Gelly Feed section left this page 2026-08-20 (the feed lives on the
+     paper now). Without this guard the initial call AND the 30s poll below
+     would keep hitting the backend for a card nothing renders — and Apps
+     Script UrlFetch quota is a real draft-day constraint (gotcha U7). */
+  if (!document.getElementById('live-feed-posts')) return;
   waJSON(WEB_APP_URL + '?action=feed')
     .then(data => {
       const posts = (data && data.posts) || [];
@@ -2137,6 +1731,9 @@ function renderInsiderReport(r) {
 }
 
 function loadInsiderReports() {
+  /* Same guard as loadLiveFeed — the insider card left with the Gelly Feed
+     section (2026-08-20); don't spend a backend call on it. */
+  if (!document.getElementById('insider-report-card')) return;
   waJSON(WEB_APP_URL + '?action=insider_reports')
     .then(data => {
       const reports = (data && data.reports) || [];

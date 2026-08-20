@@ -5,11 +5,12 @@ const { JSDOM } = require('jsdom');
 
 const SRC = fs.readFileSync(__dirname + '/sitenav.js', 'utf8');
 
+/* Mirrors board.html's hardcoded bar AFTER the 2026-08-20 Gelly Feed removal:
+   no 'board' tab, no #board section, Rosters is the default active tab. */
 const SHELL_DOM = `<!doctype html><html><body>
   <header><h1>WPIAL All Stars</h1>
     <nav>
-      <button data-tab="board" class="active">Gelly Feed</button>
-      <button data-tab="rosters">Rosters and Round Values</button>
+      <button data-tab="rosters" class="active">Rosters and Round Values</button>
       <button data-tab="schedule">2026 NFL Schedule</button>
       <button data-tab="scoreboard">Scoreboard</button>
       <button data-tab="standings">Standings</button>
@@ -17,7 +18,7 @@ const SHELL_DOM = `<!doctype html><html><body>
       <button data-tab="history">League History</button>
     </nav>
   </header>
-  <section id="rosters"></section><section id="board"></section>
+  <section id="rosters" class="active"></section>
 </body></html>`;
 
 const PAPER_DOM = `<!doctype html><html><body>
@@ -68,16 +69,15 @@ console.log('\nSHELL — https://wadi.solutions/board.html');
   check('no duplicated tab buttons (hardcoded ones not re-injected)',
     dupes.length === 0, dupes.length ? 'duplicated: ' + dupes.join(', ') : '');
 
-  /* Gelly Feed carries tab 'board', which is deliberately NOT a NAV entry, so
-     reorder() never touches it and it stays where the hardcoded markup put it:
-     first. Everything reorder() DOES own must be in NAV order behind it. */
-  const managed = labels.filter((l) => l !== 'Gelly Feed');
-  check('NAV-managed chips are in NAV order',
-    managed.join('|') === ['League News', 'Draftboard', 'Rosters and Round Values',
+  /* Since the 2026-08-20 Gelly Feed removal every button in the bar is
+     NAV-managed, so reorder() owns the whole bar and it must read in exactly
+     NAV order — identical to the strip every other page gets. */
+  check('the whole bar is in NAV order (no unmanaged tabs left)',
+    labels.join('|') === ['League News', 'Draftboard', 'Rosters and Round Values',
       'Depth Chart', '2026 NFL Schedule', 'Scoreboard', 'Standings', 'Rules',
       'League History'].join('|'), 'order: ' + labels.join(' | '));
-  check('the unmanaged Gelly Feed tab is still first',
-    labels[0] === 'Gelly Feed', 'first is: ' + labels[0]);
+  check('the Gelly Feed tab is gone (removed 2026-08-20 — feed lives on the paper)',
+    !labels.includes('Gelly Feed'), 'nav reads: ' + labels.join(' | '));
 
   check('renderStrip did NOT run on the shell (it owns its own bar)',
     !w.document.getElementById('siteNav') ||

@@ -84,8 +84,9 @@
        have a `tab`, so 'board' leaves it and an old board.html#board bookmark falls
        through to the default tab — the same graceful degradation `rosters` takes via
        `retires`. Nothing is lost: the feed those bookmarks were for is on this page,
-       in the rail, live. The #board section itself is untouched and still reachable
-       by direct link.
+       in the rail, live. (2026-08-20: the shell's own Gelly Feed tab and its #board
+       section were removed outright — Bryan's call, "Gelly is now in League News" —
+       so board.html#board now falls through to the shell's default tab, Rosters.)
 
        Note after the root swap: a bookmark saved as `index.html#board` BEFORE the swap
        no longer reaches the shell at all — index.html is the paper now, and it has no
@@ -617,16 +618,16 @@
       (function (btn) {
         btn.addEventListener('click', function () {
           var t = btn.dataset.tab;
-          /* The hash follows the VISIBLE tab, including the shell's own 'board' (Gelly
-             Feed), which is deliberately absent from validTabs(). Bailing before the
-             replaceState left the URL pointing at whatever tab the reader came from: open
-             board.html#rosters, click Gelly Feed, refresh — and you are back on Rosters,
-             having apparently lost your click. selectTab() still refuses an unknown
-             incoming hash, so writing this one costs nothing on the way back in. */
+          /* The hash follows the VISIBLE tab, even one not in validTabs(). (The
+             lesson came from the shell's old Gelly Feed 'board' tab, removed
+             2026-08-20: bailing before the replaceState left the URL pointing at
+             whatever tab the reader came from, so a refresh appeared to lose the
+             click. selectTab() still refuses an unknown incoming hash, so writing
+             an unlisted one costs nothing on the way back in.) */
           try { history.replaceState(null, '', '#' + t); } catch (e) {}
-          /* Closes for EVERY tab, 'board' included. The old early return skipped this too,
-             so on a phone tapping Gelly Feed in the sheet left the sheet open on top of
-             the tab it had just switched to. */
+          /* Closes for EVERY tab. The old early return skipped this too, so on a
+             phone tapping an unlisted tab in the sheet left the sheet open on top
+             of the tab it had just switched to. */
           closeSheet();
         });
       })(buttons[j]);
@@ -690,11 +691,21 @@
       var sec = document.getElementById('rosters');
       if (btn) btn.hidden = true;
       if (sec) {
-        /* If it is the active tab when it retires, hand the page back to League News
-           rather than leaving the reader on a blank screen. */
+        /* If it is the active tab when it retires, hand the page to the first
+           surviving tab rather than leaving the reader on a blank screen.
+           This used to click the Gelly Feed ('board') button; that tab was
+           removed 2026-08-20 (the feed lives on the paper), and Rosters is now
+           the shell's DEFAULT tab — so after 2026-08-31 this fallback runs on
+           EVERY hashless load of board.html, not just at the moment of expiry.
+           It must always find a real, un-hidden button. */
         if (sec.classList.contains('active')) {
-          var home = navEl && navEl.querySelector('button[data-tab="board"]');
-          if (home) home.click();
+          var alive = navEl ? navEl.querySelectorAll('button[data-tab]') : [];
+          for (var a = 0; a < alive.length; a++) {
+            if (!alive[a].hidden && alive[a].dataset.tab !== 'rosters') {
+              alive[a].click();
+              break;
+            }
+          }
         }
         sec.hidden = true;
         sec.classList.remove('active');
