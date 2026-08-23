@@ -361,6 +361,23 @@ console.log('\nrehearsal batch — keepers, byes, roster legality, watchlists');
     /if \(L\.length !== before\) changed\(\);/.test(WL));
   check('draftboard: render fires the event the prune listens for',
     /dispatchEvent\(new CustomEvent\('wpial-board-render'\)\)/.test(BD2));
+
+  /* 9f. The two states a quiet strip line demonstrably failed to convey: three
+         people drafted for an hour on one shared link, and a disconnected board
+         looks identical to a working one. */
+  const mism = (DS.match(/function identityMismatch\(\)[\s\S]*?\n  \}/) || [''])[0];
+  check('draftsync: draft identity is cross-checked against the site login',
+    /siteFid\(\)/.test(mism) && /s === myFid/.test(mism));
+  check('draftsync: compared by fid, never by team name (ESPN names drift hourly)',
+    /function siteFid\(\)[\s\S]{0,300}u\.fid/.test(DS) && !/WPIAL_USER\.team === teamOf/.test(DS));
+  check('draftsync: a mismatch says WRONG ACCOUNT and names both franchises',
+    /WRONG ACCOUNT/.test(DS) && /teamOf\(mm\.draft\)/.test(DS) && /teamOf\(mm\.site\)/.test(DS));
+  check('draftsync: not-connected gets its own loud banner, not just a strip line',
+    /NOT CONNECTED/.test(DS) && /stay on this device and nobody else sees them/.test(DS));
+  check('draftsync: that banner offers Connect without hunting for it',
+    /id="dsAlertGo"/.test(DS) && /ag\.onclick = connectClick/.test(DS));
+  check('draftsync: neither banner fires in MOCK (private simulator)',
+    /if \(!isLive\(\)\) \{ el\.style\.display = 'none'; alertBar\(''\); return; \}/.test(DS));
 }
 
 /* jsdom defers DOMContentLoaded; sitenav's init() waits for it. */

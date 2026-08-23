@@ -97,6 +97,52 @@
 
   function amCommish() { return !!(uid && commishMap[uid] === true); }
 
+  /* ---------------- two identities, one browser ----------------
+   * Every browser on this board holds TWO independent identities: the site
+   * login (auth.js -> WPIAL_USER) and the draft session (this file). They must
+   * name the same franchise. On 2026-08-23 three people drafted for an hour on
+   * one shared ?k= link and nobody noticed, because the only tell was a quiet
+   * line reading "you are Bijan Mustard" on somebody else's screen.
+   *
+   * Compared by FID, never by team name — names come from ESPN and drift
+   * hourly, so a name comparison would cry wolf every afternoon.
+   *
+   * There is no commissioner exception: picking for another team does not
+   * change who you are signed in as, so a mismatch is always wrong.
+   */
+  function siteFid() {
+    try {
+      var u = window.WPIAL_USER;
+      if (!u) return null;
+      if (u.fid) return String(u.fid);
+      return u.team ? fidOf(u.team) : null;
+    } catch (e) { return null; }
+  }
+  function identityMismatch() {
+    if (!uid || !myFid) return null;
+    var s = siteFid();
+    if (!s || s === myFid) return null;
+    return { site: s, draft: myFid };
+  }
+
+  /* One loud banner for the two states a quiet strip line demonstrably fails to
+     communicate. Fixed, because both are conditions you must not draft through.
+     Sits above the staging banner (env.js owns bottom:0 there, 26px tall). */
+  function alertBar(html, cls) {
+    var el = document.getElementById('dsAlert');
+    if (!html) { if (el) el.style.display = 'none'; return; }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'dsAlert';
+      el.setAttribute('role', 'alert');
+      (document.body || document.documentElement).appendChild(el);
+    }
+    el.className = cls || '';
+    el.style.bottom = (WPIAL_ENV && WPIAL_ENV.isStaging) ? '26px' : '0';
+    el.innerHTML = html;
+    el.style.display = '';
+  }
+
   /* Keeper rows carry a player name and a position but NO NFL team — the keeper
      sheet has never had one. The board resolves it out of POOL by NORMALISED
      NAME (gotcha 21: never by id, the two feeds disagree on ids), and so must
@@ -165,7 +211,12 @@
       '@media (max-width:760px){#dsBar input{flex:1 1 100%;min-width:0;}}',
       '#dsBar .dsclock{font-family:"Oswald",sans-serif;font-variant-numeric:tabular-nums;',
       '  font-size:14px;color:var(--text);letter-spacing:.5px;}',
-      '@media (max-width:760px){#dsBar{gap:7px;font-size:11px;}}'
+      '@media (max-width:760px){#dsBar{gap:7px;font-size:11px;}}',
+      '#dsAlert{position:fixed;left:0;right:0;z-index:2147482000;padding:7px 12px;',
+      '  font-size:13px;font-weight:700;text-align:center;color:#fff;',
+      '  background:#8a2b1c;border-top:2px solid #e0644f;}',
+      '#dsAlert.ghost{background:#5a4a12;border-top-color:#f0d488;}',
+      '#dsAlert button{font-size:12px;padding:3px 10px;margin-left:8px;}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -222,8 +273,22 @@
   function paint() {
     var el = bar();
     if (!el) return;
-    if (!isLive()) { el.style.display = 'none'; return; }
+    if (!isLive()) { el.style.display = 'none'; alertBar(''); return; }
     el.style.display = '';
+
+    /* Loudest first: a wrong identity is worse than no identity, because the
+       board looks like it is working. */
+    var mm = identityMismatch();
+    if (mm) {
+      alertBar('⚠ WRONG ACCOUNT — this browser is signed in to the draft as <b>' +
+        h(teamOf(mm.draft)) + '</b>, but your league login is <b>' + h(teamOf(mm.site)) +
+        '</b>. You are using someone else\'s draft link. Open your own before picking.');
+    } else if (!uid) {
+      alertBar('⚠ NOT CONNECTED — picks you make here stay on this device and nobody else sees them.' +
+        ' <button id="dsAlertGo" type="button">Connect</button>', 'ghost');
+    } else {
+      alertBar('');
+    }
 
     var parts = [];
     if (!uid) {
@@ -277,6 +342,8 @@
 
     var c = document.getElementById('dsConnect');
     if (c) c.onclick = connectClick;
+    var ag = document.getElementById('dsAlertGo');
+    if (ag) ag.onclick = connectClick;
     var g = document.getElementById('dsEmailGo');
     if (g) g.onclick = function () {
       var v = fieldVal('dsEmail');
