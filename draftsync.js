@@ -97,6 +97,19 @@
 
   function amCommish() { return !!(uid && commishMap[uid] === true); }
 
+  /* Keeper rows carry a player name and a position but NO NFL team — the keeper
+     sheet has never had one. The board resolves it out of POOL by NORMALISED
+     NAME (gotcha 21: never by id, the two feeds disagree on ids), and so must
+     anything that writes or reads a keeper pick. Without it byeOf() gets '' and
+     every keeper becomes invisible to the entire bye-week planner. */
+  function nflResolver() {
+    var pm = null;
+    try { pm = poolByNorm(); } catch (e) { return function () { return ''; }; }
+    return function (name) {
+      try { var r = pm[norm(name)]; return (r && r.t) || ''; } catch (e) { return ''; }
+    };
+  }
+
   /* ---------------- tiny utils ---------------- */
   function h(s) {
     return String(s == null ? '' : s)
@@ -518,10 +531,19 @@
     applying = true;
     try {
       var local = {};
+      /* One resolver for the whole set — poolByNorm() rebuilds a map over the
+         entire POOL, and this runs on every remote change. */
+      var nflOf = null;
       Object.keys(remotePicks).forEach(function (k) {
         var p = remotePicks[k] || {};
+        var t = p.nfl || '';
+        /* Self-heal: a board seeded before this fix wrote nfl:'' for all 47
+           keepers, which blinded the bye planner to most of the league. Repair
+           on read so a bad seed can never do that again, with or without a
+           re-setup. */
+        if (!t && p.name) { if (!nflOf) nflOf = nflResolver(); t = nflOf(p.name); }
         local[k] = {
-          name: p.name, pos: p.pos || '', team: p.nfl || '',
+          name: p.name, pos: p.pos || '', team: t,
           keeper: p.keeper === true, id: p.id || undefined
         };
       });
@@ -682,13 +704,14 @@
          the same pre-filled slots and nobody's local list matters again. */
       var km = {};
       try { km = keeperMap(); } catch (e) {}
+      var nflOf = nflResolver();
       var first = null;
       S.forEach(function (s) {
         var k = km[s.team] && km[s.team][s.round];
         if (k) {
           upd['picks/' + s.overall] = {
             fid: fidOf(s.team), name: k.player, pos: k.pos || '',
-            nfl: '', id: k.poolRef || null, keeper: true, overall: s.overall,
+            nfl: nflOf(k.player), id: k.poolRef || null, keeper: true, overall: s.overall,
             by: uid, at: firebase.database.ServerValue.TIMESTAMP
           };
         } else if (first == null) first = s.overall;

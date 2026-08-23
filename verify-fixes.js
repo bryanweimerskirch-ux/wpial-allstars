@@ -299,6 +299,70 @@ console.log('\ndraftsync — email-link sign-in has three ways in');
     /if \(!linkChecked\) \{ linkChecked = true;/.test(DS));
 }
 
+/* ---------------------------------------------------------------------------
+ * 9. The 2026-08-23 rehearsal batch. Every one of these reproduces a defect the
+ *    league hit during the live staging run-through, so a revert fails here
+ *    rather than on draft night.
+ * ------------------------------------------------------------------------ */
+console.log('\nrehearsal batch — keepers, byes, roster legality, watchlists');
+{
+  const DS = read('draftsync.js'), BD2 = read('draftboard.html'), DC = read('draftclock.js'), WL = read('watchlist.js');
+
+  /* 9a. Keeper picks were seeded with nfl:'' — which blinded the whole bye
+         planner to 47 of the ~60 players on the board. */
+  const seed = (DS.match(/upd\['picks\/' \+ s\.overall\] = \{[\s\S]*?\};/) || [''])[0];
+  check('draftsync: keeper seed resolves a real NFL team (not nfl:"")',
+    /nfl: nflOf\(k\.player\)/.test(seed) && !/nfl: ''/.test(seed));
+  check('draftsync: resolution is by normalised NAME, never by id (gotcha 21)',
+    /function nflResolver\(\)[\s\S]{0,400}poolByNorm\(\)[\s\S]{0,300}norm\(name\)/.test(DS));
+  const apply = (DS.match(/var local = \{\};[\s\S]*?picks = local;/) || [''])[0];
+  check('draftsync: an empty nfl is healed on READ, so a bad seed cannot blind byes again',
+    /if \(!t && p\.name\)/.test(apply) && /nflResolver\(\)/.test(apply));
+
+  /* 9b. Bye context followed whoever was on the clock, so an owner's warnings
+         vanished the instant they used them. */
+  const ctx = (BD2.match(/function ctxTeam\(\)\{[\s\S]*?\n\}/) || [''])[0];
+  check('draftboard: ctxTeam anchors to the signed-in franchise, not the clock',
+    /syncTeam\(\)/.test(ctx) && !/cursor<SLOTS\.length \? SLOTS\[cursor\]\.team : null; \}$/.test(ctx));
+  check('draftboard: the commissioner still follows the clock (he drafts for others)',
+    /syncCommish\(\)/.test(ctx) && /clockTeam\(\)/.test(ctx));
+  check('draftboard: needs count keeper ghosts as well as committed picks',
+    /function rosterCountAll\(team\)\{[\s\S]{0,200}teamPlayers\(team\)/.test(BD2) &&
+    /function teamNeeds\(team\)\{[\s\S]{0,120}rosterCountAll\(team\)/.test(BD2));
+
+  /* 9c. Endgame legality — a team could finish with no QB, K or DEF. */
+  const forced = (BD2.match(/function forcedPositions\(team\)\{[\s\S]*?\n\}/) || [''])[0];
+  check('draftboard: restriction engages only once slack is gone',
+    /if\(cur\.total < left\) return null;/.test(forced));
+  check('draftboard: legality is "does it still fit AFTER this pick", not "do I have one"',
+    /needsFromCount\(bumpCount\(c,pos\)\)\.total <= left-1/.test(forced));
+  check('draftboard: an unsatisfiable roster still gets options (no deadlock)',
+    /if\(!list\.length\)\{/.test(forced) && /over=true/.test(forced));
+  check('draftboard: tryDraft refuses a pick that would strand the roster',
+    /function tryDraft\(p\)\{[\s\S]{0,700}forcedPositions\(s\.team\)[\s\S]{0,300}return;/.test(BD2));
+  check('draftboard: Best Available is filtered, not merely annotated',
+    /if\(fx\) avail=avail\.filter\(p=>fx\.list\.indexOf\(p\.p\)>=0\);/.test(BD2));
+  check('draftboard: and says which positions are required and why',
+    /class="forcedbar/.test(BD2) && /function forcedNote\(/.test(BD2));
+
+  /* 9d. Auto-pick had to learn the same rule or it recreates the hole. */
+  const choose = (DC.match(/function choose\(team\) \{[\s\S]*?\n  \}/) || [''])[0];
+  check('draftclock: auto-pick filters the watchlist by roster legality',
+    /stillOnBoard\(p\) && fits\(p\)/.test(choose));
+  check('draftclock: and the Best Available fallback too',
+    /open\.filter\(fits\)/.test(choose));
+  check('draftclock: but never stalls the clock over legality',
+    /legal\.length \? legal : open/.test(choose));
+
+  /* 9e. Watchlists kept drafted players, struck through, behind a manual button. */
+  check('watchlist: drafted players are pruned, not just struck through',
+    /function pruneGone\(\)/.test(WL) && /addEventListener\('wpial-board-render', pruneGone\)/.test(WL));
+  check('watchlist: the prune is guarded so it does not save on every repaint',
+    /if \(L\.length !== before\) changed\(\);/.test(WL));
+  check('draftboard: render fires the event the prune listens for',
+    /dispatchEvent\(new CustomEvent\('wpial-board-render'\)\)/.test(BD2));
+}
+
 /* jsdom defers DOMContentLoaded; sitenav's init() waits for it. */
 function return_after_load(dom, fn) {
   if (dom.window.document.readyState === 'loading') {

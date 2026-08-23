@@ -117,19 +117,34 @@
   }
 
   /**
-   * Returns {player, via} — via is 'watchlist' or 'board'. Deliberately applies
-   * no roster logic: the watchlist is an explicit instruction and Best Available
-   * is the stated fallback rule.
+   * Returns {player, via} — via is 'watchlist' or 'board'. The watchlist is an
+   * explicit instruction and Best Available is the stated fallback rule, so
+   * neither applies preference logic — but BOTH are now filtered by roster
+   * legality in the endgame rounds. Without that, auto-pick walks a team into
+   * exactly the hole the manual gate exists to prevent: it would happily spend
+   * the last two picks on a watchlisted WR and leave the team without a kicker.
+   * forcedPositions() returns null whenever slack remains, which is every round
+   * but the last few.
    */
+  function allowedPos(team) {
+    try { var fx = forcedPositions(team); return fx ? fx.list : null; } catch (e) { return null; }
+  }
   function choose(team) {
+    var ok = allowedPos(team);
+    var fits = function (p) { return !ok || ok.indexOf(p.p) >= 0; };
     var wl = (watch[team] && watch[team].players) || [];
     for (var i = 0; i < wl.length; i++) {
       var p = poolFor(wl[i]);
-      if (p && stillOnBoard(p)) return { player: p, via: 'watchlist', rank: i + 1 };
+      if (p && stillOnBoard(p) && fits(p)) return { player: p, via: 'watchlist', rank: i + 1 };
     }
     var open = [];
     try { open = available('ALL'); } catch (e) {}
-    return open.length ? { player: open[0], via: 'board' } : null;
+    var legal = open.filter(fits);
+    /* Never return nothing on account of legality — an empty set would stall
+       the clock instead of making a pick. forcedPositions() already refuses to
+       hand back an empty list, this is the belt to that pair of braces. */
+    var from = legal.length ? legal : open;
+    return from.length ? { player: from[0], via: 'board' } : null;
   }
 
   function fire() {

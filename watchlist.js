@@ -252,6 +252,29 @@
     changed();
   }
 
+  /* A watchlist should only ever show players still on the board. Taken players
+     used to be struck through and left in place behind a manual "Clear N gone"
+     button, so by the middle rounds the list was mostly noise — exactly when it
+     matters most, and exactly what the panel exists to prevent.
+
+     Pruned automatically on every board repaint instead. Guarded on "did the
+     length change" because render() fires on every pick and changed() writes to
+     localStorage and schedules a server save.
+
+     Interaction with undo, deliberate: if the commissioner undoes a pick the
+     player is NOT restored to anyone's list. Re-adding takes three seconds and
+     silently resurrecting a name into a priority-ordered list would be worse.
+
+     Auto-pick ordering is unaffected — draftclock walks this same array in
+     order and already skipped anything not still on the board. */
+  function pruneGone() {
+    if (!L.length) return;
+    var before = L.length;
+    L = L.filter(function (e) { return playerState(e) === 'open'; });
+    if (L.length !== before) changed();
+  }
+  document.addEventListener('wpial-board-render', pruneGone);
+
   function changed() {
     try { localStorage.setItem(cacheKey(), JSON.stringify(L)); } catch (e) {}
     status = 'saving';

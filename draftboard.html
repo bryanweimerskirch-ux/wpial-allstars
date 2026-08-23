@@ -151,6 +151,9 @@ table#board{border-collapse:separate;border-spacing:3px;table-layout:fixed;width
 #board td .meta .bye{margin-left:3px;font-size:9px;padding:0 3px;line-height:13px;}
 
 /* tap-for-details toast */
+.forcedbar{margin:0 0 6px;padding:5px 8px;border:1px solid var(--accent2,#f0d488);border-radius:6px;
+  background:rgba(240,212,136,.10);color:var(--text,#e8eaee);font-size:11.5px;font-weight:600;}
+.forcedbar.over{border-color:var(--danger,#e0644f);background:rgba(224,100,79,.12);}
 #byeToast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,14px);z-index:400;
   max-width:min(460px,92vw);background:var(--panel);color:var(--text);
   border:1px solid var(--danger);border-left:4px solid var(--danger);border-radius:8px;
@@ -2336,13 +2339,18 @@ function render(){
   if(!preDraft) advanceThroughKeepers(); // ensure keeper slots up to cursor are shown
   renderBoard(); renderStatus(); renderBA(); renderRoster(); renderSetupBanner();
   saveState();
+  /* Anything outside this file that mirrors board state hangs off this event —
+     watchlist.js prunes drafted players on it. One CustomEvent per repaint is
+     cheap; a listener that does real work must guard on "did anything change".*/
+  try{ document.dispatchEvent(new CustomEvent('wpial-board-render')); }catch(e){}
 }
 function renderBoard(){
   const km=keeperMap();
   const dSet=draftedNorms();
   /* One collision report for all 160 cells. Board chips are relative to the team
-     the panels are showing (on the clock in live, your team in mock) — the same
-     "you" the pool and roster panel use, so the three never disagree. */
+     the panels are showing — see ctxTeam(): your own franchise in live (the
+     commissioner follows the clock), your team in mock. The same "you" the pool
+     and roster panel use, so the three never disagree. */
   const bctx=ctxTeam(), brep=bctx?byeReport(bctx):{};
   const bclash=t=>{ const w=byeOf(t); return w?(brep[w]||[]).length:0; };
   const keepTot={}; if(mode==='mock') TEAMS.forEach(t=>keepTot[t]=teamKeepState(t).total);
@@ -2423,15 +2431,21 @@ function renderBA(){
      read as "the pool ends here" (reported 2026-08-19). Still start at 18 so a
      re-render on every pick stays cheap, but say what's below the fold and let
      the owner page through the whole pool. */
-  const avail=available(posFilter);
+  /* Endgame legality: the pool narrows to positions the team ON THE CLOCK can
+     still legally take. Filtered rather than greyed — an owner under time
+     pressure should not have to read a disabled row to find out why. */
+  const fxTeam=clockTeam(), fx=forcedPositions(fxTeam);
+  let avail=available(posFilter);
+  if(fx) avail=avail.filter(p=>fx.list.indexOf(p.p)>=0);
   const list=avail.slice(0,baShown);
   /* One bye report for the whole list, not one per row — byeReport() walks SLOTS
      and rebuilds keeperMap()/poolByNorm(), and renderBA() reruns on every pick. */
   const ct=ctxTeam(), rep=ct?byeReport(ct):{};
   const clashOf=t=>{ const w=byeOf(t); return w?(rep[w]||[]).length:0; };
-  $('#balist').innerHTML=list.map(p=>
+  const fxBar = fx ? '<div class="forcedbar'+(fx.over?' over':'')+'">'+esc(forcedNote(fxTeam,fx))+'</div>' : '';
+  $('#balist').innerHTML=fxBar+list.map(p=>
     '<div class="ba" data-id="'+p.id+'"><span class="rk">'+p.r+'</span><span class="nm">'+esc(p.n)+(p.rk?' <span title="rookie">🐣</span>':'')+'</span><span class="poschip '+p.p+'">'+p.p+'</span><span class="batm">'+esc(p.t)+'</span>'+byeChip(p.t,clashOf(p.t),'pool')+'<span class="pt">'+(p.pts?p.pts+' pts':'')+(p.adp?' · '+p.adp:'')+'</span></div>'
-  ).join('') || (posFilter==='ROOK'&&!POOL.some(p=>p.rk)?'<div class="hint">No rookie flags in the current data source — the live league feed provides them (embedded snapshot doesn’t).</div>':'<div class="hint">No players left at this position.</div>');
+  ).join('') || (fx?'<div class="hint">Nobody left at '+esc(fx.list.join('/'))+' in this filter — switch the position filter to ALL.</div>':'') || (posFilter==='ROOK'&&!POOL.some(p=>p.rk)?'<div class="hint">No rookie flags in the current data source — the live league feed provides them (embedded snapshot doesn’t).</div>':'<div class="hint">No players left at this position.</div>');
   if(avail.length>list.length){
     $('#balist').insertAdjacentHTML('beforeend',
       '<button id="baMore" type="button">Show 30 more · '+(avail.length-list.length)+' below</button>');
@@ -2494,7 +2508,33 @@ function renderKeepable(){
    costs you points if it empties a starting slot. */
 const LINEUP={QB:1,RB:2,WR:2,TE:1,K:1,DEF:1}, FLEX_N=2, FLEX_POS=['RB','WR','TE'];
 /* Whose roster the pool + roster panel are talking about. */
-function ctxTeam(){ return mode==='mock' ? myTeam : (cursor<SLOTS.length ? SLOTS[cursor].team : null); }
+function clockTeam(){ return cursor<SLOTS.length ? SLOTS[cursor].team : null; }
+/* The franchise this browser is signed in as, from the Firebase draft session. */
+function syncTeam(){
+  try{
+    const st = window.WPIAL_SYNC && WPIAL_SYNC.state();
+    if(!st || !st.fid) return null;
+    if(window.WPIAL_FX && WPIAL_FX.get){ const r=WPIAL_FX.get(st.fid); if(r&&(r.name||r.canon)) return r.name||r.canon; }
+    const n = parseInt(String(st.fid).replace(/[^0-9]/g,''),10);
+    return (n>=1 && n<=TEAMS.length) ? TEAMS[n-1] : null;
+  }catch(e){ return null; }
+}
+function syncCommish(){ try{ const st=window.WPIAL_SYNC&&WPIAL_SYNC.state(); return !!(st&&st.commish); }catch(e){ return false; } }
+/* Which roster the bye markers and the needs panel are measured against.
+   This used to be "whoever is on the clock", which was right when the
+   commissioner ran the whole board alone — on-the-clock and the-team-I-am-
+   looking-at were the same thing. Once owners started drafting for themselves
+   they stopped being the same thing, and an owner's bye warnings vanished the
+   instant they acted on them (reported 2026-08-23).
+   The commissioner still follows the clock: he legitimately picks for other
+   teams, and showing him HIS byes while drafting for a dead phone would be
+   worse than useless. */
+function ctxTeam(){
+  if(mode==='mock') return myTeam;
+  const mine = syncTeam();
+  if(mine && !syncCommish()) return mine;
+  return clockTeam() || mine;
+}
 /* Counts committed picks AND undrafted keeper ghosts. The ghosts matter: keeper
    lock is before the draft, so the pre-draft board is exactly when someone needs
    to see that three of their five keepers are off in Week 11. Keeper rows carry
@@ -2569,12 +2609,75 @@ function byeChip(nflTeam,clash,ctx){
        + ' title="'+esc(tip)+'">B'+w+mark+'</span>';
 }
 /* League lineup minimums (Constitution Art. V): 1 QB, 2 RB, 2 WR, 1 TE, 2 FLEX (RB/WR/TE), 1 D/ST, 1 K + 6 bench */
-function teamNeeds(team){
-  const c=rosterCount(team);
+function needsFromCount(c){
   const need={QB:Math.max(0,1-c.QB),RB:Math.max(0,2-c.RB),WR:Math.max(0,2-c.WR),TE:Math.max(0,1-c.TE),K:Math.max(0,1-c.K),DEF:Math.max(0,1-c.DEF)};
   const surplus=Math.max(0,c.RB-2)+Math.max(0,c.WR-2)+Math.max(0,c.TE-1);
   need.FLEX=Math.max(0,2-surplus);
-  return {c,need,total:need.QB+need.RB+need.WR+need.TE+need.K+need.DEF+need.FLEX};
+  need.total=need.QB+need.RB+need.WR+need.TE+need.K+need.DEF+need.FLEX;
+  return need;
+}
+/* Counts committed picks AND undrafted keeper ghosts, so the needs panel reads
+   the same before and after the live draft materialises keepers into picks.
+   (cpuPick keeps its own picks-only rosterCount — the mock simulator is
+   deliberately untouched.) */
+function rosterCountAll(team){
+  const c={QB:0,RB:0,WR:0,TE:0,K:0,DEF:0,total:0};
+  teamPlayers(team).forEach(p=>{ if(c[p.pos]!=null)c[p.pos]++; c.total++; });
+  return c;
+}
+function teamNeeds(team){
+  const c=rosterCountAll(team);
+  const need=needsFromCount(c);
+  return {c,need,total:need.total};
+}
+/* ---- endgame legality ----------------------------------------------------
+   Lineup minimums are Constitution Art. V. A team that spends its last picks on
+   a fifth WR cannot field a legal lineup all season — which is exactly what the
+   2026-08-23 rehearsal produced: Drake Draaaake? reached the last two rounds
+   with no QB, no K and no DEF.
+
+   The rule is not "block the positions you already have". It is: a position is
+   allowed only if, AFTER taking it, the remaining mandatory needs still fit in
+   the remaining picks. That distinction matters — needing QB + FLEX with two
+   picks left has to allow both a QB and a flex body, and block a kicker.
+
+   Restriction only engages once slack is gone (needs >= picks left), so the
+   first dozen rounds are untouched.
+
+   CLIENT-SIDE ONLY. RTDB rules cannot iterate a franchise's picks, so unlike
+   turn order this is a guardrail, not a server-enforced rule. */
+const REQ_POS=['QB','RB','WR','TE','K','DEF'];
+function picksLeftFor(team){
+  let n=0; SLOTS.forEach(s=>{ if(s.team===team && !picks[s.overall] && s.overall>=cursor) n++; });
+  return n;
+}
+function bumpCount(c,pos){ const o=Object.assign({},c); if(o[pos]!=null) o[pos]++; return o; }
+function forcedPositions(team){
+  if(!team) return null;
+  const c=rosterCountAll(team), left=picksLeftFor(team);
+  const cur=needsFromCount(c);
+  if(!cur.total || left<=0) return null;
+  if(cur.total < left) return null;                       /* slack remains */
+  let list=REQ_POS.filter(pos=>needsFromCount(bumpCount(c,pos)).total <= left-1);
+  let over=false;
+  if(!list.length){
+    /* Already unsatisfiable — no legal finish exists. Never return an empty set
+       or the team cannot pick at all and the draft deadlocks. Offer whatever
+       reduces the shortfall most. */
+    over=true;
+    let best=Infinity;
+    REQ_POS.forEach(pos=>{ const t=needsFromCount(bumpCount(c,pos)).total; if(t<best) best=t; });
+    list=REQ_POS.filter(pos=>needsFromCount(bumpCount(c,pos)).total===best);
+  }
+  return {list:list, left:left, total:cur.total, over:over, need:cur};
+}
+function forcedNote(team,fx){
+  if(!fx) return '';
+  const names=fx.list.join(', ');
+  return (fx.over
+    ? '⚠ '+team+' cannot fill a legal lineup — '+fx.total+' needs, '+fx.left+' pick'+(fx.left===1?'':'s')+' left. Must take: '
+    : team+' must draft '+names+' — '+fx.total+' need'+(fx.total===1?'':'s')+', '+fx.left+' pick'+(fx.left===1?'':'s')+' left.')
+    + (fx.over ? names+'.' : '');
 }
 /* Bye-week histogram: one bar per week that any of this team's STARTERS is off.
    Two starters out is survivable, three is a lost week — that's the threshold the
@@ -2603,14 +2706,20 @@ function renderByes(team){
    so it survives every re-render of the board, pool and roster list — none of
    which we want to attach listeners inside (renderBA alone rebuilds 18 rows on
    every pick). */
-function showByeToast(week){
-  const msg=byeSentence(ctxTeam(),week); if(!msg) return;
+/* One toast element, two callers. Tooltips do not exist on touch and blocking
+   modals are a site law violation, so a refusal has to say itself somewhere. */
+function toastMsg(msg,ms){
+  if(!msg) return;
   let t=$('#byeToast');
   if(!t){ t=document.createElement('div'); t.id='byeToast'; document.body.appendChild(t); }
-  t.textContent='⚠ '+msg;
+  t.textContent=msg;
   t.classList.add('show');
-  clearTimeout(showByeToast._t);
-  showByeToast._t=setTimeout(()=>t.classList.remove('show'),4200);
+  clearTimeout(toastMsg._t);
+  toastMsg._t=setTimeout(()=>t.classList.remove('show'),ms||4200);
+}
+function showByeToast(week){
+  const msg=byeSentence(ctxTeam(),week); if(!msg) return;
+  toastMsg('⚠ '+msg);
 }
 document.addEventListener('click',function(e){
   const chip=e.target.closest&&e.target.closest('.bye[data-bye]');
@@ -2662,6 +2771,15 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 function tryDraft(p){
   if(cursor>=SLOTS.length) return;
   const s=SLOTS[cursor];
+  /* Roster legality, checked at the funnel every human pick goes through
+     (Best Available click and search both land here). Auto-pick is gated
+     separately inside draftclock.js. */
+  const fx=forcedPositions(s.team);
+  if(fx && fx.list.indexOf(p.p)<0){
+    toastMsg('✕ '+p.p+' would leave '+s.team+' short — must take '+fx.list.join(', ')+
+             ' ('+fx.total+' need'+(fx.total===1?'':'s')+', '+fx.left+' pick'+(fx.left===1?'':'s')+' left)');
+    return;
+  }
   if(mode==='mock' && mockRunning===false && s.team!==myTeam){
     // allow manual control of any team when mock not running
   }
