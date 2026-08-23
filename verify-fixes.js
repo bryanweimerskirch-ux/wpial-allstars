@@ -277,6 +277,26 @@ console.log('\ndraftsync — email-link sign-in has three ways in');
     /id="dsPaste"/.test(DS) && /id="dsLink"/.test(DS) && /id="dsFinish"/.test(DS));
   check('draftsync: Connect is still offered when nothing is in flight',
     /id="dsConnect"/.test(DS));
+
+  /* The one-click link is the path that does not depend on the owner doing
+     anything right. Losing any of this puts draft night back on the mail app. */
+  const link = (DS.match(/function maybeSignInFromLink\([\s\S]*?\n  \}/) || [''])[0];
+  check('draftsync: a ?k= link signs in with a password, not another email',
+    /signInWithEmailAndPassword/.test(link) && !/sendSignInLinkToEmail/.test(link));
+  check('draftsync: an unclaimed franchise is created on first click',
+    /createUserWithEmailAndPassword/.test(link) && /user-not-found/.test(link));
+  check('draftsync: re-clicking the same link is a no-op (no sign-out churn)',
+    /if \(have === k\.email\) return false/.test(link));
+  check('draftsync: a link opened in another session takes it over',
+    /signOut\(\)/.test(link));
+  check('draftsync: the link identity is synthetic, never the owner inbox',
+    /LINK_DOMAIN = '@wpial\.invalid'/.test(DS) &&
+    /fid \+ LINK_DOMAIN/.test(DS));
+  const lp = (DS.match(/function linkParam\([\s\S]*?\n  \}/) || [''])[0];
+  check('draftsync: a mangled ?k= is rejected rather than half-honoured',
+    /\^f\[0-9\]\{2\}\$/.test(lp) && /secret\.length < 12/.test(lp));
+  check('draftsync: the link is resolved once, from the auth-state callback',
+    /if \(!linkChecked\) \{ linkChecked = true;/.test(DS));
 }
 
 /* jsdom defers DOMContentLoaded; sitenav's init() waits for it. */

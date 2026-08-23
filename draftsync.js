@@ -406,6 +406,71 @@
     say('Almost there — confirm the email this link was sent to.', '', 0);
   }
 
+  /* ---------------- one-click draft link (?k=f01-SECRET) ----------------
+   * The email-link flow above is correct, but it only works if the owner opens
+   * the link in the browser they will actually draft from — and a phone's mail
+   * app works against that. This path does not depend on the owner doing
+   * anything right: the credential is IN the URL, it is PERMANENT, and it is
+   * REUSABLE. Click it from anywhere, on any device, as many times as you like;
+   * every click lands a Firebase session in whatever browser did the clicking.
+   * Storage cleared, new phone, mail app's browser — click the link again.
+   *
+   * The identity is per-FRANCHISE and synthetic (f01@wpial.invalid — RFC 2606
+   * reserves .invalid, so it can never route anywhere). The owner's real inbox
+   * is deliberately NOT in the link: this is a bearer credential, so whoever
+   * holds it can pick for that franchise, and nothing personal belongs in it.
+   * A leaked link reaches one franchise's draft picks and nothing else — it is
+   * not a way into the rest of the site, because auth.js is a separate session
+   * and fbauth.gs still refuses any account whose email is not verified.
+   * /emailToFid remains the only thing that decides which franchise it is.
+   */
+  var LINK_DOMAIN = '@wpial.invalid';
+  var linkChecked = false;
+
+  function linkParam() {
+    try {
+      var m = /[?&]k=([A-Za-z0-9_%-]+)/.exec(window.location.search);
+      if (!m) return null;
+      var raw = decodeURIComponent(m[1]);
+      var i = raw.indexOf('-');
+      if (i < 2) return null;
+      var fid = raw.slice(0, i).toLowerCase();
+      var secret = raw.slice(i + 1);
+      if (!/^f[0-9]{2}$/.test(fid) || secret.length < 12) return null;
+      return { fid: fid, secret: secret, email: fid + LINK_DOMAIN };
+    } catch (e) { return null; }
+  }
+
+  /* Called once, from the first auth-state callback — that is the moment a
+     restored session is known, so a returning owner is not signed out and back
+     in on every page load. Returns true if it started an async sign-in. */
+  function maybeSignInFromLink(current) {
+    var k = linkParam();
+    if (!k) return false;
+    var have = current && current.email ? String(current.email).toLowerCase() : '';
+    if (have === k.email) return false;              /* already this franchise */
+
+    say('Signing you in…', '', 0);
+    var start = current ? fbauth.signOut() : Promise.resolve();
+    start
+      .then(function () { return fbauth.signInWithEmailAndPassword(k.email, k.secret); })
+      ['catch'](function (err) {
+        /* First click this franchise has ever had: claim the account. The
+           secret in the link becomes its password, so this is deterministic
+           and the next click signs in normally. */
+        if (String((err && err.code) || err).indexOf('user-not-found') >= 0) {
+          return fbauth.createUserWithEmailAndPassword(k.email, k.secret);
+        }
+        throw err;
+      })
+      .then(function () { say('', '', 0); })
+      ['catch'](function (err) {
+        say('✕ This draft link did not work (' + h(String((err && err.code) || err)) +
+            ') — send the commissioner a screenshot. You can still use Connect below.', 'rej', 0);
+      });
+    return true;
+  }
+
   /* ---------------- listeners ---------------- */
   function ref(p) { return db.ref(ROOT + (p ? '/' + p : '')); }
 
@@ -665,6 +730,9 @@
 
   /* ---------------- auth lifecycle ---------------- */
   fbauth.onAuthStateChanged(function (u) {
+    /* A ?k= link overrides whatever session this browser is holding, and is
+       resolved here rather than at init() so a restored session is visible. */
+    if (!linkChecked) { linkChecked = true; if (maybeSignInFromLink(u)) return; }
     uid = u ? u.uid : null;
     myEmail = u ? (u.email || '') : null;
     myFid = null;
