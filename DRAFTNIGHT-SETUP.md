@@ -78,7 +78,13 @@ The orange striped banner at the bottom is how you know you're in staging. Close
 
 1. **Keepers lock Fri Aug 29.** Run setup AFTER that: setup snapshots the keeper list into the shared board. (If a keeper changes after setup, delete `drafts/prod/2026` in the console and run setup again.)
 2. On `wadi.solutions/draftboard.html` (no `?env` — the strip should NOT show the staging banner), tap **⚡ Start live draft**. Keeper picks appear pre-filled, cursor sits at the first real pick.
-3. Owners open the draft board on any device → **Connect** → tap the emailed link. The strip shows "you are ⟨their team⟩" and "N of 10 owners online."
+3. Owners open the draft board on any device → **Connect** → they get an emailed link.
+
+   ⚠️ **Tell them to COPY the link, not tap it.** On a phone, tapping a link inside Yahoo Mail, Apple Mail or Gmail opens that app's *own* built-in browser. Firebase signs them in there — in storage Safari and Chrome never see — so the next time they open the board in their real browser it says "not connected" again. That is what Brandon and Tyler hit. Press and hold the link → **Copy**, go back to the draft board in Safari/Chrome, tap **"I already have a link"**, paste, **Finish sign-in**.
+
+   If they tap it anyway and land in the mail app's browser, the page there now asks for their email and finishes the sign-in on the spot — but the session lives in that in-app browser, so have them redo it in the browser they will actually draft from. A link is one-time: once tapped it is spent, and they need a fresh **Connect**.
+
+   When it works the strip shows "you are ⟨their team⟩" and "N of 10 owners online."
 4. Run your clock exactly as before (it's still commissioner-only). Every screen counts down together. Auto-pick still fires from your machine only, and its picks go through the same server-enforced path.
 5. Phone dies mid-pick? Pick for them from your board — their board (and everyone's) shows "picked for you by the commissioner."
 6. Undo works from your board only, one pick at a time, and every screen follows.
@@ -86,7 +92,10 @@ The orange striped banner at the bottom is how you know you're in staging. Close
 ## 4. What the strip states mean
 
 - `○ Live draft: not connected` — picks made here stay on this device (pre-connect)
-- `✉ Link sent to …` — check that inbox **on this device**
+- `✉ Link sent to …` — copy the link out of that inbox and paste it back here
+- `Confirm the email this link was sent to:` — the link opened in a browser that never asked for one; typing the address finishes the sign-in **here**, no new email needed
+- `Paste the sign-in link from your email:` — the "I already have a link" path, for a link copied out of a mail app
+- `✕ That link was already used or has expired` — a link works once; tapping it in the mail app spends it. Tap Connect for a fresh one and copy it
 - `● Live · you are ⟨team⟩ · N of 10 owners online` — connected and shared
 - `⟳ reconnecting — board may be stale` — network dropped; Firebase re-syncs itself
 - `✕ ⟨Team⟩'s pick was already made — the board has moved on` — the race; normal, nothing lost

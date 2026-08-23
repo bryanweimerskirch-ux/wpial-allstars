@@ -148,6 +148,8 @@
       '#dsBar button{font-size:11px;padding:3px 9px;}',
       '#dsBar input{font-size:11px;padding:3px 6px;background:transparent;',
       '  border:1px solid var(--line);border-radius:6px;color:var(--text);min-width:170px;}',
+      '#dsBar input#dsLink{min-width:240px;flex:1 1 260px;}',
+      '@media (max-width:760px){#dsBar input{flex:1 1 100%;min-width:0;}}',
       '#dsBar .dsclock{font-family:"Oswald",sans-serif;font-variant-numeric:tabular-nums;',
       '  font-size:14px;color:var(--text);letter-spacing:.5px;}',
       '@media (max-width:760px){#dsBar{gap:7px;font-size:11px;}}'
@@ -213,10 +215,23 @@
     var parts = [];
     if (!uid) {
       parts.push('<span class="dsdot">○</span> Live draft: <b>not connected</b> — picks made here stay on this device');
-      parts.push('<button id="dsConnect" class="primary" type="button">Connect</button>');
-      if (pendingEmailUi) {
+      if (uiMode === 'finish') {
+        parts.push('<span>Confirm the email this link was sent to:</span>');
+        parts.push('<input id="dsEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com">');
+        parts.push('<button id="dsFinish" class="primary" type="button">Finish sign-in</button>');
+      } else if (uiMode === 'paste') {
+        parts.push('<span>Paste the sign-in link from your email:</span>');
+        parts.push('<input id="dsLink" type="url" inputmode="url" placeholder="https://wadi.solutions/…">');
+        if (!storedEmail()) parts.push('<input id="dsEmail" type="email" inputmode="email" autocomplete="email" placeholder="the email it went to">');
+        parts.push('<button id="dsFinish" class="primary" type="button">Finish sign-in</button>');
+        parts.push('<button id="dsCancel" type="button">cancel</button>');
+      } else if (uiMode === 'email') {
         parts.push('<input id="dsEmail" type="email" inputmode="email" autocomplete="email" placeholder="the email your invite went to">');
-        parts.push('<button id="dsEmailGo" type="button">Send link</button>');
+        parts.push('<button id="dsEmailGo" class="primary" type="button">Send link</button>');
+        parts.push('<button id="dsPaste" type="button">I already have a link</button>');
+      } else {
+        parts.push('<button id="dsConnect" class="primary" type="button">Connect</button>');
+        parts.push('<button id="dsPaste" type="button">I already have a link</button>');
       }
     } else if (!metaExists) {
       parts.push('<span class="dsdot">●</span> Connected as <b>' + h(myEmail || '') + '</b> · live draft <b>not started</b>');
@@ -239,62 +254,156 @@
     }
     if (uid) { var actLine = activationLine(); if (actLine) parts.push(actLine); }
     if (msg) parts.push('<span class="dsmsg ' + msgClass + '">' + msg + '</span>');
+    /* A repaint rewrites innerHTML, so carry any half-typed field across it. */
+    var keep = { dsEmail: fieldVal('dsEmail'), dsLink: fieldVal('dsLink') };
     el.innerHTML = parts.join(' ');
+    Object.keys(keep).forEach(function (id) {
+      var k = document.getElementById(id);
+      if (k && keep[id] && !k.value) k.value = keep[id];
+    });
 
     var c = document.getElementById('dsConnect');
     if (c) c.onclick = connectClick;
     var g = document.getElementById('dsEmailGo');
     if (g) g.onclick = function () {
-      var v = (document.getElementById('dsEmail') || {}).value || '';
-      if (v.indexOf('@') > 0) sendLink(v.trim());
+      var v = fieldVal('dsEmail');
+      if (v.indexOf('@') > 0) sendLink(v);
+      else say('Enter the email your invite went to.', 'rej');
     };
+    var f = document.getElementById('dsFinish');
+    if (f) f.onclick = finishClick;
+    var p = document.getElementById('dsPaste');
+    if (p) p.onclick = function () { uiMode = 'paste'; say('', '', 0); };
+    var cn = document.getElementById('dsCancel');
+    if (cn) cn.onclick = function () { uiMode = 'idle'; linkUrl = ''; say('', '', 0); };
     var st = document.getElementById('dsSetup');
     if (st) st.onclick = setupLive;
+    ['dsEmail', 'dsLink'].forEach(function (id) {
+      var fld = document.getElementById(id);
+      if (!fld) return;
+      fld.onkeydown = function (ev) {
+        if (ev.key !== 'Enter') return;
+        ev.preventDefault();
+        var fin = document.getElementById('dsFinish');
+        var snd = document.getElementById('dsEmailGo');
+        if (fin) fin.onclick(); else if (snd) snd.onclick();
+      };
+    });
   }
 
-  /* ---------------- email-link sign-in ---------------- */
-  var pendingEmailUi = false;
+  /* ---------------- email-link sign-in ----------------
+   * Three ways in, because a phone's mail app usually opens links in its OWN
+   * in-app browser whose storage Safari and Chrome never see. Signing in there
+   * signs you in somewhere you will not be drafting from, so the next visit to
+   * the real browser says "not connected" again — which is what owners
+   * experienced as having to sign in over and over.
+   *
+   *   1. same browser — it asked for the link, so the email is already in this
+   *      storage and completeLinkSignIn() finishes with no typing.
+   *   2. link opened where no email is stored — ask for the address and
+   *      complete THIS link. That is Firebase's documented recovery. The old
+   *      code mailed a fresh link instead, which never converged.
+   *   3. link copied out of the mail app and pasted into the browser the owner
+   *      actually uses — the same call with the pasted URL. This is the path
+   *      that gets a Yahoo/iCloud owner connected in Safari.
+   *
+   * A sign-in link is ONE-TIME: whoever opens it first consumes it. That is
+   * why the sent-message tells them to copy the link, not tap it.
+   */
+  var uiMode = 'idle';       /* 'idle' | 'email' | 'finish' | 'paste' */
+  var linkUrl = '';          /* a sign-in link waiting to be completed */
+
+  function fieldVal(id) {
+    var el = document.getElementById(id);
+    return el && el.value ? String(el.value).trim() : '';
+  }
+  function storedEmail() {
+    try { return localStorage.getItem(K_EMAIL) || ''; } catch (e) { return ''; }
+  }
+
   function connectClick() {
     var known = '';
     try { known = (window.WPIAL_USER && WPIAL_USER.email) || ''; } catch (e) {}
     if (known) sendLink(known);
-    else { pendingEmailUi = true; paint(); }
+    else { uiMode = 'email'; paint(); }
   }
+
   function sendLink(email) {
     var url = window.location.origin + window.location.pathname +
       (WPIAL_ENV.isStaging ? '?env=staging' : '');
+    /* Stash BEFORE sending, per the SDK docs: if the link comes back to this
+       same browser, sign-in completes with nothing to type. */
+    try { localStorage.setItem(K_EMAIL, email); } catch (e) {}
     fbauth.sendSignInLinkToEmail(email, { url: url, handleCodeInApp: true })
       .then(function () {
-        try { localStorage.setItem(K_EMAIL, email); } catch (e) {}
-        pendingEmailUi = false;
-        say('✉ Link sent to ' + h(email) + ' — open it on THIS device', '', 0);
+        uiMode = 'idle';
+        say('✉ Link sent to ' + h(email) + ' — on a phone, press and hold the link, choose Copy, ' +
+            'then come back to this page and tap “I already have a link”. Tapping the link opens ' +
+            'your mail app’s own browser and signs you in there instead of here.', '', 0);
       })
       .catch(function (err) {
         say('⚠ Could not send link: ' + h((err && err.message) || err), 'rej', 12000);
       });
   }
-  function completeLinkSignIn() {
-    if (!fbauth.isSignInWithEmailLink(window.location.href)) return;
-    var email = null;
-    try { email = localStorage.getItem(K_EMAIL); } catch (e) {}
-    if (!email) {
-      /* Link opened on a different device than the one that requested it. */
-      pendingEmailUi = true;
-      say('Almost there — confirm the email this link was sent to, then tap Send link again', '', 0);
-      return;
-    }
-    fbauth.signInWithEmailLink(email, window.location.href)
+
+  /* The only call that actually signs anyone in. */
+  function finishSignIn(email, url) {
+    var isCurrent = (url === window.location.href);
+    say('Signing in…', '', 0);
+    return fbauth.signInWithEmailLink(email, url)
       .then(function () {
         try { localStorage.removeItem(K_EMAIL); } catch (e) {}
+        uiMode = 'idle';
+        linkUrl = '';
+        say('', '', 0);
         /* Scrub the one-time code from the URL but keep the path + env. */
-        try {
-          var clean = window.location.pathname + (WPIAL_ENV.isStaging ? '?env=staging' : '');
-          window.history.replaceState({}, document.title, clean);
-        } catch (e) {}
+        if (isCurrent) {
+          try {
+            var clean = window.location.pathname + (WPIAL_ENV.isStaging ? '?env=staging' : '');
+            window.history.replaceState({}, document.title, clean);
+          } catch (e) {}
+        }
       })
       .catch(function (err) {
-        say('⚠ Sign-in link failed: ' + h((err && err.code) || err) + ' — request a new one', 'rej', 0);
+        var code = String((err && err.code) || err || '');
+        if (code.indexOf('invalid-action-code') >= 0 || code.indexOf('expired') >= 0) {
+          uiMode = 'idle';
+          linkUrl = '';
+          say('✕ That link was already used or has expired — a link only works once, and tapping ' +
+              'it in your mail app uses it up. Tap Connect for a fresh one, then copy it.', 'rej', 0);
+        } else if (code.indexOf('invalid-email') >= 0 || code.indexOf('user-mismatch') >= 0) {
+          say('✕ That is not the address this link was sent to — check it and try again.', 'rej', 0);
+        } else {
+          say('⚠ Sign-in failed: ' + h(code) + ' — tap Connect for a new link.', 'rej', 0);
+        }
       });
+  }
+
+  function finishClick() {
+    var url = linkUrl;
+    if (uiMode === 'paste') {
+      url = fieldVal('dsLink');
+      if (!url) { say('Paste the whole link from the email.', 'rej'); return; }
+      if (!fbauth.isSignInWithEmailLink(url)) {
+        say('✕ That is not a sign-in link — copy the whole address from the email, https and all.', 'rej', 0);
+        return;
+      }
+    }
+    if (!url) { say('No sign-in link yet — tap Connect to have one emailed.', 'rej'); return; }
+    var email = fieldVal('dsEmail') || storedEmail();
+    if (email.indexOf('@') < 0) { say('Enter the email the link was sent to.', 'rej'); return; }
+    finishSignIn(email, url);
+  }
+
+  function completeLinkSignIn() {
+    if (!fbauth.isSignInWithEmailLink(window.location.href)) return;
+    linkUrl = window.location.href;
+    var email = storedEmail();
+    if (email) { finishSignIn(email, linkUrl); return; }
+    /* Opened in a browser that never asked for it — complete it here rather
+       than sending another one (see 2 above). */
+    uiMode = 'finish';
+    say('Almost there — confirm the email this link was sent to.', '', 0);
   }
 
   /* ---------------- listeners ---------------- */

@@ -235,6 +235,50 @@ console.log('\n2026-08-20 — Gelly Feed tab removed from the shell');
     !/data-tab="board"/.test(NAV2));
 }
 
+/* ---------------------------------------------------------------------------
+ * 8. draftsync sign-in: a link that lands in the wrong browser must still be
+ *    completable THERE. The original code answered that case by mailing a
+ *    fresh link, which is unreachable for an owner whose mail app opens its
+ *    own browser — every new link landed back in the same place. Reverting any
+ *    of this puts Yahoo/iCloud owners back in that loop.
+ * ------------------------------------------------------------------------ */
+console.log('\ndraftsync — email-link sign-in has three ways in');
+{
+  const DS = read('draftsync.js');
+
+  const complete = (DS.match(/function completeLinkSignIn\(\)[\s\S]*?\n  \}/) || [''])[0];
+  check('draftsync: no-stored-email path does NOT send another link',
+    complete.length > 0 && !/sendSignInLinkToEmail/.test(complete) &&
+      !/Send link again/.test(complete),
+    complete ? '' : 'completeLinkSignIn() not found');
+  check('draftsync: no-stored-email path asks for the address instead',
+    /uiMode = 'finish'/.test(complete));
+
+  const finishClick = (DS.match(/function finishClick\(\)[\s\S]*?\n  \}/) || [''])[0];
+  check('draftsync: Finish sign-in completes a link rather than mailing one',
+    /finishSignIn\(/.test(finishClick) && !/sendSignInLinkToEmail/.test(finishClick));
+  check('draftsync: a pasted link is validated before it is used',
+    /isSignInWithEmailLink\(url\)/.test(finishClick));
+
+  const finish = (DS.match(/function finishSignIn\([\s\S]*?\n  \}/) || [''])[0];
+  check('draftsync: finishSignIn is the single call that signs anyone in',
+    /signInWithEmailLink\(email, url\)/.test(finish));
+  check('draftsync: a used or expired link says so in words, not a code',
+    /invalid-action-code/.test(finish) && /already used/.test(finish));
+
+  const send = (DS.match(/function sendLink\([\s\S]*?\n  \}/) || [''])[0];
+  check('draftsync: the email is stashed BEFORE the link is sent',
+    send.indexOf('setItem(K_EMAIL') > 0 &&
+    send.indexOf('setItem(K_EMAIL') < send.indexOf('sendSignInLinkToEmail'));
+  check('draftsync: the sent message tells owners to copy the link, not tap it',
+    /choose Copy/.test(send));
+
+  check('draftsync: the paste-a-link path is reachable from the strip',
+    /id="dsPaste"/.test(DS) && /id="dsLink"/.test(DS) && /id="dsFinish"/.test(DS));
+  check('draftsync: Connect is still offered when nothing is in flight',
+    /id="dsConnect"/.test(DS));
+}
+
 /* jsdom defers DOMContentLoaded; sitenav's init() waits for it. */
 function return_after_load(dom, fn) {
   if (dom.window.document.readyState === 'loading') {
