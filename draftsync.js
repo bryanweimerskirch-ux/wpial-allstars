@@ -760,6 +760,15 @@
   /* ---------------- commissioner: one-time setup ---------------- */
   function setupLive() {
     if (!amCommish()) return;
+    /* The board seeds keepers from whatever `keepers` holds at this instant. When the
+       keeper feed has failed, that is KEEPERS_SNAPSHOT — a hardcoded July list of 15
+       across 3 clubs, including two players who are no longer kept. Seeding from it
+       would write a wrong board for all ten owners, and setupLive() merges rather than
+       overwrites, so it could not be cleanly re-run. Refuse instead. */
+    if (window.WPIAL_KEEPERS_OK !== true) {
+      say('\u26a0 Keeper feed not verified \u2014 refusing to seed. Hard-refresh until the strip reads "10/10 teams in", then try again.', 'rej', 0);
+      return;
+    }
     var S = slots();
     var run = function () {
       var upd = {};

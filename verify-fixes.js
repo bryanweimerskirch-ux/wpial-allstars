@@ -380,6 +380,52 @@ console.log('\nrehearsal batch — keepers, byes, roster legality, watchlists');
     /if \(!isLive\(\)\) \{ el\.style\.display = 'none'; alertBar\(''\); return; \}/.test(DS));
 }
 
+/* ---------------------------------------------------------------------------
+ * 2026-08-24 — the keeper feed was pointed at a dead action and failed silently
+ *
+ * The live symptom: the strip read a confident "15 declared · 3/10 teams in" while
+ * the sheet and keepers_v2 both held 47 across all ten clubs. Cause was not a race:
+ *   - KEEPERS_URL pointed at ?action=keepers, which returns 404
+ *   - fetchLiveKeepers ended in .catch(()=>{}) — the failure vanished
+ *   - init() had already loaded KEEPERS_SNAPSHOT (a hardcoded July list of 15 across
+ *     3 clubs, including Sam Darnold and Dalton Kincaid, no longer kept) tagged as
+ *     source:'live', so nothing on screen could tell snapshot from truth
+ *   - setupLive() seeds from whatever `keepers` holds, and merges rather than
+ *     overwrites, so a bad seed could not be cleanly re-run
+ * ------------------------------------------------------------------------- */
+console.log('\n2026-08-24 — keeper feed endpoint, silent failure, snapshot disguise');
+{
+  const DB = read('draftboard.html');
+  const DS = read('draftsync.js');
+
+  check('draftboard: keeper feed points at keepers_v2, not the 404ing keepers action',
+    /KEEPERS_URL\s*=\s*'[^']*action=keepers_v2'/.test(DB));
+  check('draftboard: a non-2xx keeper response is an error, not success',
+    /if\(!r\.ok\) throw new Error\('HTTP '\+r\.status\)/.test(DB));
+  check('draftboard: an empty keeper feed is an error too',
+    /throw new Error\('empty keeper feed'\)/.test(DB));
+  check('draftboard: the keeper failure is no longer swallowed by an empty catch',
+    !/\.catch\(\(\)=>\{\}\);\s*\n\}\s*\nfunction fetchFeedRankings/.test(DB) &&
+    /keeper feed failed:/.test(DB));
+  check('draftboard: both feed shapes parse (keepers_v2 teams map + legacy array)',
+    /function flattenKeeperFeed/.test(DB) && /d\.teams/.test(DB) && /Array\.isArray\(d\.keepers\)/.test(DB));
+  check('draftboard: the embedded list loads as a snapshot, never as live',
+    /loadKeepersFromList\(KEEPERS_SNAPSHOT,'snapshot'\)/.test(DB) &&
+    !/loadKeepersFromList\(KEEPERS_SNAPSHOT,'live'\)/.test(DB));
+  check('draftboard: an unverified board says so instead of stating a count',
+    /keeper feed unavailable/.test(DB) && /DO NOT start the draft/.test(DB));
+  check('draftboard: verification state is mirrored onto window (gotcha 24)',
+    /window\.WPIAL_KEEPERS_OK\s*=/.test(DB));
+  check('draftboard: the declared round from the sheet wins over the derived one',
+    /declared \(league sheet\)/.test(DB));
+  check('draftboard: the offline snapshot is the current 47, not the July 15',
+    (DB.match(/KEEPERS_SNAPSHOT = (\[.*?\]);/s) || [,''])[1].split('"team"').length - 1 === 47);
+  check('draftboard: the two players who are no longer kept are gone from the snapshot',
+    !/"player":"Sam Darnold"/.test(DB) && !/"player":"Dalton Kincaid"/.test(DB));
+  check('draftsync: setupLive refuses to seed an unverified keeper set',
+    /window\.WPIAL_KEEPERS_OK !== true/.test(DS) && /refusing to seed/.test(DS));
+}
+
 /* jsdom defers DOMContentLoaded; sitenav's init() waits for it. */
 function return_after_load(dom, fn) {
   if (dom.window.document.readyState === 'loading') {
