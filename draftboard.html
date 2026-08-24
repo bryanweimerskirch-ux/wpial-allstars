@@ -3415,7 +3415,10 @@ function fetchLiveKeepers(manual, attempt){
   attempt = attempt || 1;
   const MAX = 3;
   const url=KEEPERS_URL+(KEEPERS_URL.indexOf('?')<0?'?':'&')+'cb='+Date.now();
-  return fetchWithTimeout(url, 12000).then(r=>{
+  /* 20s, not 12s. Measured live 2026-08-24: keepers_v2 answered at 2.9s, 7.1s and
+     9.7s, and TIMED OUT at 12s. The whole deployment sits in the 7-20s band, so a
+     12s bound was under the observed latency of the one fetch that gates Start. */
+  return fetchWithTimeout(url, 20000).then(r=>{
     if(!r.ok) throw new Error('HTTP '+r.status);
     return r.json();
   }).then(d=>{

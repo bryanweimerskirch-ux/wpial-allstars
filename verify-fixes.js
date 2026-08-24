@@ -422,8 +422,8 @@ console.log('\n2026-08-24 — keeper feed endpoint, silent failure, snapshot dis
     (DB.match(/KEEPERS_SNAPSHOT = (\[.*?\]);/s) || [,''])[1].split('"team"').length - 1 === 47);
   check('draftboard: the two players who are no longer kept are gone from the snapshot',
     !/"player":"Sam Darnold"/.test(DB) && !/"player":"Dalton Kincaid"/.test(DB));
-  check('draftboard: every keeper fetch is time-bounded (the endpoint HANGS, it does not error)',
-    /function fetchWithTimeout/.test(DB) && /AbortController/.test(DB) && /fetchWithTimeout\(url, 12000\)/.test(DB));
+  check('draftboard: the bound clears measured latency (keepers_v2 timed out at 12s live)',
+    /function fetchWithTimeout/.test(DB) && /AbortController/.test(DB) && /fetchWithTimeout\(url, 20000\)/.test(DB));
   check('draftboard: a flaky feed is retried before it is called a failure',
     /attempt < MAX/.test(DB) && /fetchLiveKeepers\(manual, attempt\+1\)/.test(DB));
   check('draftboard: the unverified strip tells you what to do, not just what is wrong',
