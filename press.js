@@ -286,7 +286,24 @@
   }
 
   function setDateline(report) {
-    var d = report && report.report_date ? new Date(
+    /* With no report loaded this used to stamp the masthead with new Date() and derive
+       an edition label from TODAY's weekday — so during the ~30s the feeds take to
+       answer, the paper printed itself as a finished edition dated today. On a Monday
+       that reads as a "Monday paper" nobody ever filed. An edition that was not filed
+       has no date and no number; say so rather than inventing one. */
+    if (!report) {
+      $('dlVol').textContent = 'Vol. ' + roman(new Date().getFullYear() - EST_YEAR + 1) + ' · No. —';
+      $('dlDate').textContent = '—';
+      $('bpDate').textContent = '—';
+      $('dlChip').textContent = 'EDITION';
+      $('newChip').hidden = true;
+      $('earEst').textContent = 'Est. 2019 · ' + (new Date().getFullYear() - EST_YEAR) + ' seasons on record';
+      $('edTitle').textContent = 'The Rocky Mountain Valley Dispatch';
+      $('edMeta').textContent = 'No edition on file';
+      $('stEd').textContent = S.leads.length || '—';
+      return;
+    }
+    var d = report.report_date ? new Date(
       /T/.test(report.report_date) ? report.report_date : report.report_date + 'T12:00:00') : new Date();
     if (isNaN(d.getTime())) d = new Date();
     var vol = roman(d.getFullYear() - EST_YEAR + 1);
@@ -300,8 +317,11 @@
     /* R-Q8: derived from the day of week, free-text `edition` still wins. Nothing
        server-side schedules a Sunday vs Wednesday edition, so the masthead does not
        promise one. */
-    var label = (report && report.edition) ? String(report.edition) :
-                (d.getDay() === 0 ? 'Sunday Edition' : 'Midweek Wire');
+    /* Gelly files Sunday and Wednesday (gelly-edition.gs). Deriving "Midweek Wire"
+       from "not Sunday" labelled every other weekday as an edition day. */
+    var label = report.edition ? String(report.edition) :
+                (d.getDay() === 0 ? 'Sunday Edition' :
+                 d.getDay() === 3 ? 'Midweek Wire' : 'Edition');
     $('dlChip').textContent = label.toUpperCase();
 
     var fresh = (Date.now() - d.getTime()) < 3 * 86400000;
@@ -792,10 +812,14 @@
         ? ' · Lock ' + lock.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) +
           ', ' + lock.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
         : '';
+      /* S.keepers is null both before the feed answers and when it fails, and the two
+         are the same thing to a reader: we do not know. Printing "declarations are
+         still open" next to ten "Has not declared" lines told all ten owners their
+         sheet was blank five days before the lock. It was not. */
       $('atlByline').textContent = S.keepers
         ? dec + ' of ' + total + ' clubs have declared' +
           (dec < total ? ' · ' + (total - dec) + ' outstanding' : ' · all in') + lockTxt
-        : 'Keeper declarations are still open';
+        : 'Keeper wire not answering — declarations cannot be read right now';
     }
     if (!f) { box.innerHTML = '<div class="empty">Franchise registry unavailable.</div>'; return; }
     var order = S.standings.length ? S.standings : f.all().map(function (r) {
@@ -833,7 +857,11 @@
            keeper list is the only real news a club has in August, and it is the
            thing owners actually argue about. */
         var kept = keepersFor(fid);
-        if (kept && kept.players.length) {
+        if (!S.keepers) {
+          /* Unknown is not the same as empty. Never print "has not declared" off a
+             feed we could not read. */
+          note = 'Keeper card could not be read — the wire is not answering. This is the connection, not the club.';
+        } else if (kept && kept.players.length) {
           note = '<b>Keeping:</b> ' + kept.players.map(function (k) {
             return (k.round ? '<span class="rd">R' + esc(k.round) + '</span> ' : '') + esc(k.name);
           }).join(' · ');
@@ -855,6 +883,7 @@
              the standing is alphabetical order wearing a medal. Print what is
              actually true instead. */
           : (function () {
+              if (!S.keepers) return '—';
               var k = keepersFor(fid);
               if (!k || !k.updated) return 'Outstanding';
               var when = new Date(k.updated);

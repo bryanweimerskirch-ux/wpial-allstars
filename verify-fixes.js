@@ -435,6 +435,38 @@ console.log('\n2026-08-24 — keeper feed endpoint, silent failure, snapshot dis
     /' keepers across ' \+ teamsIn \+ ' clubs/.test(DS));
 }
 
+/* ---------------------------------------------------------------------------
+ * 2026-08-24 — the paper printed a loading state as a finished edition
+ *
+ * Bryan: "I only have a Sunday and Wednesday edition... what's this empty Monday
+ * paper?" There was no Monday edition. The feeds take ~30s to answer, and during
+ * that window setDateline() stamped the masthead from new Date() and derived the
+ * edition chip from TODAY's weekday, while renderAroundLeague() printed
+ * "Has not declared. The sheet is blank" for all ten clubs off a null S.keepers.
+ * Five days before the lock, with all 47 declarations present in the sheet.
+ * ------------------------------------------------------------------------- */
+console.log('\n2026-08-24 — press: loading state must not read as a filed edition');
+{
+  const PR = read('press.js');
+
+  check('press: no report means no dateline, not today\u2019s date',
+    /if \(!report\) \{/.test(PR) && /'No edition on file'/.test(PR) &&
+    /\$\('dlDate'\)\.textContent = '\u2014'/.test(PR));
+  check('press: an unfiled edition has no number',
+    /' \u00b7 No\. \u2014'/.test(PR));
+  check('press: Midweek Wire means Wednesday, not "any day that is not Sunday"',
+    /d\.getDay\(\) === 3 \? 'Midweek Wire'/.test(PR));
+  check('press: the keeper byline does not claim declarations are open when the wire is down',
+    /Keeper wire not answering/.test(PR) && !/'Keeper declarations are still open'/.test(PR));
+  check('press: a club whose card could not be read is not reported as undeclared',
+    /if \(!S\.keepers\) \{/.test(PR) && /could not be read/.test(PR) &&
+    /this is the connection, not the club/i.test(PR));
+  check('press: the record line shows unknown, not "Outstanding", when the feed is null',
+    /if \(!S\.keepers\) return '\u2014';/.test(PR));
+  check('press: a genuinely undeclared club still gets the commissioner\u2019s line',
+    /Has not declared\.<\/b> The sheet is blank and the clock is not\./.test(PR));
+}
+
 /* jsdom defers DOMContentLoaded; sitenav's init() waits for it. */
 function return_after_load(dom, fn) {
   if (dom.window.document.readyState === 'loading') {
