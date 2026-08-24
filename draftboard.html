@@ -2428,7 +2428,7 @@ function renderStatus(){
   const teamsIn=new Set(keepers.map(k=>k.team)).size;
   const mk=(mode==='mock'&&mockKeepers.length)?' +'+mockKeepers.length+' mock':'';
   if(!keepersVerified){
-    $('#keeperCount').textContent='⚠ keeper feed unavailable — stale snapshot ('+keepers.length+' from '+teamsIn+' teams). DO NOT start the draft.';
+    $('#keeperCount').textContent='⚠ keeper feed unverified — showing built-in snapshot ('+keepers.length+' from '+teamsIn+' teams). Press ⭐ Pull keepers before starting.';
     $('#keeperCount').className='pill warn';
   } else {
     $('#keeperCount').textContent='⭐ '+keepers.length+' declared'+mk+' · '+teamsIn+'/10 teams in';
@@ -3400,9 +3400,22 @@ function flattenKeeperFeed(d){
   if(Array.isArray(d.keepers)) return d.keepers.slice();
   return null;
 }
-function fetchLiveKeepers(manual){
+/* The Apps Script endpoint does not merely fail — it HANGS, for minutes, with no
+   error. A bare fetch() therefore leaves the keeper load pending forever, which is
+   indistinguishable from "still loading" and blocks the commissioner's guard. Bound
+   every attempt and retry a couple of times before giving up. */
+function fetchWithTimeout(url, ms){
+  if(typeof AbortController!=='function') return fetch(url);
+  const ac=new AbortController();
+  const t=setTimeout(()=>{ try{ac.abort();}catch(e){} }, ms);
+  return fetch(url,{signal:ac.signal}).then(r=>{ clearTimeout(t); return r; },
+                                            e=>{ clearTimeout(t); throw e; });
+}
+function fetchLiveKeepers(manual, attempt){
+  attempt = attempt || 1;
+  const MAX = 3;
   const url=KEEPERS_URL+(KEEPERS_URL.indexOf('?')<0?'?':'&')+'cb='+Date.now();
-  return fetch(url).then(r=>{
+  return fetchWithTimeout(url, 12000).then(r=>{
     if(!r.ok) throw new Error('HTTP '+r.status);
     return r.json();
   }).then(d=>{
@@ -3415,11 +3428,15 @@ function fetchLiveKeepers(manual){
     render();
     return true;
   }).catch(err=>{
-    /* Never swallow this. An unverified board is showing a hardcoded July snapshot
-       and looks exactly like a working one — that is how 32 real declarations went
-       missing with the strip reading a confident "15 declared". */
+    /* Never swallow this. An unverified board looks exactly like a working one —
+       that is how 32 real declarations went missing while the strip read a confident
+       "15 declared · 3/10 teams in". */
+    try{ console.warn('[wpial] keeper feed attempt '+attempt+'/'+MAX+' failed:', err && err.message || err); }catch(e){}
+    if(attempt < MAX){
+      return new Promise(res=>setTimeout(res, attempt*1500))
+        .then(()=>fetchLiveKeepers(manual, attempt+1));
+    }
     setKeepersVerified(false);
-    try{ console.warn('[wpial] keeper feed failed:', err && err.message || err); }catch(e){}
     try{ renderStatus(); }catch(e){}
     return false;
   });

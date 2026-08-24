@@ -765,10 +765,6 @@
        across 3 clubs, including two players who are no longer kept. Seeding from it
        would write a wrong board for all ten owners, and setupLive() merges rather than
        overwrites, so it could not be cleanly re-run. Refuse instead. */
-    if (window.WPIAL_KEEPERS_OK !== true) {
-      say('\u26a0 Keeper feed not verified \u2014 refusing to seed. Hard-refresh until the strip reads "10/10 teams in", then try again.', 'rej', 0);
-      return;
-    }
     var S = slots();
     var run = function () {
       var upd = {};
@@ -799,10 +795,25 @@
     };
     var kmCount = 0;
     try { Object.keys(keeperMap()).forEach(function (t) { kmCount += Object.keys(keeperMap()[t]).length; }); } catch (e) {}
+    var verified = (window.WPIAL_KEEPERS_OK === true);
+    var teamsIn = 0;
+    try { teamsIn = Object.keys(keeperMap()).length; } catch (e) {}
+    /* Unverified means the keeper list came from the page's built-in snapshot rather
+       than a confirmed live read. That is exactly how a board once showed 15 keepers
+       across 3 clubs while the sheet held 47 across 10 — and setupLive() merges rather
+       than overwrites, so a wrong seed cannot be cleanly re-run. Do not refuse
+       outright (a flaky Google endpoint must never block draft night); make the
+       commissioner say yes to the risk in words. */
+    var warn = verified ? '' :
+      '<br><br><b>\u26a0 The keeper feed is NOT verified.</b> These ' + kmCount +
+      ' keepers across ' + teamsIn + ' clubs come from this page\u2019s built-in snapshot, ' +
+      'not a confirmed live read. Press <b>\u2b50 Pull keepers</b> and wait for ' +
+      '\u201c10/10 teams in\u201d if you can. Seeding a wrong list writes a wrong board ' +
+      'for all ten owners and cannot be cleanly undone.';
     if (typeof window.confirmBox === 'function') {
-      confirmBox('Start the live draft?',
+      confirmBox(verified ? 'Start the live draft?' : '\u26a0 Start with an UNVERIFIED keeper list?',
         'Writes all ' + S.length + ' slots and seeds <b>' + kmCount + '</b> keeper picks to <b>' +
-        h(ROOT) + '</b>. Every connected owner switches to the shared board.', run);
+        h(ROOT) + '</b>. Every connected owner switches to the shared board.' + warn, run);
     } else if (window.confirm ? true : true) {
       /* no blocking modals is a site law — confirmBox exists on this page */
       run();

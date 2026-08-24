@@ -406,14 +406,14 @@ console.log('\n2026-08-24 — keeper feed endpoint, silent failure, snapshot dis
     /throw new Error\('empty keeper feed'\)/.test(DB));
   check('draftboard: the keeper failure is no longer swallowed by an empty catch',
     !/\.catch\(\(\)=>\{\}\);\s*\n\}\s*\nfunction fetchFeedRankings/.test(DB) &&
-    /keeper feed failed:/.test(DB));
+    /keeper feed attempt '\+attempt\+'\/'\+MAX\+' failed:/.test(DB));
   check('draftboard: both feed shapes parse (keepers_v2 teams map + legacy array)',
     /function flattenKeeperFeed/.test(DB) && /d\.teams/.test(DB) && /Array\.isArray\(d\.keepers\)/.test(DB));
   check('draftboard: the embedded list loads as a snapshot, never as live',
     /loadKeepersFromList\(KEEPERS_SNAPSHOT,'snapshot'\)/.test(DB) &&
     !/loadKeepersFromList\(KEEPERS_SNAPSHOT,'live'\)/.test(DB));
   check('draftboard: an unverified board says so instead of stating a count',
-    /keeper feed unavailable/.test(DB) && /DO NOT start the draft/.test(DB));
+    /keeper feed unverified/.test(DB) && /showing built-in snapshot/.test(DB));
   check('draftboard: verification state is mirrored onto window (gotcha 24)',
     /window\.WPIAL_KEEPERS_OK\s*=/.test(DB));
   check('draftboard: the declared round from the sheet wins over the derived one',
@@ -422,8 +422,17 @@ console.log('\n2026-08-24 — keeper feed endpoint, silent failure, snapshot dis
     (DB.match(/KEEPERS_SNAPSHOT = (\[.*?\]);/s) || [,''])[1].split('"team"').length - 1 === 47);
   check('draftboard: the two players who are no longer kept are gone from the snapshot',
     !/"player":"Sam Darnold"/.test(DB) && !/"player":"Dalton Kincaid"/.test(DB));
-  check('draftsync: setupLive refuses to seed an unverified keeper set',
-    /window\.WPIAL_KEEPERS_OK !== true/.test(DS) && /refusing to seed/.test(DS));
+  check('draftboard: every keeper fetch is time-bounded (the endpoint HANGS, it does not error)',
+    /function fetchWithTimeout/.test(DB) && /AbortController/.test(DB) && /fetchWithTimeout\(url, 12000\)/.test(DB));
+  check('draftboard: a flaky feed is retried before it is called a failure',
+    /attempt < MAX/.test(DB) && /fetchLiveKeepers\(manual, attempt\+1\)/.test(DB));
+  check('draftboard: the unverified strip tells you what to do, not just what is wrong',
+    /Press \u2b50 Pull keepers before starting|Press ⭐ Pull keepers before starting/.test(DB));
+  check('draftsync: an unverified keeper set changes the confirm, it does not hard-block',
+    /WPIAL_KEEPERS_OK === true/.test(DS) && /UNVERIFIED keeper list/.test(DS) &&
+    /built-in snapshot/.test(DS) && !/refusing to seed/.test(DS));
+  check('draftsync: the warning names the count and the club total the commish is risking',
+    /' keepers across ' \+ teamsIn \+ ' clubs/.test(DS));
 }
 
 /* jsdom defers DOMContentLoaded; sitenav's init() waits for it. */
