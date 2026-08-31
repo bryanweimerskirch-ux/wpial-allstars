@@ -94,8 +94,17 @@
        is on the paper, in the rail. */
     { tab: null,         page: 'index.html',      label: 'League News',
       title: 'The Dispatch — the edition, standings, top scorers, the waiver wire and Gelly\'s column' },
-    { tab: null,         page: 'draftboard.html', label: 'Draftboard',
-      title: 'Interactive keeper draftboard — mock drafts, keeper decisions and a full season simulator' },
+    /* Post-draft this points at the RESULTS, not the instrument. draftboard.html is a
+       drafting tool — Firebase-backed shared state, a clock, auto-pick, mock mode — and
+       after the draft none of that is what an owner wants. It also reads a subtree the
+       runbook says to WIPE (seed -> draft -> mirror -> wipe), so a nav item aimed at it
+       degrades to an empty board the moment that cleanup runs.
+
+       draft-results.html is static and baked into the repo: no backend, no feed, nothing
+       to go stale. The board itself is still at draftboard.html for anyone with the URL,
+       and this entry points back there next August. */
+    { tab: null,         page: 'draft-results.html', label: 'Draft Results',
+      title: 'The final 2026 keeper draft board — all 16 rounds, read-only, as entered in ESPN' },
     { tab: 'rosters',    page: SHELL,             label: 'Rosters and Round Values',
       title: 'Every roster with its 2026 keeper round values — declare your keepers here',
       retires: true },
@@ -133,6 +142,12 @@
 
   function currentPage() {
     var p = (location.pathname || '').toLowerCase();
+    /* draft-results BEFORE draftboard. Neither string contains the other, so the order
+       is not load-bearing today — but this whole function is a substring ladder and the
+       one thing it has already got wrong (press.html) was a page that fell through to
+       index.html and lost its highlight. 'draft-results' matches nothing else below:
+       it has no 'board', no 'roster', no 'dashboard' in it. */
+    if (p.indexOf('draft-results') !== -1) return 'draft-results.html';
     if (p.indexOf('draftboard') !== -1) return 'draftboard.html';
     if (p.indexOf('dashboard') !== -1) return 'dashboard.html';
     /* Root swap (2026-08-16): board.html is the old shell. This MUST sit after both
