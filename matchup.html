@@ -492,7 +492,8 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     var html = '';
     pairs.starters.forEach(function (row) {
       html += R.faceoffRow(row.l, row.r, {
-        state: st, slot: (row.l && row.l.slot) || (row.r && row.r.slot),
+        /* row.slot first: pairLineups knows the slot even when neither side filled it. */
+        state: st, slot: row.slot || (row.l && row.l.slot) || (row.r && row.r.slot),
         colorLeft: opt.colorLeft, colorRight: opt.colorRight
       });
     });

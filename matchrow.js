@@ -358,10 +358,19 @@
   }
 
   /* Starters in ESPN's own slot order, bench after. Sorting by slot name would put FLEX
-     before QB and read as a bug to anyone who has ever opened the ESPN app. */
-  var SLOT_ORDER = ['QB', 'RB', 'WR', 'TE', 'FLEX', 'RB/WR/TE', 'OP', 'D/ST', 'DST', 'K'];
+     before QB and read as a bug to anyone who has ever opened the ESPN app.
+
+     ESPN spells the same slot more than one way depending on the endpoint, so aliases
+     collapse to one key BEFORE anything groups or compares on it. Without that, a payload
+     mixing 'FLEX' and 'RB/WR/TE' renders two half-empty flex rows instead of one. */
+  var SLOT_ALIAS = { 'RB/WR/TE': 'FLEX', 'DST': 'D/ST', 'D-ST': 'D/ST', 'DEF': 'D/ST' };
+  var SLOT_ORDER = ['QB', 'RB', 'WR', 'TE', 'FLEX', 'OP', 'D/ST', 'K'];
+  function slotKey(s) {
+    var u = String(s || '').toUpperCase().trim();
+    return SLOT_ALIAS[u] || u;
+  }
   function slotRank(s) {
-    var i = SLOT_ORDER.indexOf(String(s || '').toUpperCase());
+    var i = SLOT_ORDER.indexOf(slotKey(s));
     return i === -1 ? SLOT_ORDER.length : i;
   }
   function splitLineup(players) {
@@ -371,13 +380,54 @@
     return { starters: st, bench: bn };
   }
 
-  /* Pair two lineups slot-by-slot for the face-off view. Uneven lineups (an IR slot on one
-     side only) pad with null rather than shifting every row below out of alignment. */
+  /* Pair two lineups SLOT BY SLOT for the face-off view.
+   *
+   * This used to pair by array index — `sa.starters[i]` against `sb.starters[i]` — which is
+   * not what the comment above it claimed and not what the screen needs. The feed omits an
+   * empty slot entirely rather than sending a placeholder, so the moment one manager had an
+   * empty TE and the other did not, every row below desynced: the opponent's TE showed under
+   * a FLEX chip, a FLEX under D/ST, the D/ST under K, and the last man had no partner left
+   * and got an orphan row of his own. That is where the phantom SECOND KICKER came from.
+   * Padding at the end, which the old code did do, cannot fix a gap in the middle.
+   *
+   * Now: group each side by slot key, walk SLOT_ORDER, and pair the nth of one against the
+   * nth of the other. A slot only one side has still gets its own row, with a null opposite.
+   * The row carries its own `slot`, so the chip is right even when NEITHER side filled it on
+   * that line — the chip is a property of the lineup template, not of whoever happens to be
+   * standing in it.
+   *
+   * Unknown slots keep first-seen order after the known ones rather than being dropped: a
+   * slot this file has not heard of is still somebody's actual starter. */
   function pairLineups(a, b) {
     var sa = splitLineup(a), sb = splitLineup(b);
+
+    function bySlot(list) {
+      var map = {}, order = [];
+      (list || []).forEach(function (p) {
+        var k = slotKey(p.slot);
+        if (!map[k]) { map[k] = []; order.push(k); }
+        map[k].push(p);
+      });
+      return { map: map, order: order };
+    }
+
+    var ga = bySlot(sa.starters), gb = bySlot(sb.starters);
+    var keys = [], seen = {};
+    SLOT_ORDER.forEach(function (k) {
+      if ((ga.map[k] || gb.map[k]) && !seen[k]) { keys.push(k); seen[k] = 1; }
+    });
+    ga.order.concat(gb.order).forEach(function (k) {
+      if (!seen[k]) { keys.push(k); seen[k] = 1; }
+    });
+
     var rows = [], i;
-    var n = Math.max(sa.starters.length, sb.starters.length);
-    for (i = 0; i < n; i++) rows.push({ l: sa.starters[i] || null, r: sb.starters[i] || null, bench: false });
+    keys.forEach(function (k) {
+      var la = ga.map[k] || [], lb = gb.map[k] || [];
+      var n = Math.max(la.length, lb.length);
+      for (var j = 0; j < n; j++) {
+        rows.push({ l: la[j] || null, r: lb[j] || null, bench: false, slot: k });
+      }
+    });
     var m = Math.max(sa.bench.length, sb.bench.length);
     var bench = [];
     for (i = 0; i < m; i++) bench.push({ l: sa.bench[i] || null, r: sb.bench[i] || null, bench: true });
