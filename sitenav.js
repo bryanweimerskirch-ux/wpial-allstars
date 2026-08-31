@@ -71,7 +71,16 @@
      It hides BOTH the nav entry and the section — an orphaned #rosters link landing
      on stale round values is the failure this is meant to prevent, and a hidden nav
      item alone would leave every bookmark pointing at exactly that. */
-  var ROSTERS_RETIRE_AT = Date.parse('2026-08-31T12:00:00Z');   // 6:00am MT, Mon Aug 31
+  /* MOVED 2026-08-30, after the draft finished. The 6am-Monday value existed to avoid
+     hiding the tab out from under someone while the board was still live — that risk is
+     gone the moment the last pick is in, and leaving it up for another ten hours meant
+     showing last season's round values on the night everyone came to look at results.
+     Bryan: "Rosters and round values tab can be hidden/removed until next off season."
+
+     It comes back for the 2027 keeper session. Move this constant, do not delete the
+     section: the tab hiding and the section hiding are the same switch, and an orphaned
+     #rosters link landing on stale numbers is exactly what that was built to prevent. */
+  var ROSTERS_RETIRE_AT = Date.parse('2026-08-31T02:00:00Z');   // draft complete, 8:00pm MT Sun Aug 30
   function rostersRetired() { return Date.now() >= ROSTERS_RETIRE_AT; }
 
   var NAV = [

@@ -1,0 +1,2319 @@
+{
+ "season": 2026,
+ "generated_at": "2026-08-31T02:18:00Z",
+ "source": "ESPN offline draft import, league 11564022 \u2014 the league's system of record",
+ "note": "Static and final. Join on `id` (ESPN player id), never on `player` \u2014 the 2026 draft lost two picks to a display-name join between the keeper feed ('Los Angeles Rams Defense') and the rankings pool ('Rams D/ST').",
+ "rounds": 16,
+ "teams": 10,
+ "franchises": [
+  {
+   "fid": "f01",
+   "canon": "Drake Draaaake?",
+   "espn_team_id": "8",
+   "espn_name": "Drake Draaaake?",
+   "draft_slot": 1
+  },
+  {
+   "fid": "f02",
+   "canon": "Kweef Farts",
+   "espn_team_id": "6",
+   "espn_name": "Kweef Farts",
+   "draft_slot": 2
+  },
+  {
+   "fid": "f03",
+   "canon": "Syd Sweeney's Denim Jeans",
+   "espn_team_id": "4",
+   "espn_name": "Syd Sweeney's Fat T!ts",
+   "draft_slot": 3
+  },
+  {
+   "fid": "f04",
+   "canon": "G. O. A. T.",
+   "espn_team_id": "3",
+   "espn_name": "G. O. A. T.",
+   "draft_slot": 4
+  },
+  {
+   "fid": "f05",
+   "canon": "THE Vagitarians",
+   "espn_team_id": "7",
+   "espn_name": "THE Vagitarians",
+   "draft_slot": 5
+  },
+  {
+   "fid": "f06",
+   "canon": "Mud Dogs",
+   "espn_team_id": "5",
+   "espn_name": "Mud Dogs",
+   "draft_slot": 6
+  },
+  {
+   "fid": "f07",
+   "canon": "Bindgamer3",
+   "espn_team_id": "11",
+   "espn_name": "Bindgamer3",
+   "draft_slot": 7
+  },
+  {
+   "fid": "f08",
+   "canon": "Bijan Mustard",
+   "espn_team_id": "1",
+   "espn_name": "Bijan Mustard",
+   "draft_slot": 8
+  },
+  {
+   "fid": "f09",
+   "canon": "Mean Machine",
+   "espn_team_id": "2",
+   "espn_name": "Mean Machine",
+   "draft_slot": 9
+  },
+  {
+   "fid": "f10",
+   "canon": "Return of The Mac",
+   "espn_team_id": "10",
+   "espn_name": "Return of The Mac",
+   "draft_slot": 10
+  }
+ ],
+ "keeper_count": 49,
+ "keepers_by_fid": {
+  "f03": [
+   {
+    "player": "Jahmyr Gibbs",
+    "round": 1,
+    "pos": "RB",
+    "id": "4429795"
+   },
+   {
+    "player": "CeeDee Lamb",
+    "round": 3,
+    "pos": "WR",
+    "id": "4241389"
+   },
+   {
+    "player": "Emeka Egbuka",
+    "round": 4,
+    "pos": "WR",
+    "id": "4567750"
+   },
+   {
+    "player": "Garrett Wilson",
+    "round": 7,
+    "pos": "WR",
+    "id": "4569618"
+   },
+   {
+    "player": "Brian Thomas Jr.",
+    "round": 11,
+    "pos": "WR",
+    "id": "4432773"
+   }
+  ],
+  "f05": [
+   {
+    "player": "Ashton Jeanty",
+    "round": 1,
+    "pos": "RB",
+    "id": "4890973"
+   },
+   {
+    "player": "Jaylen Waddle",
+    "round": 4,
+    "pos": "WR",
+    "id": "4372016"
+   },
+   {
+    "player": "Chris Olave",
+    "round": 5,
+    "pos": "WR",
+    "id": "4361370"
+   },
+   {
+    "player": "Christian Watson",
+    "round": 7,
+    "pos": "WR",
+    "id": "4248528"
+   },
+   {
+    "player": "Kyle Pitts Sr.",
+    "round": 9,
+    "pos": "TE",
+    "id": "4360248"
+   }
+  ],
+  "f06": [
+   {
+    "player": "Jonathan Taylor",
+    "round": 1,
+    "pos": "RB",
+    "id": "4242335"
+   },
+   {
+    "player": "Matthew Golden",
+    "round": 6,
+    "pos": "WR",
+    "id": "4701936"
+   },
+   {
+    "player": "George Pickens",
+    "round": 7,
+    "pos": "WR",
+    "id": "4426354"
+   },
+   {
+    "player": "Quinshon Judkins",
+    "round": 9,
+    "pos": "RB",
+    "id": "4685702"
+   },
+   {
+    "player": "Blake Corum",
+    "round": 10,
+    "pos": "RB",
+    "id": "4429096"
+   }
+  ],
+  "f07": [
+   {
+    "player": "Puka Nacua",
+    "round": 1,
+    "pos": "WR",
+    "id": "4426515"
+   },
+   {
+    "player": "DK Metcalf",
+    "round": 5,
+    "pos": "WR",
+    "id": "4047650"
+   },
+   {
+    "player": "Patrick Mahomes",
+    "round": 6,
+    "pos": "QB",
+    "id": "3139477"
+   },
+   {
+    "player": "Brock Bowers",
+    "round": 8,
+    "pos": "TE",
+    "id": "4432665"
+   },
+   {
+    "player": "Javonte Williams",
+    "round": 9,
+    "pos": "RB",
+    "id": "4361579"
+   }
+  ],
+  "f08": [
+   {
+    "player": "Bijan Robinson",
+    "round": 1,
+    "pos": "RB",
+    "id": "4430807"
+   },
+   {
+    "player": "Travis Etienne Jr.",
+    "round": 3,
+    "pos": "RB",
+    "id": "4239996"
+   },
+   {
+    "player": "Justin Jefferson",
+    "round": 5,
+    "pos": "WR",
+    "id": "4262921"
+   },
+   {
+    "player": "Ladd McConkey",
+    "round": 7,
+    "pos": "WR",
+    "id": "4612826"
+   },
+   {
+    "player": "Jordan Mason",
+    "round": 10,
+    "pos": "RB",
+    "id": "4360569"
+   }
+  ],
+  "f09": [
+   {
+    "player": "Saquon Barkley",
+    "round": 1,
+    "pos": "RB",
+    "id": "3929630"
+   },
+   {
+    "player": "Cam Skattebo",
+    "round": 7,
+    "pos": "RB",
+    "id": "4696981"
+   },
+   {
+    "player": "Colston Loveland",
+    "round": 8,
+    "pos": "TE",
+    "id": "4723086"
+   },
+   {
+    "player": "Jameson Williams",
+    "round": 9,
+    "pos": "WR",
+    "id": "4426388"
+   },
+   {
+    "player": "Rams D/ST",
+    "round": 14,
+    "pos": "DEF",
+    "id": "-16014"
+   }
+  ],
+  "f10": [
+   {
+    "player": "Ja'Marr Chase",
+    "round": 2,
+    "pos": "WR",
+    "id": "4362628"
+   },
+   {
+    "player": "James Cook III",
+    "round": 6,
+    "pos": "RB",
+    "id": "4379399"
+   },
+   {
+    "player": "Jaxon Smith-Njigba",
+    "round": 8,
+    "pos": "WR",
+    "id": "4430878"
+   },
+   {
+    "player": "Chase Brown",
+    "round": 9,
+    "pos": "RB",
+    "id": "4362238"
+   },
+   {
+    "player": "Bhayshul Tuten",
+    "round": 11,
+    "pos": "RB",
+    "id": "4882093"
+   }
+  ],
+  "f04": [
+   {
+    "player": "Rashee Rice",
+    "round": 4,
+    "pos": "WR",
+    "id": "4428331"
+   },
+   {
+    "player": "Kenneth Walker III",
+    "round": 5,
+    "pos": "RB",
+    "id": "4567048"
+   },
+   {
+    "player": "Amon-Ra St. Brown",
+    "round": 6,
+    "pos": "WR",
+    "id": "4374302"
+   },
+   {
+    "player": "Sam LaPorta",
+    "round": 13,
+    "pos": "TE",
+    "id": "4430027"
+   },
+   {
+    "player": "Seahawks D/ST",
+    "round": 16,
+    "pos": "DEF",
+    "id": "-16026"
+   }
+  ],
+  "f01": [
+   {
+    "player": "Drake London",
+    "round": 4,
+    "pos": "WR",
+    "id": "4426502"
+   },
+   {
+    "player": "Tucker Kraft",
+    "round": 9,
+    "pos": "TE",
+    "id": "4572680"
+   },
+   {
+    "player": "Luther Burden III",
+    "round": 12,
+    "pos": "WR",
+    "id": "4685278"
+   },
+   {
+    "player": "Dylan Sampson",
+    "round": 15,
+    "pos": "RB",
+    "id": "5081397"
+   }
+  ],
+  "f02": [
+   {
+    "player": "Jordan Addison",
+    "round": 6,
+    "pos": "WR",
+    "id": "4429205"
+   },
+   {
+    "player": "Tyler Warren",
+    "round": 9,
+    "pos": "TE",
+    "id": "4431459"
+   },
+   {
+    "player": "Chris Godwin Jr.",
+    "round": 11,
+    "pos": "WR",
+    "id": "3116165"
+   },
+   {
+    "player": "Bo Nix",
+    "round": 12,
+    "pos": "QB",
+    "id": "4426338"
+   },
+   {
+    "player": "Jalen McMillan",
+    "round": 15,
+    "pos": "WR",
+    "id": "4430834"
+   }
+  ]
+ },
+ "picks": [
+  {
+   "overall": 1,
+   "round": 1,
+   "pick": 1,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "De'Von Achane",
+   "id": "4429160",
+   "pos": "RB",
+   "nfl": "MIA",
+   "keeper": false
+  },
+  {
+   "overall": 2,
+   "round": 1,
+   "pick": 2,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Christian McCaffrey",
+   "id": "3117251",
+   "pos": "RB",
+   "nfl": "SF",
+   "keeper": false
+  },
+  {
+   "overall": 3,
+   "round": 1,
+   "pick": 3,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Jahmyr Gibbs",
+   "id": "4429795",
+   "pos": "RB",
+   "nfl": "DET",
+   "keeper": true
+  },
+  {
+   "overall": 4,
+   "round": 1,
+   "pick": 4,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Derrick Henry",
+   "id": "3043078",
+   "pos": "RB",
+   "nfl": "BAL",
+   "keeper": false
+  },
+  {
+   "overall": 5,
+   "round": 1,
+   "pick": 5,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Ashton Jeanty",
+   "id": "4890973",
+   "pos": "RB",
+   "nfl": "LV",
+   "keeper": true
+  },
+  {
+   "overall": 6,
+   "round": 1,
+   "pick": 6,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Jonathan Taylor",
+   "id": "4242335",
+   "pos": "RB",
+   "nfl": "IND",
+   "keeper": true
+  },
+  {
+   "overall": 7,
+   "round": 1,
+   "pick": 7,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Puka Nacua",
+   "id": "4426515",
+   "pos": "WR",
+   "nfl": "LAR",
+   "keeper": true
+  },
+  {
+   "overall": 8,
+   "round": 1,
+   "pick": 8,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Bijan Robinson",
+   "id": "4430807",
+   "pos": "RB",
+   "nfl": "ATL",
+   "keeper": true
+  },
+  {
+   "overall": 9,
+   "round": 1,
+   "pick": 9,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Saquon Barkley",
+   "id": "3929630",
+   "pos": "RB",
+   "nfl": "PHI",
+   "keeper": true
+  },
+  {
+   "overall": 10,
+   "round": 1,
+   "pick": 10,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Omarion Hampton",
+   "id": "4685382",
+   "pos": "RB",
+   "nfl": "LAC",
+   "keeper": false
+  },
+  {
+   "overall": 11,
+   "round": 2,
+   "pick": 1,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Ja'Marr Chase",
+   "id": "4362628",
+   "pos": "WR",
+   "nfl": "CIN",
+   "keeper": true
+  },
+  {
+   "overall": 12,
+   "round": 2,
+   "pick": 2,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Nico Collins",
+   "id": "4258173",
+   "pos": "WR",
+   "nfl": "HOU",
+   "keeper": false
+  },
+  {
+   "overall": 13,
+   "round": 2,
+   "pick": 3,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Josh Allen",
+   "id": "3918298",
+   "pos": "QB",
+   "nfl": "BUF",
+   "keeper": false
+  },
+  {
+   "overall": 14,
+   "round": 2,
+   "pick": 4,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Jeremiyah Love",
+   "id": "4870808",
+   "pos": "RB",
+   "nfl": "ARI",
+   "keeper": false
+  },
+  {
+   "overall": 15,
+   "round": 2,
+   "pick": 5,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "A.J. Brown",
+   "id": "4047646",
+   "pos": "WR",
+   "nfl": "NE",
+   "keeper": false
+  },
+  {
+   "overall": 16,
+   "round": 2,
+   "pick": 6,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Breece Hall",
+   "id": "4427366",
+   "pos": "RB",
+   "nfl": "NYJ",
+   "keeper": false
+  },
+  {
+   "overall": 17,
+   "round": 2,
+   "pick": 7,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Malik Nabers",
+   "id": "4595348",
+   "pos": "WR",
+   "nfl": "NYG",
+   "keeper": false
+  },
+  {
+   "overall": 18,
+   "round": 2,
+   "pick": 8,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Kyren Williams",
+   "id": "4430737",
+   "pos": "RB",
+   "nfl": "LAR",
+   "keeper": false
+  },
+  {
+   "overall": 19,
+   "round": 2,
+   "pick": 9,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Bucky Irving",
+   "id": "4596448",
+   "pos": "RB",
+   "nfl": "TB",
+   "keeper": false
+  },
+  {
+   "overall": 20,
+   "round": 2,
+   "pick": 10,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "DeVonta Smith",
+   "id": "4241478",
+   "pos": "WR",
+   "nfl": "PHI",
+   "keeper": false
+  },
+  {
+   "overall": 21,
+   "round": 3,
+   "pick": 1,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Josh Jacobs",
+   "id": "4047365",
+   "pos": "RB",
+   "nfl": "GB",
+   "keeper": false
+  },
+  {
+   "overall": 22,
+   "round": 3,
+   "pick": 2,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Jadarian Price",
+   "id": "4685512",
+   "pos": "RB",
+   "nfl": "SEA",
+   "keeper": false
+  },
+  {
+   "overall": 23,
+   "round": 3,
+   "pick": 3,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "CeeDee Lamb",
+   "id": "4241389",
+   "pos": "WR",
+   "nfl": "DAL",
+   "keeper": true
+  },
+  {
+   "overall": 24,
+   "round": 3,
+   "pick": 4,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Jalen Hurts",
+   "id": "4040715",
+   "pos": "QB",
+   "nfl": "PHI",
+   "keeper": false
+  },
+  {
+   "overall": 25,
+   "round": 3,
+   "pick": 5,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Zay Flowers",
+   "id": "4429615",
+   "pos": "WR",
+   "nfl": "BAL",
+   "keeper": false
+  },
+  {
+   "overall": 26,
+   "round": 3,
+   "pick": 6,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Trey McBride",
+   "id": "4361307",
+   "pos": "TE",
+   "nfl": "ARI",
+   "keeper": false
+  },
+  {
+   "overall": 27,
+   "round": 3,
+   "pick": 7,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Davante Adams",
+   "id": "16800",
+   "pos": "WR",
+   "nfl": "LAR",
+   "keeper": false
+  },
+  {
+   "overall": 28,
+   "round": 3,
+   "pick": 8,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Travis Etienne Jr.",
+   "id": "4239996",
+   "pos": "RB",
+   "nfl": "NO",
+   "keeper": true
+  },
+  {
+   "overall": 29,
+   "round": 3,
+   "pick": 9,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Tee Higgins",
+   "id": "4239993",
+   "pos": "WR",
+   "nfl": "CIN",
+   "keeper": false
+  },
+  {
+   "overall": 30,
+   "round": 3,
+   "pick": 10,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "D'Andre Swift",
+   "id": "4259545",
+   "pos": "RB",
+   "nfl": "CHI",
+   "keeper": false
+  },
+  {
+   "overall": 31,
+   "round": 4,
+   "pick": 1,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Tetairoa McMillan",
+   "id": "4685472",
+   "pos": "WR",
+   "nfl": "CAR",
+   "keeper": false
+  },
+  {
+   "overall": 32,
+   "round": 4,
+   "pick": 2,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Tony Pollard",
+   "id": "3916148",
+   "pos": "RB",
+   "nfl": "TEN",
+   "keeper": false
+  },
+  {
+   "overall": 33,
+   "round": 4,
+   "pick": 3,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "DJ Moore",
+   "id": "3915416",
+   "pos": "WR",
+   "nfl": "BUF",
+   "keeper": false
+  },
+  {
+   "overall": 34,
+   "round": 4,
+   "pick": 4,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Rico Dowdle",
+   "id": "4038815",
+   "pos": "RB",
+   "nfl": "PIT",
+   "keeper": false
+  },
+  {
+   "overall": 35,
+   "round": 4,
+   "pick": 5,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Lamar Jackson",
+   "id": "3916387",
+   "pos": "QB",
+   "nfl": "BAL",
+   "keeper": false
+  },
+  {
+   "overall": 36,
+   "round": 4,
+   "pick": 6,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Jaylen Waddle",
+   "id": "4372016",
+   "pos": "WR",
+   "nfl": "DEN",
+   "keeper": true
+  },
+  {
+   "overall": 37,
+   "round": 4,
+   "pick": 7,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Rashee Rice",
+   "id": "4428331",
+   "pos": "WR",
+   "nfl": "KC",
+   "keeper": true
+  },
+  {
+   "overall": 38,
+   "round": 4,
+   "pick": 8,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Emeka Egbuka",
+   "id": "4567750",
+   "pos": "WR",
+   "nfl": "TB",
+   "keeper": true
+  },
+  {
+   "overall": 39,
+   "round": 4,
+   "pick": 9,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Carnell Tate",
+   "id": "4871023",
+   "pos": "WR",
+   "nfl": "TEN",
+   "keeper": false
+  },
+  {
+   "overall": 40,
+   "round": 4,
+   "pick": 10,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Drake London",
+   "id": "4426502",
+   "pos": "WR",
+   "nfl": "ATL",
+   "keeper": true
+  },
+  {
+   "overall": 41,
+   "round": 5,
+   "pick": 1,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Terry McLaurin",
+   "id": "3121422",
+   "pos": "WR",
+   "nfl": "WSH",
+   "keeper": false
+  },
+  {
+   "overall": 42,
+   "round": 5,
+   "pick": 2,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Marvin Harrison Jr.",
+   "id": "4432708",
+   "pos": "WR",
+   "nfl": "ARI",
+   "keeper": false
+  },
+  {
+   "overall": 43,
+   "round": 5,
+   "pick": 3,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Rome Odunze",
+   "id": "4431299",
+   "pos": "WR",
+   "nfl": "CHI",
+   "keeper": false
+  },
+  {
+   "overall": 44,
+   "round": 5,
+   "pick": 4,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Kenneth Walker III",
+   "id": "4567048",
+   "pos": "RB",
+   "nfl": "KC",
+   "keeper": true
+  },
+  {
+   "overall": 45,
+   "round": 5,
+   "pick": 5,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Chris Olave",
+   "id": "4361370",
+   "pos": "WR",
+   "nfl": "NO",
+   "keeper": true
+  },
+  {
+   "overall": 46,
+   "round": 5,
+   "pick": 6,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "David Montgomery",
+   "id": "4035538",
+   "pos": "RB",
+   "nfl": "HOU",
+   "keeper": false
+  },
+  {
+   "overall": 47,
+   "round": 5,
+   "pick": 7,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "DK Metcalf",
+   "id": "4047650",
+   "pos": "WR",
+   "nfl": "PIT",
+   "keeper": true
+  },
+  {
+   "overall": 48,
+   "round": 5,
+   "pick": 8,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Justin Jefferson",
+   "id": "4262921",
+   "pos": "WR",
+   "nfl": "MIN",
+   "keeper": true
+  },
+  {
+   "overall": 49,
+   "round": 5,
+   "pick": 9,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Joe Burrow",
+   "id": "3915511",
+   "pos": "QB",
+   "nfl": "CIN",
+   "keeper": false
+  },
+  {
+   "overall": 50,
+   "round": 5,
+   "pick": 10,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Parker Washington",
+   "id": "4432620",
+   "pos": "WR",
+   "nfl": "JAX",
+   "keeper": false
+  },
+  {
+   "overall": 51,
+   "round": 6,
+   "pick": 1,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "James Cook III",
+   "id": "4379399",
+   "pos": "RB",
+   "nfl": "BUF",
+   "keeper": true
+  },
+  {
+   "overall": 52,
+   "round": 6,
+   "pick": 2,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Quentin Johnston",
+   "id": "4429025",
+   "pos": "WR",
+   "nfl": "LAC",
+   "keeper": false
+  },
+  {
+   "overall": 53,
+   "round": 6,
+   "pick": 3,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Jonathon Brooks",
+   "id": "4678008",
+   "pos": "RB",
+   "nfl": "CAR",
+   "keeper": false
+  },
+  {
+   "overall": 54,
+   "round": 6,
+   "pick": 4,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Patrick Mahomes",
+   "id": "3139477",
+   "pos": "QB",
+   "nfl": "KC",
+   "keeper": true
+  },
+  {
+   "overall": 55,
+   "round": 6,
+   "pick": 5,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Matthew Golden",
+   "id": "4701936",
+   "pos": "WR",
+   "nfl": "GB",
+   "keeper": true
+  },
+  {
+   "overall": 56,
+   "round": 6,
+   "pick": 6,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Alec Pierce",
+   "id": "4360078",
+   "pos": "WR",
+   "nfl": "IND",
+   "keeper": false
+  },
+  {
+   "overall": 57,
+   "round": 6,
+   "pick": 7,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Amon-Ra St. Brown",
+   "id": "4374302",
+   "pos": "WR",
+   "nfl": "DET",
+   "keeper": true
+  },
+  {
+   "overall": 58,
+   "round": 6,
+   "pick": 8,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "TreVeyon Henderson",
+   "id": "4432710",
+   "pos": "RB",
+   "nfl": "NE",
+   "keeper": false
+  },
+  {
+   "overall": 59,
+   "round": 6,
+   "pick": 9,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Jordan Addison",
+   "id": "4429205",
+   "pos": "WR",
+   "nfl": "MIN",
+   "keeper": true
+  },
+  {
+   "overall": 60,
+   "round": 6,
+   "pick": 10,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "J.K. Dobbins",
+   "id": "4241985",
+   "pos": "RB",
+   "nfl": "DEN",
+   "keeper": false
+  },
+  {
+   "overall": 61,
+   "round": 7,
+   "pick": 1,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Jaylen Warren",
+   "id": "4569987",
+   "pos": "RB",
+   "nfl": "PIT",
+   "keeper": false
+  },
+  {
+   "overall": 62,
+   "round": 7,
+   "pick": 2,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Makai Lemon",
+   "id": "4870795",
+   "pos": "WR",
+   "nfl": "PHI",
+   "keeper": false
+  },
+  {
+   "overall": 63,
+   "round": 7,
+   "pick": 3,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Garrett Wilson",
+   "id": "4569618",
+   "pos": "WR",
+   "nfl": "NYJ",
+   "keeper": true
+  },
+  {
+   "overall": 64,
+   "round": 7,
+   "pick": 4,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Rhamondre Stevenson",
+   "id": "4569173",
+   "pos": "RB",
+   "nfl": "NE",
+   "keeper": false
+  },
+  {
+   "overall": 65,
+   "round": 7,
+   "pick": 5,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Christian Watson",
+   "id": "4248528",
+   "pos": "WR",
+   "nfl": "GB",
+   "keeper": true
+  },
+  {
+   "overall": 66,
+   "round": 7,
+   "pick": 6,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "George Pickens",
+   "id": "4426354",
+   "pos": "WR",
+   "nfl": "DAL",
+   "keeper": true
+  },
+  {
+   "overall": 67,
+   "round": 7,
+   "pick": 7,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Mike Evans",
+   "id": "16737",
+   "pos": "WR",
+   "nfl": "SF",
+   "keeper": false
+  },
+  {
+   "overall": 68,
+   "round": 7,
+   "pick": 8,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Ladd McConkey",
+   "id": "4612826",
+   "pos": "WR",
+   "nfl": "LAC",
+   "keeper": true
+  },
+  {
+   "overall": 69,
+   "round": 7,
+   "pick": 9,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Cam Skattebo",
+   "id": "4696981",
+   "pos": "RB",
+   "nfl": "NYG",
+   "keeper": true
+  },
+  {
+   "overall": 70,
+   "round": 7,
+   "pick": 10,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Drake Maye",
+   "id": "4431452",
+   "pos": "QB",
+   "nfl": "NE",
+   "keeper": false
+  },
+  {
+   "overall": 71,
+   "round": 8,
+   "pick": 1,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Jaxon Smith-Njigba",
+   "id": "4430878",
+   "pos": "WR",
+   "nfl": "SEA",
+   "keeper": true
+  },
+  {
+   "overall": 72,
+   "round": 8,
+   "pick": 2,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Colston Loveland",
+   "id": "4723086",
+   "pos": "TE",
+   "nfl": "CHI",
+   "keeper": true
+  },
+  {
+   "overall": 73,
+   "round": 8,
+   "pick": 3,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "George Kittle",
+   "id": "3040151",
+   "pos": "TE",
+   "nfl": "SF",
+   "keeper": false
+  },
+  {
+   "overall": 74,
+   "round": 8,
+   "pick": 4,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Brock Bowers",
+   "id": "4432665",
+   "pos": "TE",
+   "nfl": "LV",
+   "keeper": true
+  },
+  {
+   "overall": 75,
+   "round": 8,
+   "pick": 5,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Michael Pittman Jr.",
+   "id": "4035687",
+   "pos": "WR",
+   "nfl": "PIT",
+   "keeper": false
+  },
+  {
+   "overall": 76,
+   "round": 8,
+   "pick": 6,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Kyle Monangai",
+   "id": "4608686",
+   "pos": "RB",
+   "nfl": "CHI",
+   "keeper": false
+  },
+  {
+   "overall": 77,
+   "round": 8,
+   "pick": 7,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Courtland Sutton",
+   "id": "3128429",
+   "pos": "WR",
+   "nfl": "DEN",
+   "keeper": false
+  },
+  {
+   "overall": 78,
+   "round": 8,
+   "pick": 8,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Jaxson Dart",
+   "id": "4689114",
+   "pos": "QB",
+   "nfl": "NYG",
+   "keeper": false
+  },
+  {
+   "overall": 79,
+   "round": 8,
+   "pick": 9,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Jacory Croskey-Merritt",
+   "id": "4575131",
+   "pos": "RB",
+   "nfl": "WSH",
+   "keeper": false
+  },
+  {
+   "overall": 80,
+   "round": 8,
+   "pick": 10,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "KC Concepcion",
+   "id": "4870653",
+   "pos": "WR",
+   "nfl": "CLE",
+   "keeper": false
+  },
+  {
+   "overall": 81,
+   "round": 9,
+   "pick": 1,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Tucker Kraft",
+   "id": "4572680",
+   "pos": "TE",
+   "nfl": "GB",
+   "keeper": true
+  },
+  {
+   "overall": 82,
+   "round": 9,
+   "pick": 2,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Tyler Warren",
+   "id": "4431459",
+   "pos": "TE",
+   "nfl": "IND",
+   "keeper": true
+  },
+  {
+   "overall": 83,
+   "round": 9,
+   "pick": 3,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Harold Fannin Jr.",
+   "id": "5083076",
+   "pos": "TE",
+   "nfl": "CLE",
+   "keeper": false
+  },
+  {
+   "overall": 84,
+   "round": 9,
+   "pick": 4,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Jayden Reed",
+   "id": "4362249",
+   "pos": "WR",
+   "nfl": "GB",
+   "keeper": false
+  },
+  {
+   "overall": 85,
+   "round": 9,
+   "pick": 5,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Kyle Pitts Sr.",
+   "id": "4360248",
+   "pos": "TE",
+   "nfl": "ATL",
+   "keeper": true
+  },
+  {
+   "overall": 86,
+   "round": 9,
+   "pick": 6,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Quinshon Judkins",
+   "id": "4685702",
+   "pos": "RB",
+   "nfl": "CLE",
+   "keeper": true
+  },
+  {
+   "overall": 87,
+   "round": 9,
+   "pick": 7,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Javonte Williams",
+   "id": "4361579",
+   "pos": "RB",
+   "nfl": "DAL",
+   "keeper": true
+  },
+  {
+   "overall": 88,
+   "round": 9,
+   "pick": 8,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Jayden Daniels",
+   "id": "4426348",
+   "pos": "QB",
+   "nfl": "WSH",
+   "keeper": false
+  },
+  {
+   "overall": 89,
+   "round": 9,
+   "pick": 9,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Jameson Williams",
+   "id": "4426388",
+   "pos": "WR",
+   "nfl": "DET",
+   "keeper": true
+  },
+  {
+   "overall": 90,
+   "round": 9,
+   "pick": 10,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Chase Brown",
+   "id": "4362238",
+   "pos": "RB",
+   "nfl": "CIN",
+   "keeper": true
+  },
+  {
+   "overall": 91,
+   "round": 10,
+   "pick": 1,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "RJ Harvey",
+   "id": "4568490",
+   "pos": "RB",
+   "nfl": "DEN",
+   "keeper": false
+  },
+  {
+   "overall": 92,
+   "round": 10,
+   "pick": 2,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Xavier Worthy",
+   "id": "4683062",
+   "pos": "WR",
+   "nfl": "KC",
+   "keeper": false
+  },
+  {
+   "overall": 93,
+   "round": 10,
+   "pick": 3,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Jordan Mason",
+   "id": "4360569",
+   "pos": "RB",
+   "nfl": "MIN",
+   "keeper": true
+  },
+  {
+   "overall": 94,
+   "round": 10,
+   "pick": 4,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Kenny Gainwell",
+   "id": "4371733",
+   "pos": "RB",
+   "nfl": "TB",
+   "keeper": false
+  },
+  {
+   "overall": 95,
+   "round": 10,
+   "pick": 5,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Blake Corum",
+   "id": "4429096",
+   "pos": "RB",
+   "nfl": "LAR",
+   "keeper": true
+  },
+  {
+   "overall": 96,
+   "round": 10,
+   "pick": 6,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Aaron Jones Sr.",
+   "id": "3042519",
+   "pos": "RB",
+   "nfl": "MIN",
+   "keeper": false
+  },
+  {
+   "overall": 97,
+   "round": 10,
+   "pick": 7,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Rachaad White",
+   "id": "4697815",
+   "pos": "RB",
+   "nfl": "WSH",
+   "keeper": false
+  },
+  {
+   "overall": 98,
+   "round": 10,
+   "pick": 8,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Stefon Diggs",
+   "id": "2976212",
+   "pos": "WR",
+   "nfl": "WSH",
+   "keeper": false
+  },
+  {
+   "overall": 99,
+   "round": 10,
+   "pick": 9,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "De'Zhaun Stribling",
+   "id": "4710714",
+   "pos": "WR",
+   "nfl": "SF",
+   "keeper": false
+  },
+  {
+   "overall": 100,
+   "round": 10,
+   "pick": 10,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Zach Charbonnet",
+   "id": "4426385",
+   "pos": "RB",
+   "nfl": "SEA",
+   "keeper": false
+  },
+  {
+   "overall": 101,
+   "round": 11,
+   "pick": 1,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Jordyn Tyson",
+   "id": "4880281",
+   "pos": "WR",
+   "nfl": "NO",
+   "keeper": false
+  },
+  {
+   "overall": 102,
+   "round": 11,
+   "pick": 2,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Chris Godwin Jr.",
+   "id": "3116165",
+   "pos": "WR",
+   "nfl": "TB",
+   "keeper": true
+  },
+  {
+   "overall": 103,
+   "round": 11,
+   "pick": 3,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Brian Thomas Jr.",
+   "id": "4432773",
+   "pos": "WR",
+   "nfl": "JAX",
+   "keeper": true
+  },
+  {
+   "overall": 104,
+   "round": 11,
+   "pick": 4,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Mark Andrews",
+   "id": "3116365",
+   "pos": "TE",
+   "nfl": "BAL",
+   "keeper": false
+  },
+  {
+   "overall": 105,
+   "round": 11,
+   "pick": 5,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Chuba Hubbard",
+   "id": "4241416",
+   "pos": "RB",
+   "nfl": "CAR",
+   "keeper": false
+  },
+  {
+   "overall": 106,
+   "round": 11,
+   "pick": 6,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Josh Downs",
+   "id": "4688813",
+   "pos": "WR",
+   "nfl": "IND",
+   "keeper": false
+  },
+  {
+   "overall": 107,
+   "round": 11,
+   "pick": 7,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Matthew Stafford",
+   "id": "12483",
+   "pos": "QB",
+   "nfl": "LAR",
+   "keeper": false
+  },
+  {
+   "overall": 108,
+   "round": 11,
+   "pick": 8,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Jakobi Meyers",
+   "id": "3916433",
+   "pos": "WR",
+   "nfl": "JAX",
+   "keeper": false
+  },
+  {
+   "overall": 109,
+   "round": 11,
+   "pick": 9,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Kenyon Sadiq",
+   "id": "5083315",
+   "pos": "TE",
+   "nfl": "NYJ",
+   "keeper": false
+  },
+  {
+   "overall": 110,
+   "round": 11,
+   "pick": 10,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Bhayshul Tuten",
+   "id": "4882093",
+   "pos": "RB",
+   "nfl": "JAX",
+   "keeper": true
+  },
+  {
+   "overall": 111,
+   "round": 12,
+   "pick": 1,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "MarShawn Lloyd",
+   "id": "4429023",
+   "pos": "RB",
+   "nfl": "GB",
+   "keeper": false
+  },
+  {
+   "overall": 112,
+   "round": 12,
+   "pick": 2,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Alvin Kamara",
+   "id": "3054850",
+   "pos": "RB",
+   "nfl": "NO",
+   "keeper": false
+  },
+  {
+   "overall": 113,
+   "round": 12,
+   "pick": 3,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Chris Rodriguez Jr.",
+   "id": "4362619",
+   "pos": "RB",
+   "nfl": "JAX",
+   "keeper": false
+  },
+  {
+   "overall": 114,
+   "round": 12,
+   "pick": 4,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Brock Purdy",
+   "id": "4361741",
+   "pos": "QB",
+   "nfl": "SF",
+   "keeper": false
+  },
+  {
+   "overall": 115,
+   "round": 12,
+   "pick": 5,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Texans D/ST",
+   "id": "-16034",
+   "pos": "DEF",
+   "nfl": "HOU",
+   "keeper": false
+  },
+  {
+   "overall": 116,
+   "round": 12,
+   "pick": 6,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Trevor Lawrence",
+   "id": "4360310",
+   "pos": "QB",
+   "nfl": "JAX",
+   "keeper": false
+  },
+  {
+   "overall": 117,
+   "round": 12,
+   "pick": 7,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Kyler Murray",
+   "id": "3917315",
+   "pos": "QB",
+   "nfl": "MIN",
+   "keeper": false
+  },
+  {
+   "overall": 118,
+   "round": 12,
+   "pick": 8,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Woody Marks",
+   "id": "4429059",
+   "pos": "RB",
+   "nfl": "HOU",
+   "keeper": false
+  },
+  {
+   "overall": 119,
+   "round": 12,
+   "pick": 9,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Bo Nix",
+   "id": "4426338",
+   "pos": "QB",
+   "nfl": "DEN",
+   "keeper": true
+  },
+  {
+   "overall": 120,
+   "round": 12,
+   "pick": 10,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Luther Burden III",
+   "id": "4685278",
+   "pos": "WR",
+   "nfl": "CHI",
+   "keeper": true
+  },
+  {
+   "overall": 121,
+   "round": 13,
+   "pick": 1,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Broncos D/ST",
+   "id": "-16007",
+   "pos": "DEF",
+   "nfl": "DEN",
+   "keeper": false
+  },
+  {
+   "overall": 122,
+   "round": 13,
+   "pick": 2,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Brandon Aubrey",
+   "id": "3953687",
+   "pos": "K",
+   "nfl": "DAL",
+   "keeper": false
+  },
+  {
+   "overall": 123,
+   "round": 13,
+   "pick": 3,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Cameron Dicker",
+   "id": "4362081",
+   "pos": "K",
+   "nfl": "LAC",
+   "keeper": false
+  },
+  {
+   "overall": 124,
+   "round": 13,
+   "pick": 4,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Sam LaPorta",
+   "id": "4430027",
+   "pos": "TE",
+   "nfl": "DET",
+   "keeper": true
+  },
+  {
+   "overall": 125,
+   "round": 13,
+   "pick": 5,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Michael Wilson",
+   "id": "4360761",
+   "pos": "WR",
+   "nfl": "ARI",
+   "keeper": false
+  },
+  {
+   "overall": 126,
+   "round": 13,
+   "pick": 6,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Tank Dell",
+   "id": "4366031",
+   "pos": "WR",
+   "nfl": "HOU",
+   "keeper": false
+  },
+  {
+   "overall": 127,
+   "round": 13,
+   "pick": 7,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Travis Kelce",
+   "id": "15847",
+   "pos": "TE",
+   "nfl": "KC",
+   "keeper": false
+  },
+  {
+   "overall": 128,
+   "round": 13,
+   "pick": 8,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Patriots D/ST",
+   "id": "-16017",
+   "pos": "DEF",
+   "nfl": "NE",
+   "keeper": false
+  },
+  {
+   "overall": 129,
+   "round": 13,
+   "pick": 9,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Justin Herbert",
+   "id": "4038941",
+   "pos": "QB",
+   "nfl": "LAC",
+   "keeper": false
+  },
+  {
+   "overall": 130,
+   "round": 13,
+   "pick": 10,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Dak Prescott",
+   "id": "2577417",
+   "pos": "QB",
+   "nfl": "DAL",
+   "keeper": false
+  },
+  {
+   "overall": 131,
+   "round": 14,
+   "pick": 1,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Harrison Mevis",
+   "id": "4574716",
+   "pos": "K",
+   "nfl": "LAR",
+   "keeper": false
+  },
+  {
+   "overall": 132,
+   "round": 14,
+   "pick": 2,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Rams D/ST",
+   "id": "-16014",
+   "pos": "DEF",
+   "nfl": "LAR",
+   "keeper": true
+  },
+  {
+   "overall": 133,
+   "round": 14,
+   "pick": 3,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Cam Little",
+   "id": "4686361",
+   "pos": "K",
+   "nfl": "JAX",
+   "keeper": false
+  },
+  {
+   "overall": 134,
+   "round": 14,
+   "pick": 4,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Caleb Williams",
+   "id": "4431611",
+   "pos": "QB",
+   "nfl": "CHI",
+   "keeper": false
+  },
+  {
+   "overall": 135,
+   "round": 14,
+   "pick": 5,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Caleb Douglas",
+   "id": "4869645",
+   "pos": "WR",
+   "nfl": "MIA",
+   "keeper": false
+  },
+  {
+   "overall": 136,
+   "round": 14,
+   "pick": 6,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Steelers D/ST",
+   "id": "-16023",
+   "pos": "DEF",
+   "nfl": "PIT",
+   "keeper": false
+  },
+  {
+   "overall": 137,
+   "round": 14,
+   "pick": 7,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Jason Myers",
+   "id": "2473037",
+   "pos": "K",
+   "nfl": "SEA",
+   "keeper": false
+  },
+  {
+   "overall": 138,
+   "round": 14,
+   "pick": 8,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Daniel Jones",
+   "id": "3917792",
+   "pos": "QB",
+   "nfl": "IND",
+   "keeper": false
+  },
+  {
+   "overall": 139,
+   "round": 14,
+   "pick": 9,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Ravens D/ST",
+   "id": "-16033",
+   "pos": "DEF",
+   "nfl": "BAL",
+   "keeper": false
+  },
+  {
+   "overall": 140,
+   "round": 14,
+   "pick": 10,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Baker Mayfield",
+   "id": "3052587",
+   "pos": "QB",
+   "nfl": "TB",
+   "keeper": false
+  },
+  {
+   "overall": 141,
+   "round": 15,
+   "pick": 1,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Dylan Sampson",
+   "id": "5081397",
+   "pos": "RB",
+   "nfl": "CLE",
+   "keeper": true
+  },
+  {
+   "overall": 142,
+   "round": 15,
+   "pick": 2,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "Jalen McMillan",
+   "id": "4430834",
+   "pos": "WR",
+   "nfl": "TB",
+   "keeper": true
+  },
+  {
+   "overall": 143,
+   "round": 15,
+   "pick": 3,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Tyler Shough",
+   "id": "4360689",
+   "pos": "QB",
+   "nfl": "NO",
+   "keeper": false
+  },
+  {
+   "overall": 144,
+   "round": 15,
+   "pick": 4,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Rashid Shaheed",
+   "id": "4032473",
+   "pos": "WR",
+   "nfl": "SEA",
+   "keeper": false
+  },
+  {
+   "overall": 145,
+   "round": 15,
+   "pick": 5,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Dallas Goedert",
+   "id": "3121023",
+   "pos": "TE",
+   "nfl": "PHI",
+   "keeper": false
+  },
+  {
+   "overall": 146,
+   "round": 15,
+   "pick": 6,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Chris Boswell",
+   "id": "17372",
+   "pos": "K",
+   "nfl": "PIT",
+   "keeper": false
+  },
+  {
+   "overall": 147,
+   "round": 15,
+   "pick": 7,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Harrison Butker",
+   "id": "3055899",
+   "pos": "K",
+   "nfl": "KC",
+   "keeper": false
+  },
+  {
+   "overall": 148,
+   "round": 15,
+   "pick": 8,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Jonah Coleman",
+   "id": "4702555",
+   "pos": "RB",
+   "nfl": "DEN",
+   "keeper": false
+  },
+  {
+   "overall": 149,
+   "round": 15,
+   "pick": 9,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Ka'imi Fairbairn",
+   "id": "2971573",
+   "pos": "K",
+   "nfl": "HOU",
+   "keeper": false
+  },
+  {
+   "overall": 150,
+   "round": 15,
+   "pick": 10,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Dalton Kincaid",
+   "id": "4385690",
+   "pos": "TE",
+   "nfl": "BUF",
+   "keeper": false
+  },
+  {
+   "overall": 151,
+   "round": 16,
+   "pick": 1,
+   "fid": "f10",
+   "team": "Return of The Mac",
+   "player": "Eagles D/ST",
+   "id": "-16021",
+   "pos": "DEF",
+   "nfl": "PHI",
+   "keeper": false
+  },
+  {
+   "overall": 152,
+   "round": 16,
+   "pick": 2,
+   "fid": "f09",
+   "team": "Mean Machine",
+   "player": "Germie Bernard",
+   "id": "4685261",
+   "pos": "WR",
+   "nfl": "PIT",
+   "keeper": false
+  },
+  {
+   "overall": 153,
+   "round": 16,
+   "pick": 3,
+   "fid": "f08",
+   "team": "Bijan Mustard",
+   "player": "Ja'Kobi Lane",
+   "id": "4870847",
+   "pos": "WR",
+   "nfl": "BAL",
+   "keeper": false
+  },
+  {
+   "overall": 154,
+   "round": 16,
+   "pick": 4,
+   "fid": "f07",
+   "team": "Bindgamer3",
+   "player": "Lions D/ST",
+   "id": "-16008",
+   "pos": "DEF",
+   "nfl": "DET",
+   "keeper": false
+  },
+  {
+   "overall": 155,
+   "round": 16,
+   "pick": 5,
+   "fid": "f06",
+   "team": "Mud Dogs",
+   "player": "Fernando Mendoza",
+   "id": "4837248",
+   "pos": "QB",
+   "nfl": "LV",
+   "keeper": false
+  },
+  {
+   "overall": 156,
+   "round": 16,
+   "pick": 6,
+   "fid": "f05",
+   "team": "THE Vagitarians",
+   "player": "Evan McPherson",
+   "id": "4360234",
+   "pos": "K",
+   "nfl": "CIN",
+   "keeper": false
+  },
+  {
+   "overall": 157,
+   "round": 16,
+   "pick": 7,
+   "fid": "f04",
+   "team": "G. O. A. T.",
+   "player": "Seahawks D/ST",
+   "id": "-16026",
+   "pos": "DEF",
+   "nfl": "SEA",
+   "keeper": true
+  },
+  {
+   "overall": 158,
+   "round": 16,
+   "pick": 8,
+   "fid": "f03",
+   "team": "Syd Sweeney's Denim Jeans",
+   "player": "Browns D/ST",
+   "id": "-16005",
+   "pos": "DEF",
+   "nfl": "CLE",
+   "keeper": false
+  },
+  {
+   "overall": 159,
+   "round": 16,
+   "pick": 9,
+   "fid": "f02",
+   "team": "Kweef Farts",
+   "player": "C.J. Stroud",
+   "id": "4432577",
+   "pos": "QB",
+   "nfl": "HOU",
+   "keeper": false
+  },
+  {
+   "overall": 160,
+   "round": 16,
+   "pick": 10,
+   "fid": "f01",
+   "team": "Drake Draaaake?",
+   "player": "Tyler Loop",
+   "id": "4697745",
+   "pos": "K",
+   "nfl": "BAL",
+   "keeper": false
+  }
+ ]
+}

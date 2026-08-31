@@ -124,6 +124,8 @@ td.keeper .nm::after{content:' \2605';color:var(--accent);font-size:10px;}
     <span id="kcount"></span>
   </div>
 
+  <p id="loadErr" hidden style="border:1px solid var(--danger);border-radius:8px;padding:10px 12px;color:var(--danger);font-size:12.5px;"></p>
+
   <div id="boardView">
     <div class="boardwrap"><table class="board" id="board"></table></div>
   </div>
@@ -171,8 +173,7 @@ td.keeper .nm::after{content:' \2605';color:var(--accent);font-size:10px;}
 (function () {
   'use strict';
 
-  var DATA = {"teams":["Drake Draaaake?","Kweef Farts","Syd Sweeney's Denim Jeans","G. O. A. T.","THE Vagitarians","Mud Dogs","Bindgamer3","Bijan Mustard","Mean Machine","Return of The Mac"],"picks":[{"o":1,"r":1,"p":1,"c":0,"f":"f01","n":"De'Von Achane","pos":"RB","t":"MIA","k":0},{"o":2,"r":1,"p":2,"c":1,"f":"f02","n":"Christian McCaffrey","pos":"RB","t":"SF","k":0},{"o":3,"r":1,"p":3,"c":2,"f":"f03","n":"Jahmyr Gibbs","pos":"RB","t":"DET","k":1},{"o":4,"r":1,"p":4,"c":3,"f":"f04","n":"Derrick Henry","pos":"RB","t":"BAL","k":0},{"o":5,"r":1,"p":5,"c":4,"f":"f05","n":"Ashton Jeanty","pos":"RB","t":"LV","k":1},{"o":6,"r":1,"p":6,"c":5,"f":"f06","n":"Jonathan Taylor","pos":"RB","t":"IND","k":1},{"o":7,"r":1,"p":7,"c":6,"f":"f07","n":"Puka Nacua","pos":"WR","t":"LAR","k":1},{"o":8,"r":1,"p":8,"c":7,"f":"f08","n":"Bijan Robinson","pos":"RB","t":"ATL","k":1},{"o":9,"r":1,"p":9,"c":8,"f":"f09","n":"Saquon Barkley","pos":"RB","t":"PHI","k":1},{"o":10,"r":1,"p":10,"c":9,"f":"f10","n":"Omarion Hampton","pos":"RB","t":"LAC","k":0},{"o":11,"r":2,"p":1,"c":9,"f":"f10","n":"Ja'Marr Chase","pos":"WR","t":"CIN","k":1},{"o":12,"r":2,"p":2,"c":8,"f":"f09","n":"Nico Collins","pos":"WR","t":"HOU","k":0},{"o":13,"r":2,"p":3,"c":7,"f":"f08","n":"Josh Allen","pos":"QB","t":"BUF","k":0},{"o":14,"r":2,"p":4,"c":6,"f":"f07","n":"Jeremiyah Love","pos":"RB","t":"ARI","k":0},{"o":15,"r":2,"p":5,"c":5,"f":"f06","n":"A.J. Brown","pos":"WR","t":"NE","k":0},{"o":16,"r":2,"p":6,"c":4,"f":"f05","n":"Breece Hall","pos":"RB","t":"NYJ","k":0},{"o":17,"r":2,"p":7,"c":3,"f":"f04","n":"Malik Nabers","pos":"WR","t":"NYG","k":0},{"o":18,"r":2,"p":8,"c":2,"f":"f03","n":"Kyren Williams","pos":"RB","t":"LAR","k":0},{"o":19,"r":2,"p":9,"c":1,"f":"f02","n":"Bucky Irving","pos":"RB","t":"TB","k":0},{"o":20,"r":2,"p":10,"c":0,"f":"f01","n":"DeVonta Smith","pos":"WR","t":"PHI","k":0},{"o":21,"r":3,"p":1,"c":0,"f":"f01","n":"Josh Jacobs","pos":"RB","t":"GB","k":0},{"o":22,"r":3,"p":2,"c":1,"f":"f02","n":"Jadarian Price","pos":"RB","t":"SEA","k":0},{"o":23,"r":3,"p":3,"c":2,"f":"f03","n":"CeeDee Lamb","pos":"WR","t":"DAL","k":1},{"o":24,"r":3,"p":4,"c":3,"f":"f04","n":"Jalen Hurts","pos":"QB","t":"PHI","k":0},{"o":25,"r":3,"p":5,"c":4,"f":"f05","n":"Zay Flowers","pos":"WR","t":"BAL","k":0},{"o":26,"r":3,"p":6,"c":5,"f":"f06","n":"Trey McBride","pos":"TE","t":"ARI","k":0},{"o":27,"r":3,"p":7,"c":6,"f":"f07","n":"Davante Adams","pos":"WR","t":"LAR","k":0},{"o":28,"r":3,"p":8,"c":7,"f":"f08","n":"Travis Etienne Jr.","pos":"RB","t":"NO","k":1},{"o":29,"r":3,"p":9,"c":8,"f":"f09","n":"Tee Higgins","pos":"WR","t":"CIN","k":0},{"o":30,"r":3,"p":10,"c":9,"f":"f10","n":"D'Andre Swift","pos":"RB","t":"CHI","k":0},{"o":31,"r":4,"p":1,"c":9,"f":"f10","n":"Tetairoa McMillan","pos":"WR","t":"CAR","k":0},{"o":32,"r":4,"p":2,"c":8,"f":"f09","n":"Tony Pollard","pos":"RB","t":"TEN","k":0},{"o":33,"r":4,"p":3,"c":7,"f":"f08","n":"DJ Moore","pos":"WR","t":"BUF","k":0},{"o":34,"r":4,"p":4,"c":6,"f":"f07","n":"Rico Dowdle","pos":"RB","t":"PIT","k":0},{"o":35,"r":4,"p":5,"c":5,"f":"f06","n":"Lamar Jackson","pos":"QB","t":"BAL","k":0},{"o":36,"r":4,"p":6,"c":4,"f":"f05","n":"Jaylen Waddle","pos":"WR","t":"DEN","k":1},{"o":37,"r":4,"p":7,"c":3,"f":"f04","n":"Rashee Rice","pos":"WR","t":"KC","k":1},{"o":38,"r":4,"p":8,"c":2,"f":"f03","n":"Emeka Egbuka","pos":"WR","t":"TB","k":1},{"o":39,"r":4,"p":9,"c":1,"f":"f02","n":"Carnell Tate","pos":"WR","t":"TEN","k":0},{"o":40,"r":4,"p":10,"c":0,"f":"f01","n":"Drake London","pos":"WR","t":"ATL","k":1},{"o":41,"r":5,"p":1,"c":0,"f":"f01","n":"Terry McLaurin","pos":"WR","t":"WSH","k":0},{"o":42,"r":5,"p":2,"c":1,"f":"f02","n":"Marvin Harrison Jr.","pos":"WR","t":"ARI","k":0},{"o":43,"r":5,"p":3,"c":2,"f":"f03","n":"Rome Odunze","pos":"WR","t":"CHI","k":0},{"o":44,"r":5,"p":4,"c":3,"f":"f04","n":"Kenneth Walker III","pos":"RB","t":"KC","k":1},{"o":45,"r":5,"p":5,"c":4,"f":"f05","n":"Chris Olave","pos":"WR","t":"NO","k":1},{"o":46,"r":5,"p":6,"c":5,"f":"f06","n":"David Montgomery","pos":"RB","t":"HOU","k":0},{"o":47,"r":5,"p":7,"c":6,"f":"f07","n":"DK Metcalf","pos":"WR","t":"PIT","k":1},{"o":48,"r":5,"p":8,"c":7,"f":"f08","n":"Justin Jefferson","pos":"WR","t":"MIN","k":1},{"o":49,"r":5,"p":9,"c":8,"f":"f09","n":"Joe Burrow","pos":"QB","t":"CIN","k":0},{"o":50,"r":5,"p":10,"c":9,"f":"f10","n":"Parker Washington","pos":"WR","t":"JAX","k":0},{"o":51,"r":6,"p":1,"c":9,"f":"f10","n":"James Cook III","pos":"RB","t":"BUF","k":1},{"o":52,"r":6,"p":2,"c":8,"f":"f09","n":"Quentin Johnston","pos":"WR","t":"LAC","k":0},{"o":53,"r":6,"p":3,"c":7,"f":"f08","n":"Jonathon Brooks","pos":"RB","t":"CAR","k":0},{"o":54,"r":6,"p":4,"c":6,"f":"f07","n":"Patrick Mahomes","pos":"QB","t":"KC","k":1},{"o":55,"r":6,"p":5,"c":5,"f":"f06","n":"Matthew Golden","pos":"WR","t":"GB","k":1},{"o":56,"r":6,"p":6,"c":4,"f":"f05","n":"Alec Pierce","pos":"WR","t":"IND","k":0},{"o":57,"r":6,"p":7,"c":3,"f":"f04","n":"Amon-Ra St. Brown","pos":"WR","t":"DET","k":1},{"o":58,"r":6,"p":8,"c":2,"f":"f03","n":"TreVeyon Henderson","pos":"RB","t":"NE","k":0},{"o":59,"r":6,"p":9,"c":1,"f":"f02","n":"Jordan Addison","pos":"WR","t":"MIN","k":1},{"o":60,"r":6,"p":10,"c":0,"f":"f01","n":"J.K. Dobbins","pos":"RB","t":"DEN","k":0},{"o":61,"r":7,"p":1,"c":0,"f":"f01","n":"Jaylen Warren","pos":"RB","t":"PIT","k":0},{"o":62,"r":7,"p":2,"c":1,"f":"f02","n":"Makai Lemon","pos":"WR","t":"PHI","k":0},{"o":63,"r":7,"p":3,"c":2,"f":"f03","n":"Garrett Wilson","pos":"WR","t":"NYJ","k":1},{"o":64,"r":7,"p":4,"c":3,"f":"f04","n":"Rhamondre Stevenson","pos":"RB","t":"NE","k":0},{"o":65,"r":7,"p":5,"c":4,"f":"f05","n":"Christian Watson","pos":"WR","t":"GB","k":1},{"o":66,"r":7,"p":6,"c":5,"f":"f06","n":"George Pickens","pos":"WR","t":"DAL","k":1},{"o":67,"r":7,"p":7,"c":6,"f":"f07","n":"Mike Evans","pos":"WR","t":"SF","k":0},{"o":68,"r":7,"p":8,"c":7,"f":"f08","n":"Ladd McConkey","pos":"WR","t":"LAC","k":1},{"o":69,"r":7,"p":9,"c":8,"f":"f09","n":"Cam Skattebo","pos":"RB","t":"NYG","k":1},{"o":70,"r":7,"p":10,"c":9,"f":"f10","n":"Drake Maye","pos":"QB","t":"NE","k":0},{"o":71,"r":8,"p":1,"c":9,"f":"f10","n":"Jaxon Smith-Njigba","pos":"WR","t":"SEA","k":1},{"o":72,"r":8,"p":2,"c":8,"f":"f09","n":"Colston Loveland","pos":"TE","t":"CHI","k":1},{"o":73,"r":8,"p":3,"c":7,"f":"f08","n":"George Kittle","pos":"TE","t":"SF","k":0},{"o":74,"r":8,"p":4,"c":6,"f":"f07","n":"Brock Bowers","pos":"TE","t":"LV","k":1},{"o":75,"r":8,"p":5,"c":5,"f":"f06","n":"Michael Pittman Jr.","pos":"WR","t":"PIT","k":0},{"o":76,"r":8,"p":6,"c":4,"f":"f05","n":"Kyle Monangai","pos":"RB","t":"CHI","k":0},{"o":77,"r":8,"p":7,"c":3,"f":"f04","n":"Courtland Sutton","pos":"WR","t":"DEN","k":0},{"o":78,"r":8,"p":8,"c":2,"f":"f03","n":"Jaxson Dart","pos":"QB","t":"NYG","k":0},{"o":79,"r":8,"p":9,"c":1,"f":"f02","n":"Jacory Croskey-Merritt","pos":"RB","t":"WSH","k":0},{"o":80,"r":8,"p":10,"c":0,"f":"f01","n":"KC Concepcion","pos":"WR","t":"CLE","k":0},{"o":81,"r":9,"p":1,"c":0,"f":"f01","n":"Tucker Kraft","pos":"TE","t":"GB","k":1},{"o":82,"r":9,"p":2,"c":1,"f":"f02","n":"Tyler Warren","pos":"TE","t":"IND","k":1},{"o":83,"r":9,"p":3,"c":2,"f":"f03","n":"Harold Fannin Jr.","pos":"TE","t":"CLE","k":0},{"o":84,"r":9,"p":4,"c":3,"f":"f04","n":"Jayden Reed","pos":"WR","t":"GB","k":0},{"o":85,"r":9,"p":5,"c":4,"f":"f05","n":"Kyle Pitts Sr.","pos":"TE","t":"ATL","k":1},{"o":86,"r":9,"p":6,"c":5,"f":"f06","n":"Quinshon Judkins","pos":"RB","t":"CLE","k":1},{"o":87,"r":9,"p":7,"c":6,"f":"f07","n":"Javonte Williams","pos":"RB","t":"DAL","k":1},{"o":88,"r":9,"p":8,"c":7,"f":"f08","n":"Jayden Daniels","pos":"QB","t":"WSH","k":0},{"o":89,"r":9,"p":9,"c":8,"f":"f09","n":"Jameson Williams","pos":"WR","t":"DET","k":1},{"o":90,"r":9,"p":10,"c":9,"f":"f10","n":"Chase Brown","pos":"RB","t":"CIN","k":1},{"o":91,"r":10,"p":1,"c":9,"f":"f10","n":"RJ Harvey","pos":"RB","t":"DEN","k":0},{"o":92,"r":10,"p":2,"c":8,"f":"f09","n":"Xavier Worthy","pos":"WR","t":"KC","k":0},{"o":93,"r":10,"p":3,"c":7,"f":"f08","n":"Jordan Mason","pos":"RB","t":"MIN","k":1},{"o":94,"r":10,"p":4,"c":6,"f":"f07","n":"Kenny Gainwell","pos":"RB","t":"TB","k":0},{"o":95,"r":10,"p":5,"c":5,"f":"f06","n":"Blake Corum","pos":"RB","t":"LAR","k":1},{"o":96,"r":10,"p":6,"c":4,"f":"f05","n":"Aaron Jones Sr.","pos":"RB","t":"MIN","k":0},{"o":97,"r":10,"p":7,"c":3,"f":"f04","n":"Rachaad White","pos":"RB","t":"WSH","k":0},{"o":98,"r":10,"p":8,"c":2,"f":"f03","n":"Stefon Diggs","pos":"WR","t":"WSH","k":0},{"o":99,"r":10,"p":9,"c":1,"f":"f02","n":"De'Zhaun Stribling","pos":"WR","t":"SF","k":0},{"o":100,"r":10,"p":10,"c":0,"f":"f01","n":"Zach Charbonnet","pos":"RB","t":"SEA","k":0},{"o":101,"r":11,"p":1,"c":0,"f":"f01","n":"Jordyn Tyson","pos":"WR","t":"NO","k":0},{"o":102,"r":11,"p":2,"c":1,"f":"f02","n":"Chris Godwin Jr.","pos":"WR","t":"TB","k":1},{"o":103,"r":11,"p":3,"c":2,"f":"f03","n":"Brian Thomas Jr.","pos":"WR","t":"JAX","k":1},{"o":104,"r":11,"p":4,"c":3,"f":"f04","n":"Mark Andrews","pos":"TE","t":"BAL","k":0},{"o":105,"r":11,"p":5,"c":4,"f":"f05","n":"Chuba Hubbard","pos":"RB","t":"CAR","k":0},{"o":106,"r":11,"p":6,"c":5,"f":"f06","n":"Josh Downs","pos":"WR","t":"IND","k":0},{"o":107,"r":11,"p":7,"c":6,"f":"f07","n":"Matthew Stafford","pos":"QB","t":"LAR","k":0},{"o":108,"r":11,"p":8,"c":7,"f":"f08","n":"Jakobi Meyers","pos":"WR","t":"JAX","k":0},{"o":109,"r":11,"p":9,"c":8,"f":"f09","n":"Kenyon Sadiq","pos":"TE","t":"NYJ","k":0},{"o":110,"r":11,"p":10,"c":9,"f":"f10","n":"Bhayshul Tuten","pos":"RB","t":"JAX","k":1},{"o":111,"r":12,"p":1,"c":9,"f":"f10","n":"MarShawn Lloyd","pos":"RB","t":"GB","k":0},{"o":112,"r":12,"p":2,"c":8,"f":"f09","n":"Alvin Kamara","pos":"RB","t":"NO","k":0},{"o":113,"r":12,"p":3,"c":7,"f":"f08","n":"Chris Rodriguez Jr.","pos":"RB","t":"JAX","k":0},{"o":114,"r":12,"p":4,"c":6,"f":"f07","n":"Brock Purdy","pos":"QB","t":"SF","k":0},{"o":115,"r":12,"p":5,"c":5,"f":"f06","n":"Texans D/ST","pos":"DEF","t":"HOU","k":0},{"o":116,"r":12,"p":6,"c":4,"f":"f05","n":"Trevor Lawrence","pos":"QB","t":"JAX","k":0},{"o":117,"r":12,"p":7,"c":3,"f":"f04","n":"Kyler Murray","pos":"QB","t":"MIN","k":0},{"o":118,"r":12,"p":8,"c":2,"f":"f03","n":"Woody Marks","pos":"RB","t":"HOU","k":0},{"o":119,"r":12,"p":9,"c":1,"f":"f02","n":"Bo Nix","pos":"QB","t":"DEN","k":1},{"o":120,"r":12,"p":10,"c":0,"f":"f01","n":"Luther Burden III","pos":"WR","t":"CHI","k":1},{"o":121,"r":13,"p":1,"c":0,"f":"f01","n":"Broncos D/ST","pos":"DEF","t":"DEN","k":0},{"o":122,"r":13,"p":2,"c":1,"f":"f02","n":"Brandon Aubrey","pos":"K","t":"DAL","k":0},{"o":123,"r":13,"p":3,"c":2,"f":"f03","n":"Cameron Dicker","pos":"K","t":"LAC","k":0},{"o":124,"r":13,"p":4,"c":3,"f":"f04","n":"Sam LaPorta","pos":"TE","t":"DET","k":1},{"o":125,"r":13,"p":5,"c":4,"f":"f05","n":"Michael Wilson","pos":"WR","t":"ARI","k":0},{"o":126,"r":13,"p":6,"c":5,"f":"f06","n":"Tank Dell","pos":"WR","t":"HOU","k":0},{"o":127,"r":13,"p":7,"c":6,"f":"f07","n":"Travis Kelce","pos":"TE","t":"KC","k":0},{"o":128,"r":13,"p":8,"c":7,"f":"f08","n":"Patriots D/ST","pos":"DEF","t":"NE","k":0},{"o":129,"r":13,"p":9,"c":8,"f":"f09","n":"Justin Herbert","pos":"QB","t":"LAC","k":0},{"o":130,"r":13,"p":10,"c":9,"f":"f10","n":"Dak Prescott","pos":"QB","t":"DAL","k":0},{"o":131,"r":14,"p":1,"c":9,"f":"f10","n":"Harrison Mevis","pos":"K","t":"LAR","k":0},{"o":132,"r":14,"p":2,"c":8,"f":"f09","n":"Rams D/ST","pos":"DEF","t":"LAR","k":1},{"o":133,"r":14,"p":3,"c":7,"f":"f08","n":"Cam Little","pos":"K","t":"JAX","k":0},{"o":134,"r":14,"p":4,"c":6,"f":"f07","n":"Caleb Williams","pos":"QB","t":"CHI","k":0},{"o":135,"r":14,"p":5,"c":5,"f":"f06","n":"Caleb Douglas","pos":"WR","t":"MIA","k":0},{"o":136,"r":14,"p":6,"c":4,"f":"f05","n":"Steelers D/ST","pos":"DEF","t":"PIT","k":0},{"o":137,"r":14,"p":7,"c":3,"f":"f04","n":"Jason Myers","pos":"K","t":"SEA","k":0},{"o":138,"r":14,"p":8,"c":2,"f":"f03","n":"Daniel Jones","pos":"QB","t":"IND","k":0},{"o":139,"r":14,"p":9,"c":1,"f":"f02","n":"Ravens D/ST","pos":"DEF","t":"BAL","k":0},{"o":140,"r":14,"p":10,"c":0,"f":"f01","n":"Baker Mayfield","pos":"QB","t":"TB","k":0},{"o":141,"r":15,"p":1,"c":0,"f":"f01","n":"Dylan Sampson","pos":"RB","t":"CLE","k":1},{"o":142,"r":15,"p":2,"c":1,"f":"f02","n":"Jalen McMillan","pos":"WR","t":"TB","k":1},{"o":143,"r":15,"p":3,"c":2,"f":"f03","n":"Tyler Shough","pos":"QB","t":"NO","k":0},{"o":144,"r":15,"p":4,"c":3,"f":"f04","n":"Rashid Shaheed","pos":"WR","t":"SEA","k":0},{"o":145,"r":15,"p":5,"c":4,"f":"f05","n":"Dallas Goedert","pos":"TE","t":"PHI","k":0},{"o":146,"r":15,"p":6,"c":5,"f":"f06","n":"Chris Boswell","pos":"K","t":"PIT","k":0},{"o":147,"r":15,"p":7,"c":6,"f":"f07","n":"Harrison Butker","pos":"K","t":"KC","k":0},{"o":148,"r":15,"p":8,"c":7,"f":"f08","n":"Jonah Coleman","pos":"RB","t":"DEN","k":0},{"o":149,"r":15,"p":9,"c":8,"f":"f09","n":"Ka'imi Fairbairn","pos":"K","t":"HOU","k":0},{"o":150,"r":15,"p":10,"c":9,"f":"f10","n":"Dalton Kincaid","pos":"TE","t":"BUF","k":0},{"o":151,"r":16,"p":1,"c":9,"f":"f10","n":"Eagles D/ST","pos":"DEF","t":"PHI","k":0},{"o":152,"r":16,"p":2,"c":8,"f":"f09","n":"Germie Bernard","pos":"WR","t":"PIT","k":0},{"o":153,"r":16,"p":3,"c":7,"f":"f08","n":"Ja'Kobi Lane","pos":"WR","t":"BAL","k":0},{"o":154,"r":16,"p":4,"c":6,"f":"f07","n":"Lions D/ST","pos":"DEF","t":"DET","k":0},{"o":155,"r":16,"p":5,"c":5,"f":"f06","n":"Fernando Mendoza","pos":"QB","t":"LV","k":0},{"o":156,"r":16,"p":6,"c":4,"f":"f05","n":"Evan McPherson","pos":"K","t":"CIN","k":0},{"o":157,"r":16,"p":7,"c":3,"f":"f04","n":"Seahawks D/ST","pos":"DEF","t":"SEA","k":1},{"o":158,"r":16,"p":8,"c":2,"f":"f03","n":"Browns D/ST","pos":"DEF","t":"CLE","k":0},{"o":159,"r":16,"p":9,"c":1,"f":"f02","n":"C.J. Stroud","pos":"QB","t":"HOU","k":0},{"o":160,"r":16,"p":10,"c":0,"f":"f01","n":"Tyler Loop","pos":"K","t":"BAL","k":0}]};
-  var TEAMS = DATA.teams, PICKS = DATA.picks;
+  var TEAMS = [], PICKS = [], by = {};
 
   function el(t, c, txt) {
     var n = document.createElement(t);
@@ -182,12 +183,6 @@ td.keeper .nm::after{content:' \2605';color:var(--accent);font-size:10px;}
   }
   function pad(r, p) { return r + '.' + (p < 10 ? '0' + p : p); }
 
-  /* by[round][column] — one lookup, built once. */
-  var by = {};
-  for (var i = 0; i < PICKS.length; i++) {
-    var p = PICKS[i];
-    (by[p.r] = by[p.r] || {})[p.c] = p;
-  }
 
   function cellInner(td, p) {
     if (!p) { td.textContent = ''; return; }
@@ -264,19 +259,61 @@ td.keeper .nm::after{content:' \2605';color:var(--accent);font-size:10px;}
     try { localStorage.setItem('wpial_results_view', which); } catch (e) {}
   }
 
-  renderBoard();
-  renderTeams();
+  function boot(doc) {
+    /* franchises carry draft_slot (1-10) — the board's column order. Deriving TEAMS from
+       it rather than hardcoding a second list is the whole point of the feed. */
+    var fr = doc.franchises.slice().sort(function (a, b) { return a.draft_slot - b.draft_slot; });
+    var colOf = {};
+    TEAMS = fr.map(function (f, i) { colOf[f.fid] = i; return f.canon; });
 
-  var keepers = 0;
-  for (var j = 0; j < PICKS.length; j++) if (PICKS[j].k) keepers++;
-  document.getElementById('kcount').textContent = keepers + ' keepers declared';
+    PICKS = doc.picks.map(function (p) {
+      return { o:p.overall, r:p.round, p:p.pick, c:colOf[p.fid], f:p.fid,
+               n:p.player, pos:p.pos, t:p.nfl, k:p.keeper ? 1 : 0, id:p.id };
+    });
+
+    by = {};
+    for (var i = 0; i < PICKS.length; i++) {
+      var q = PICKS[i];
+      (by[q.r] = by[q.r] || {})[q.c] = q;
+    }
+
+    renderBoard();
+    renderTeams();
+
+    var keepers = 0;
+    for (var j = 0; j < PICKS.length; j++) if (PICKS[j].k) keepers++;
+    document.getElementById('kcount').textContent = keepers + ' keepers declared';
+
+    var saved = null;
+    try { saved = localStorage.getItem('wpial_results_view'); } catch (e) {}
+    if (saved === 'team') show('team');
+  }
+
+  function fail(why) {
+    var e = document.getElementById('loadErr');
+    e.hidden = false;
+    e.textContent = 'Could not load the draft results (' + why + '). ' +
+      'The data lives in draft-results-2026.json next to this page — reload to try again.';
+    document.getElementById('boardView').hidden = true;
+  }
 
   document.getElementById('vBoard').onclick = function () { show('board'); };
   document.getElementById('vTeam').onclick  = function () { show('team'); };
 
-  var saved = null;
-  try { saved = localStorage.getItem('wpial_results_view'); } catch (e) {}
-  if (saved === 'team') show('team');
+  /* Cache-busted on purpose: GitHub Pages serves the JSON with a long max-age and a
+     corrected board that nobody can see is worse than a byte of query string.
+     XHR, not fetch — the rest of this site is ES5 and so is this. */
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'draft-results-2026.json?v=2026', true);
+  xhr.onload = function () {
+    if (xhr.status < 200 || xhr.status >= 300) return fail('HTTP ' + xhr.status);
+    var doc;
+    try { doc = JSON.parse(xhr.responseText); } catch (e) { return fail('bad JSON'); }
+    if (!doc || !doc.picks || !doc.picks.length) return fail('empty feed');
+    try { boot(doc); } catch (e) { fail(e.message); }
+  };
+  xhr.onerror = function () { fail('network'); };
+  xhr.send();
 })();
 </script>
 </body>
