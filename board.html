@@ -212,20 +212,7 @@
   .wire-archive{text-align:center;margin-top:12px;}
   .wire-archive button{font-family:inherit;background:none;border:1px solid #1c2333;color:#1c2333;padding:6px 18px;letter-spacing:1.5px;text-transform:uppercase;font-size:10px;cursor:pointer;border-radius:0;}
 
-  .draft-banner{max-width:1100px;margin:16px auto 0;padding:14px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;}
-  .db-label{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);font-weight:700;}
-  .db-when{font-size:13px;color:var(--muted);margin-top:2px;}
-  .db-count{display:flex;gap:8px;}
-  .db-unit{text-align:center;min-width:54px;background:#0f1319;border:1px solid var(--line);border-radius:8px;padding:6px 8px;}
-  .db-num{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;}
-  .db-lab{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
-  .db-order{width:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
-  .db-order-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-right:4px;}
-  .db-pick{display:flex;align-items:center;gap:6px;font-size:12px;background:#0f1319;border:1px solid var(--line);border-radius:14px;padding:3px 10px;white-space:nowrap;}
-  .db-pick b{color:var(--accent);}
-  .db-pick.first{border-color:#d8b45c;}
-  .db-pick.first b{color:#d8b45c;}
-  @media (max-width:700px){.draft-banner{margin:12px 10px 0;}.team-logo-badge{width:26px;height:26px;margin-right:6px;}}
+  @media (max-width:700px){.team-logo-badge{width:26px;height:26px;margin-right:6px;}}
 
   .player.keeper{border:1px solid #d8b45c;background:#2a230f;color:#e8c97a;font-weight:600;border-radius:6px;}
   .player.keeper::before{content:"\2B50 ";font-size:10px;}
@@ -280,8 +267,6 @@
   body.colorblind .player.keeper{border-color:#F0E442;background:#2b290f;color:#F0E442;}
   body.colorblind .honor{color:#F0E442;}
   body.colorblind .honor.og{color:#56B4E9;}
-  body.colorblind .db-pick.first{border-color:#F0E442;}
-  body.colorblind .db-pick.first b{color:#F0E442;}
 
   #cbGag{position:fixed;inset:0;z-index:900;background:var(--bg);display:none;align-items:center;justify-content:center;text-align:center;padding:24px;cursor:pointer;}
   #cbGag.show{display:flex;}
@@ -381,33 +366,6 @@
   <h1>WPIAL All Stars</h1>
   <p>2026 keeper board &middot; click any player to signal interest</p>
 </header>
-
-<div class="draft-banner" id="draft-banner">
-  <div>
-    <div class="db-label">🏈 2026 Draft Countdown</div>
-    <div class="db-when">Sunday, August 30 &middot; 5:30 PM Mountain</div>
-    <div class="db-when" id="keeper-lock"></div>
-  </div>
-  <div class="db-count" id="draft-countdown">
-    <div class="db-unit"><div class="db-num" id="dc-days">--</div><div class="db-lab">Days</div></div>
-    <div class="db-unit"><div class="db-num" id="dc-hours">--</div><div class="db-lab">Hrs</div></div>
-    <div class="db-unit"><div class="db-num" id="dc-mins">--</div><div class="db-lab">Min</div></div>
-    <div class="db-unit"><div class="db-num" id="dc-secs">--</div><div class="db-lab">Sec</div></div>
-  </div>
-  <div class="db-order">
-    <span class="db-order-label">Round 1 pick order</span>
-    <span class="db-pick first"><b>1</b> Drake Draaaake?</span>
-    <span class="db-pick"><b>2</b> Kweef Farts</span>
-    <span class="db-pick"><b>3</b> Syd Sweeney's Denim Jeans</span>
-    <span class="db-pick"><b>4</b> G. O. A. T.</span>
-    <span class="db-pick"><b>5</b> THE Vagitarians</span>
-    <span class="db-pick"><b>6</b> Mud Dogs</span>
-    <span class="db-pick"><b>7</b> Bindgamer3</span>
-    <span class="db-pick"><b>8</b> Bijan Mustard</span>
-    <span class="db-pick"><b>9</b> Mean Machine</span>
-    <span class="db-pick"><b>10</b> Return of The Mac</span>
-  </div>
-</div>
 
 
 <!-- This nav is HARDCODED and the inline script below binds `nav button[data-tab]`
@@ -744,10 +702,10 @@
   <div class="card" id="nfl-week-card" style="margin-top:16px;">
     <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
       <h3 style="margin:0;border-bottom:none;padding-bottom:0;">🏈 NFL Schedule — Week <span id="nflwk-num">1</span>, who's playing &amp; who's hurt</h3>
-      <span class="badge" style="background:none;border:1px solid var(--line);color:var(--muted);" id="nflwk-phase">keepers only — draft pending</span>
+      <span class="badge" style="background:none;border:1px solid var(--line);color:var(--muted);" id="nflwk-phase">loading rosters&hellip;</span>
     </div>
     <p class="sub" style="margin:6px 0 0;">Every NFL game with the fantasy-relevant players in it, injury designations, and which WPIAL squads have skin in the game. Injury data refreshes from ESPN on every load.</p>
-    <div class="nflwk-legend"><span>Injury:</span><span class="lg"><span class="nflwk-chip q">Q</span> Questionable</span><span class="lg"><span class="nflwk-chip d">D</span> Doubtful</span><span class="lg"><span class="nflwk-chip o">O</span> Out</span><span class="lg"><span class="nflwk-chip o">IR</span> Inj. Reserve</span><span class="lg"><span class="nflwk-avail">Avail</span> Not kept/drafted</span></div>
+    <div class="nflwk-legend"><span>Injury:</span><span class="lg"><span class="nflwk-chip q">Q</span> Questionable</span><span class="lg"><span class="nflwk-chip d">D</span> Doubtful</span><span class="lg"><span class="nflwk-chip o">O</span> Out</span><span class="lg"><span class="nflwk-chip o">IR</span> Inj. Reserve</span><span class="lg"><span class="nflwk-avail">Avail</span> Free agent &mdash; on no WPIAL roster</span></div>
     <div id="nfl-games"><p class="placeholder">Loading NFL week&hellip;</p></div>
   </div>
 
@@ -2053,8 +2011,8 @@ function loadSchedule() {
 }
 loadSchedule();
 // ---- NFL week: games + fantasy players + injury status ----------------------
-// Assignments come from the backend (?action=schedule_rosters): keepers only
-// until the live draft is done, then the draftboard takes over automatically.
+// Roster assignments come from the LIVE ESPN league rosters (?action=matchup_detail),
+// with the final 2026 draft board as the offline fallback. See the block below.
 // Schedule + injuries come straight from ESPN's public APIs, client-side.
 (function () {
   var SEASON = 2026;
@@ -2082,9 +2040,73 @@ loadSchedule();
     return p.day + (p.hour >= 18 ? ' Night' : '');
   }
 
-  // Baked keeper snapshot (from the sheet, 2026-07-31) — used only until the
-  // schedule_rosters backend action is deployed; the live feed then wins.
-  var KEEPERS_FALLBACK = [{"team": "Mud Dogs", "player": "Jonathan Taylor", "keeper": true}, {"team": "Mud Dogs", "player": "Matthew Golden", "keeper": true}, {"team": "Mud Dogs", "player": "George Pickens", "keeper": true}, {"team": "Mud Dogs", "player": "Quinshon Judkins", "keeper": true}, {"team": "Mud Dogs", "player": "Blake Corum", "keeper": true}, {"team": "THE Vagitarians", "player": "Ashton Jeanty", "keeper": true}, {"team": "THE Vagitarians", "player": "Jaylen Waddle", "keeper": true}, {"team": "THE Vagitarians", "player": "Chris Olave", "keeper": true}, {"team": "THE Vagitarians", "player": "Christian Watson", "keeper": true}, {"team": "THE Vagitarians", "player": "Kyle Pitts Sr.", "keeper": true}, {"team": "Return of The Mac", "player": "Ja'Marr Chase", "keeper": true}, {"team": "Return of The Mac", "player": "James Cook III", "keeper": true}, {"team": "Return of The Mac", "player": "Jaxon Smith-Njigba", "keeper": true}, {"team": "Return of The Mac", "player": "Chase Brown", "keeper": true}, {"team": "Return of The Mac", "player": "Bhayshul Tuten", "keeper": true}, {"team": "Bijan Mustard", "player": "Bijan Robinson", "keeper": true}, {"team": "Bijan Mustard", "player": "Justin Jefferson", "keeper": true}, {"team": "Bijan Mustard", "player": "Michael Wilson", "keeper": true}, {"team": "Bijan Mustard", "player": "Ladd McConkey", "keeper": true}, {"team": "Bijan Mustard", "player": "Dalton Kincaid", "keeper": true}];
+  /* WHERE OWNERSHIP COMES FROM, in priority order:
+       1. ?action=matchup_detail&week=N — the LIVE ESPN rosters for this scoring
+          period. This is the league's system of record, so waiver adds, drops
+          and trades since draft night are all reflected without a deploy.
+       2. draft-results-2026.json — the final draft board, static, in the repo.
+          Right about all 160 players as of Aug 30, wrong only about churn since.
+     What used to be here was a 20-player KEEPER snapshot taken 2026-07-31.
+     After the draft it named 20 of 160 rostered players and rendered the other
+     140 as "Avail" — the bug this replaces. `schedule_rosters` is still not
+     wired into doGet (gotcha U12) and is no longer called: matchup_detail is
+     deployed, answers with full rosters today, and is fresher than the sheet. */
+  var DRAFT_RESULTS_URL = 'draft-results-2026.json';
+
+  /* ESPN NFL abbreviation -> the numeric team id the scoreboard uses, so a
+     rostered player the top-N pool never returned can still be filed under the
+     right game rather than vanishing. */
+  var PRO_ID = {};
+  Object.keys(PRO).forEach(function (id) { PRO_ID[PRO[id]] = +id; });
+
+  /* Team names arrive as ESPN has them TODAY ("Syd Sweeney's Fat T!ts"); the rest
+     of the site speaks canon. Route every one through the franchise registry so a
+     rename in the ESPN app cannot orphan an owner tag. */
+  function canonTeam(name) {
+    var n = String(name == null ? '' : name).trim();
+    if (!n) return null;
+    try { return teamDisplayName(teamKey(n)) || n; } catch (e) { return n; }
+  }
+
+  /* matchup_detail -> flat roster rows. Bench and IR are kept: this card answers
+     "who owns him", not "is he starting". */
+  function rowsFromMatchup(feed) {
+    var out = [];
+    if (!feed || feed.ok === false || !feed.matchups) return out;
+    feed.matchups.forEach(function (m) {
+      ['away', 'home'].forEach(function (k) {
+        var side = m[k];
+        if (!side) return;
+        var team = canonTeam(side.team);
+        if (!team) return;
+        (side.players || []).forEach(function (pl) {
+          if (!pl || !pl.name) return;
+          out.push({ team: team, player: pl.name,
+                     pos: pl.pos === 'D/ST' ? 'DEF' : (pl.pos || ''),
+                     pro: PRO_ID[pl.nfl] || 0, inj: pl.inj || 'ACTIVE',
+                     /* 0 is what ESPN reports before kickoff, and a column of
+                        zeros asserts something false (gotcha U10). */
+                     pts: pl.pts ? pl.pts : null,
+                     proj: pl.proj == null ? null : pl.proj });
+        });
+      });
+    });
+    return out;
+  }
+
+  /* draft-results-2026.json -> the same flat rows. No points: the draft board
+     knows who owns whom and nothing about this week. */
+  function rowsFromDraft(feed) {
+    var out = [];
+    if (!feed || !feed.picks) return out;
+    feed.picks.forEach(function (pk) {
+      if (!pk || !pk.player || !pk.team) return;
+      out.push({ team: canonTeam(pk.team), player: pk.player,
+                 pos: pk.pos === 'D/ST' ? 'DEF' : (pk.pos || ''),
+                 pro: PRO_ID[pk.nfl] || 0, inj: 'ACTIVE', pts: null, proj: null });
+    });
+    return out;
+  }
 
   var STAT_IDS = [
     [3, 'PaYd'], [4, 'PaTD'], [20, 'INT'],
@@ -2105,92 +2127,137 @@ loadSchedule();
   function loadNflWeek() {
     var wrap = document.getElementById('nfl-games');
     if (!wrap) return;
-    var week = 1; // pre-season default; scoreboard call below corrects it in-season
+    var phaseEl = document.getElementById('nflwk-phase');
 
-    var pAssign = waJSON(WEB_APP_URL + '?action=schedule_rosters').catch(function () { return null; });
-    var pSched = fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=' + SEASON + '&seasontype=2&week=' + week).then(function (r) { return r.json(); });
-    var pPool = fetch('https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/' + SEASON + '/segments/0/leaguedefaults/3?view=kona_player_info',
-      { headers: { 'x-fantasy-filter': JSON.stringify({ players: { limit: 400, sortPercOwned: { sortAsc: false, sortPriority: 1 }, filterStatsForSplitTypeIds: { value: [1] } } }) } })
-      .then(function (r) { return r.json(); });
+    /* NO &week= parameter. ESPN's own scoreboard answers with the CURRENT week,
+       so this card advances by itself every Tuesday. The old call pinned
+       &week=1 and would have shown week 1 in December. Anything that is not a
+       regular-season week 1-18 (preseason, or the wrap-up between seasons)
+       falls back to week 1 rather than asking the league feed for nonsense. */
+    fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard')
+      .then(function (r) { return r.json(); })
+      .then(function (sched) {
+        var wk = (sched.week && sched.week.number) || 0;
+        var reg = !sched.season || sched.season.type === 2;
+        if (!reg || !(wk >= 1 && wk <= 18)) wk = 1;
+        return render(sched, wk);
+      })
+      .catch(function () {
+        wrap.innerHTML = '<p class="placeholder">NFL feed unavailable right now.</p>';
+      });
 
-    Promise.all([pAssign, pSched, pPool]).then(function (res) {
-      var assign = res[0], sched = res[1], kona = res[2];
-      var wk = (sched.week && sched.week.number) || week;
+    function render(sched, wk) {
+      /* Both roster sources are asked for at once and each carries its own catch.
+         The live one wins when it has players; neither can take the card down. */
+      var pRost = waJSON(WEB_APP_URL + '?action=matchup_detail&week=' + wk)
+        .catch(function () { return null; });
+      var pDraft = fetch(DRAFT_RESULTS_URL)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; });
+      /* 600, not 400. Ownership is now exact, so the pool's only job is to supply
+         the free agents and the stat lines; a rostered player it misses is added
+         back below, but a bigger pool keeps that path rare. */
+      var pPool = fetch('https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/' + SEASON + '/segments/0/leaguedefaults/3?view=kona_player_info',
+        { headers: { 'x-fantasy-filter': JSON.stringify({ players: { limit: 600, sortPercOwned: { sortAsc: false, sortPriority: 1 }, filterStatsForSplitTypeIds: { value: [1] } } }) } })
+        .then(function (r) { return r.json(); });
 
-      var owned = {}, keeper = {};
-      var phaseEl = document.getElementById('nflwk-phase');
-      if (assign && assign.ok !== false && assign.players && assign.players.length) {
-        assign.players.forEach(function (a) { owned[norm(a.player)] = a.team; if (a.keeper) keeper[norm(a.player)] = true; });
-        if (phaseEl) phaseEl.textContent = assign.phase === 'post-draft' ? 'full rosters — drafted' : 'keepers only — draft pending';
-      } else {
-        KEEPERS_FALLBACK.forEach(function (a) { owned[norm(a.player)] = a.team; if (a.keeper) keeper[norm(a.player)] = true; });
-        if (phaseEl) phaseEl.textContent = 'keepers (cached) — draft pending';
-      }
+      return Promise.all([pRost, pDraft, pPool]).then(function (res) {
+        var rost = rowsFromMatchup(res[0]);
+        var source = 'espn';
+        if (!rost.length) { rost = rowsFromDraft(res[1]); source = rost.length ? 'draft' : 'none'; }
+        var kona = res[2];
 
-      var players = [];
-      (kona.players || []).forEach(function (p) {
-        var pl = p.player, pos = POSN[pl.defaultPositionId];
-        if (!pos) return;
-        var n = norm(pl.fullName);
-        var actual = null, proj = null;
-        (pl.stats || []).forEach(function (s) {
-          if (s.seasonId !== SEASON || s.scoringPeriodId !== wk) return;
-          if (s.statSourceId === 0) actual = s;
-          else if (s.statSourceId === 1) proj = s;
+        var owned = {}, meta = {};
+        rost.forEach(function (r) { owned[norm(r.player)] = r.team; meta[norm(r.player)] = r; });
+        if (phaseEl) {
+          phaseEl.textContent = source === 'espn'
+            ? 'full rosters — ESPN, live'
+            : (source === 'draft' ? 'full rosters — 2026 draft results' : 'rosters unavailable');
+        }
+
+        var players = [], seen = {};
+        (kona.players || []).forEach(function (p) {
+          var pl = p.player, pos = POSN[pl.defaultPositionId];
+          if (!pos) return;
+          var n = norm(pl.fullName);
+          var actual = null, proj = null;
+          (pl.stats || []).forEach(function (s) {
+            if (s.seasonId !== SEASON || s.scoringPeriodId !== wk) return;
+            if (s.statSourceId === 0) actual = s;
+            else if (s.statSourceId === 1) proj = s;
+          });
+          seen[n] = true;
+          players.push({ name: pl.fullName, pos: pos, pro: pl.proTeamId,
+            inj: pl.injuryStatus || 'ACTIVE',
+            own: (pl.ownership && pl.ownership.percentOwned) || 0,
+            team: owned[n] || null,
+            pts: actual ? actual.appliedTotal : null,
+            proj: proj ? proj.appliedTotal : null,
+            line: actual ? statLine(pos, actual.stats || {}) : '' });
         });
-        players.push({ name: pl.fullName, pos: pos, pro: pl.proTeamId,
-          inj: pl.injuryStatus || 'ACTIVE',
-          own: (pl.ownership && pl.ownership.percentOwned) || 0,
-          team: owned[n] || null, keeper: !!keeper[n],
-          pts: actual ? actual.appliedTotal : null,
-          proj: proj ? proj.appliedTotal : null,
-          line: actual ? statLine(pos, actual.stats || {}) : '' });
-      });
-      var byPro = {};
-      players.forEach(function (p) { (byPro[p.pro] = byPro[p.pro] || []).push(p); });
-      Object.keys(byPro).forEach(function (k) {
-        byPro[k].sort(function (a, b) {
-          var ap = a.pts == null ? -1e9 : a.pts, bp = b.pts == null ? -1e9 : b.pts;
-          var apr = a.proj == null ? -1e9 : a.proj, bpr = b.proj == null ? -1e9 : b.proj;
-          return bp - ap || bpr - apr || (a.team ? 0 : 1) - (b.team ? 0 : 1) || sev(a.inj) - sev(b.inj) || b.own - a.own;
+
+        /* A rostered player outside the pool — a deep bench stash, a defense the
+           pool names differently — would otherwise be invisible on the one card
+           whose whole point is showing who owns whom. Add him back from the
+           roster feed's own fields. No stat line: that data is not in this feed. */
+        rost.forEach(function (r) {
+          var n = norm(r.player);
+          if (seen[n] || !r.pro) return;
+          seen[n] = true;
+          players.push({ name: r.player, pos: r.pos || '', pro: r.pro,
+            inj: r.inj, own: 100, team: r.team,
+            pts: r.pts, proj: r.proj, line: '' });
         });
-      });
 
-      var games = (sched.events || []).map(function (e) {
-        var c = e.competitions[0];
-        var home, away;
-        c.competitors.forEach(function (t) { if (t.homeAway === 'home') home = t; else away = t; });
-        var st = (e.status && e.status.type) || {};
-        return { date: e.date,
-          home: { id: +home.team.id, abbr: home.team.abbreviation, name: home.team.displayName, score: home.score },
-          away: { id: +away.team.id, abbr: away.team.abbreviation, name: away.team.displayName, score: away.score },
-          tv: (c.broadcasts && c.broadcasts[0] && c.broadcasts[0].names[0]) || '',
-          state: st.state || 'pre', detail: st.shortDetail || '' };
-      }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
-      if (sched.week && sched.week.number) {
-        var el = document.getElementById('nflwk-num'); if (el) el.textContent = sched.week.number;
-      }
+        var byPro = {};
+        players.forEach(function (p) { (byPro[p.pro] = byPro[p.pro] || []).push(p); });
+        /* OWNED FIRST. Only nine rows fit per side, and this card exists to answer
+           "who in this league has a stake in this game"; a free agent with a
+           bigger projection than someone's flex is not the answer to that. */
+        Object.keys(byPro).forEach(function (k) {
+          byPro[k].sort(function (a, b) {
+            var ap = a.pts == null ? -1e9 : a.pts, bp = b.pts == null ? -1e9 : b.pts;
+            var apr = a.proj == null ? -1e9 : a.proj, bpr = b.proj == null ? -1e9 : b.proj;
+            return (a.team ? 0 : 1) - (b.team ? 0 : 1) || bp - ap || bpr - apr
+                || sev(a.inj) - sev(b.inj) || b.own - a.own;
+          });
+        });
 
-      wrap.innerHTML = '';
-      function slotHeader(txt, cls) {
-        var sh = document.createElement('div');
-        sh.className = 'nflwk-slot' + (cls ? ' ' + cls : '');
-        sh.textContent = txt; wrap.appendChild(sh);
-      }
-      var live = games.filter(function (g) { return g.state === 'in'; });
-      var done = games.filter(function (g) { return g.state === 'post'; });
-      var upcoming = games.filter(function (g) { return g.state !== 'in' && g.state !== 'post'; });
-      if (live.length) { slotHeader('🔴 Live now', 'live'); live.forEach(function (g) { wrap.appendChild(gameEl(g, byPro)); }); }
-      if (done.length) { slotHeader('Final'); done.forEach(function (g) { wrap.appendChild(gameEl(g, byPro)); }); }
-      var lastSlot = null;
-      upcoming.forEach(function (g) {
-        var slot = slotLabel(g.date);
-        if (slot !== lastSlot) { slotHeader(slot); lastSlot = slot; }
-        wrap.appendChild(gameEl(g, byPro));
+        var games = (sched.events || []).map(function (e) {
+          var c = e.competitions[0];
+          var home, away;
+          c.competitors.forEach(function (t) { if (t.homeAway === 'home') home = t; else away = t; });
+          var st = (e.status && e.status.type) || {};
+          return { date: e.date,
+            home: { id: +home.team.id, abbr: home.team.abbreviation, name: home.team.displayName, score: home.score },
+            away: { id: +away.team.id, abbr: away.team.abbreviation, name: away.team.displayName, score: away.score },
+            tv: (c.broadcasts && c.broadcasts[0] && c.broadcasts[0].names[0]) || '',
+            state: st.state || 'pre', detail: st.shortDetail || '' };
+        }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+        var numEl = document.getElementById('nflwk-num');
+        if (numEl) numEl.textContent = wk;
+
+        wrap.innerHTML = '';
+        function slotHeader(txt, cls) {
+          var sh = document.createElement('div');
+          sh.className = 'nflwk-slot' + (cls ? ' ' + cls : '');
+          sh.textContent = txt; wrap.appendChild(sh);
+        }
+        var live = games.filter(function (g) { return g.state === 'in'; });
+        var done = games.filter(function (g) { return g.state === 'post'; });
+        var upcoming = games.filter(function (g) { return g.state !== 'in' && g.state !== 'post'; });
+        if (live.length) { slotHeader('🔴 Live now', 'live'); live.forEach(function (g) { wrap.appendChild(gameEl(g, byPro)); }); }
+        if (done.length) { slotHeader('Final'); done.forEach(function (g) { wrap.appendChild(gameEl(g, byPro)); }); }
+        var lastSlot = null;
+        upcoming.forEach(function (g) {
+          var slot = slotLabel(g.date);
+          if (slot !== lastSlot) { slotHeader(slot); lastSlot = slot; }
+          wrap.appendChild(gameEl(g, byPro));
+        });
+      }).catch(function () {
+        wrap.innerHTML = '<p class="placeholder">NFL feed unavailable right now.</p>';
       });
-    }).catch(function () {
-      wrap.innerHTML = '<p class="placeholder">NFL feed unavailable right now.</p>';
-    });
+    }
   }
 
   function sideHTML(team, byPro) {
@@ -2398,29 +2465,6 @@ loadSchedule();
       }
       loadGellyPicks();
 
-// ---- Draft countdown (Sun Aug 30 2026, 5:30 PM Mountain / MDT) ----
-(function(){
-  var target = new Date('2026-08-30T17:30:00-06:00').getTime();
-  var pad = function(n){ return String(n).padStart(2, '0'); };
-  function tick(){
-    var diff = target - Date.now();
-    if (diff <= 0) {
-      document.getElementById('draft-countdown').innerHTML = '<div class="db-unit"><div class="db-num">🏈</div><div class="db-lab">Draft day!</div></div>';
-      clearInterval(iv);
-      return;
-    }
-    var d = Math.floor(diff / 86400000);
-    var h = Math.floor(diff % 86400000 / 3600000);
-    var m = Math.floor(diff % 3600000 / 60000);
-    var s = Math.floor(diff % 60000 / 1000);
-    document.getElementById('dc-days').textContent = d;
-    document.getElementById('dc-hours').textContent = pad(h);
-    document.getElementById('dc-mins').textContent = pad(m);
-    document.getElementById('dc-secs').textContent = pad(s);
-  }
-  var iv = setInterval(tick, 1000);
-  tick();
-})();
 })();
 
 // Light polling so likes/views (and new approved posts) show up for anyone

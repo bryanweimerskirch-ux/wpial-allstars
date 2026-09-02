@@ -56,7 +56,7 @@
       colors: { primary: '#9FB8C7', secondary: '#6E8B9A', accent: '#F2F7FA' },
       logo: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#9FB8C7"/><ellipse cx="42" cy="52" rx="18" ry="14" fill="#F2F7FA"/><ellipse cx="60" cy="48" rx="14" ry="12" fill="#F2F7FA"/><ellipse cx="52" cy="60" rx="20" ry="12" fill="#F2F7FA"/><path d="M22 50 Q14 50 16 58" stroke="#6E8B9A" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M80 46 Q90 44 88 54" stroke="#6E8B9A" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="44" cy="54" r="3" fill="#333"/><circle cx="58" cy="54" r="3" fill="#333"/><path d="M46 62 Q52 66 58 62" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/></svg>' },
     { fid: 'f03', canon: "Syd Sweeney's Denim Jeans",
-      priors: ["Sydney Sweeney's Fat T!ts", "Wet Chops"],
+      priors: ["Syd Sweeney's Fat T!ts", "Sydney Sweeney's Fat T!ts", "Wet Chops"],
       colors: { primary: '#3B5F8A', secondary: '#28405E', accent: '#D9C24A' },
       logo: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#3B5F8A"/><rect x="30" y="24" width="40" height="54" rx="6" fill="#5B84B5"/><path d="M38 40 Q50 46 62 40" stroke="#28405E" stroke-width="2.5" fill="none"/><circle cx="50" cy="34" r="2.5" fill="#D9C24A"/><rect x="38" y="52" width="24" height="18" rx="3" fill="#4A729E" stroke="#28405E" stroke-width="1.5"/></svg>' },
     { fid: 'f04', canon: "G. O. A. T.",
