@@ -230,7 +230,16 @@
     css.id = 'siteNavCss';
     css.textContent = [
       /* ---- the strip ---- */
-      '#siteNav{width:100%;display:flex;gap:6px;align-items:center;padding-top:8px;',
+      /* `padding` in full, not `padding-top`, and the two extra resets: board.html
+         carries its own `nav{justify-content:center;flex-wrap:wrap;padding:14px 10px;
+         border-bottom:...}` and init() ADOPTS that element as #siteNav. Setting only
+         padding-top left the other three sides and the bottom border coming from that
+         page rule, so the same strip was a centred, wrapping, bottom-bordered bar
+         there and a left-aligned scrolling one everywhere else. Stated at the base
+         rule (not `nav#siteNav`) on purpose — the phone block below overrides
+         flex-wrap at this same specificity and must keep winning on source order. */
+      '#siteNav{width:100%;display:flex;gap:6px;align-items:center;padding:8px 0 0;',
+      '  justify-content:flex-start;flex-wrap:nowrap;border-bottom:0;',
       '  margin-top:6px;border-top:1px solid var(--line);overflow-x:auto;',
       '  -webkit-overflow-scrolling:touch;scrollbar-width:none;}',
       '#siteNav::-webkit-scrollbar{display:none;}',
@@ -242,6 +251,34 @@
       '#siteNav a.here{background:var(--accent);border-color:var(--accent);',
       '  color:var(--accent-ink,#14110a);font-weight:700;cursor:default;}',
       '#siteNav a.here:hover{color:var(--accent-ink,#14110a);}',
+
+      /* ---- the shell's hardcoded bar (board.html) ----
+         board.html ships its own <nav> of <button>s and init() adopts it as #siteNav
+         instead of building a strip, so every `#siteNav a` rule above matched NOTHING
+         there and the page's `nav button` rules dressed the bar instead: a different
+         font (system, not Barlow), 13px not 12.5px, 8px/14px padding not 5px/12px.
+         Five of the eight tabs live on that page, so most of the site was wearing the
+         other look.
+
+         Restated on the button selector at id specificity, which beats board.html's
+         `nav button` (0,0,2) and `nav button.active` (0,1,2) without that page having
+         to change — the shell keeps a sane bar if this file ever fails to load.
+
+         CHILD combinator, deliberately. auth.js parks its sign-out chip in
+         `nav || .hdr-right`, so `#wpial-chip` and the <button>log out</button> inside
+         it are DESCENDANTS of this bar. It is display:none today (hidden a few rules
+         down), so a descendant selector styles nothing visible — but it would dress
+         that button as a nav tab the moment the chip is ever unhidden. */
+      '#siteNav > button{flex:0 0 auto;background:none;border:1px solid var(--line);',
+      '  color:var(--text);padding:5px 12px;border-radius:20px;font-size:12.5px;',
+      '  font-family:"Barlow",sans-serif;font-weight:400;line-height:normal;',
+      '  white-space:nowrap;cursor:pointer;',
+      '  transition:border-color .12s ease,color .12s ease;}',
+      '#siteNav > button:hover{border-color:var(--accent);color:var(--accent2,var(--accent));}',
+      /* `.active` is the shell's word for what the strip calls `.here`. One look. */
+      '#siteNav > button.active{background:var(--accent);border-color:var(--accent);',
+      '  color:var(--accent-ink,#14110a);font-weight:700;cursor:default;}',
+      '#siteNav > button.active:hover{color:var(--accent-ink,#14110a);}',
 
       /* ---- the identity chip ---- */
       /* The slot owns the alignment. #wpialId must NOT carry margin-left:auto —
@@ -337,7 +374,7 @@
          collapses it on draft morning stays collapsed. */
       '  #siteNav{display:flex;flex-wrap:wrap;overflow:visible;gap:7px;padding-top:9px;}',
       '  #siteNav.nav-collapsed{display:none;}',
-      '  #siteNav a{padding:7px 12px;font-size:13px;}',       /* bigger tap targets */
+      '  #siteNav a,#siteNav > button{padding:7px 12px;font-size:13px;}',   /* bigger tap targets */
       '  #wpialIdBtn{max-width:150px;}',
       '  #wpialIdBtn .nm{display:none;}',                      /* avatar carries it; the menu spells it out */
       '  #wpialIdMenu{min-width:0;width:min(84vw,300px);}',
@@ -692,9 +729,13 @@
         b.type = 'button';
         b.innerHTML = item.label;
         b.title = item.title || '';
-        b.style.borderColor = 'var(--accent)';
-        b.style.color = 'var(--accent)';
-        b.style.fontWeight = '700';
+        /* NO inline styling here. These three lines used to set an accent border,
+           accent text and bold, to mark "this one leaves the page" — which is why
+           League News, Draft Results and Depth Chart wore blue outlines on the shell
+           and nowhere else. Inline styles beat every rule in injectStyles(), so the
+           unified pill above cannot take effect until they are gone. The strip on
+           every other page has never drawn that distinction, and the filled current
+           tab already says where you are. */
         b.onclick = function () { window.location.href = item.page; };
         navEl.appendChild(b);
       });
