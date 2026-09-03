@@ -606,7 +606,7 @@
 
   <div class="card">
     <h3>Year-by-year champion / runner-up / third</h3>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <table id="yby-table" style="width:100%;border-collapse:collapse;font-size:13px;">
       <tr style="color:var(--muted);text-align:left;"><th style="padding:4px 8px 4px 0;">Year</th><th style="padding:4px 8px;">Champion</th><th style="padding:4px 8px;">2nd</th><th style="padding:4px 8px;">3rd</th></tr>
       <tr><td style="padding:4px 8px 4px 0;">2025</td><td style="padding:4px 8px;">Return of The Mac</td><td style="padding:4px 8px;">Mean Machine</td><td style="padding:4px 8px;">Bijan Mustard</td></tr>
       <tr><td style="padding:4px 8px 4px 0;">2024</td><td style="padding:4px 8px;">Najee Germany (now Drake Draaaake?)</td><td style="padding:4px 8px;">Bindgamer3</td><td style="padding:4px 8px;">Sydney Sweeney's Fat T!ts (now Syd Sweeney's Denim Jeans)</td></tr>
@@ -2595,6 +2595,66 @@ loadHistoryTable();
    already painted. Re-render on every 'wpial-profiles' so a rename lands without a
    reload — same listener pattern as refreshTeamCardIdentity(). Cheap: no refetch. */
 document.addEventListener('wpial-profiles', renderHistoryTable);
+
+/* ---- The two hand-written History cards, kept current from the registry ----------
+   Both are authored as static HTML on purpose: the honors, the pre-registry name chain
+   and the season-by-season podium are hand-curated and not derivable from any feed.
+   But exactly one token in each is NOT history — it is "what this franchise is called
+   today" — and that token moves whenever an owner renames in ESPN. So the markup stays
+   the source of truth for the past and the registry supplies the present.
+
+   Both passes are idempotent and re-run on 'wpial-profiles': they stash what was
+   authored in dataset the first time through and recompute from that stash after, so
+   running them twenty times is the same as running them once. */
+
+/* Lineage ribbons. The authored <b> is canon. If ESPN now reports something else, the
+   new name takes the head of the chain and canon slides in behind it. A ribbon that
+   said "· same name since 2024" stops saying so the moment the name changes. */
+function refreshLineageRibbons() {
+  document.querySelectorAll('#history .ribbon .lineage').forEach(el => {
+    if (el.dataset.canon === undefined) {
+      const b = el.querySelector('b');
+      if (!b) return;
+      el.dataset.canon = b.textContent.trim();
+      const html = el.innerHTML;
+      el.dataset.rest = html.slice(html.indexOf('</b>') + 4);
+    }
+    const canon = el.dataset.canon;
+    const display = teamDisplayName(canon) || canon;
+    const renamed = display !== canon;
+    /* "same name, all 8 seasons" is a claim a rename has just falsified. Drop it and
+       let the chain say what happened instead. */
+    const rest = (renamed && /·\s*same name/i.test(el.dataset.rest)) ? '' : el.dataset.rest;
+    el.innerHTML = '<b>' + escapeHtml(display) + '</b>' +
+      (renamed ? ' ← ' + escapeHtml(canon) : '') + rest;
+  });
+}
+
+/* Year-by-year podium. Each cell is the name that franchise played under THAT season —
+   which is history and must not move — plus, when it goes by something else now, a
+   "(now …)" tag that must. Resolving the authored name reproduces today's table
+   character for character, and picks up every future rename for free. A cell that
+   resolves to nothing is a departed franchise (2 Husky 4 Sandusky) and is left alone. */
+function refreshPodiumNames() {
+  const tbl = document.getElementById('yby-table');
+  if (!tbl) return;
+  tbl.querySelectorAll('td').forEach(td => {
+    if (td.dataset.era === undefined) {
+      /* Strip any authored "(now X)" back off to recover the season-era name. */
+      td.dataset.era = td.textContent.trim().replace(/\s*\(now .*\)$/, '');
+    }
+    const era = td.dataset.era;
+    if (!era) return;
+    const fid = (window.WPIAL_FX && WPIAL_FX.resolve(era)) || null;
+    if (!fid) return;                       // a year, a header, or a dead franchise
+    const display = teamDisplayName(era) || era;
+    td.textContent = display === era ? era : era + ' (now ' + display + ')';
+  });
+}
+
+function refreshHistoryCopy() { refreshLineageRibbons(); refreshPodiumNames(); }
+refreshHistoryCopy();
+document.addEventListener('wpial-profiles', refreshHistoryCopy);
 
 // ---- Colorblind mode (the Wadi Accessibility Initiative) ----
 // The mode itself now lives in cbmode.js and applies to every page. All this

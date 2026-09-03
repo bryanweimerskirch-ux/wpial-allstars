@@ -23,6 +23,14 @@
  * index, filtered to exactly the ids this ledger mentions. That call is the reason
  * for the 900s cache: it is the expensive half.
  *
+ * 2026-09-03 — THE NAME LOOKUP MOVED. It used to ask the league-scoped
+ * ?view=kona_player_info and it was resolving NOTHING: every row on the front page
+ * printed "ADD unnamed". The public season player index answers the same ids, with no
+ * cookies at all and with D/ST included, so it is now the primary and the league view
+ * is only a fallback for an id the public index has never heard of. See waTxPlayers_.
+ * A resolver that fails silently is worse than one that fails loudly, so the payload
+ * now carries `resolved`/`requested` and, on any miss, a `diag` of what each call did.
+ *
  * Team identity is reported as the ESPN teamId, never the name — the standing
  * contract in matchup.gs:17-28 and bench.gs:23-25. The client canons it through
  * WPIAL_FX.resolve().
@@ -92,40 +100,111 @@ function waTxLedger_(c) {
   }
 }
 
+/** One ESPN player object -> our shape. Tolerates a missing fullName. */
+function waTxPlayerRow_(pl) {
+  if (!pl || pl.id === undefined || pl.id === null) return null;
+  var nm = pl.fullName || ((pl.firstName || '') + ' ' + (pl.lastName || '')).trim();
+  return {
+    id: String(pl.id),
+    name: nm,
+    pos: WA_TX_POS[pl.defaultPositionId] || '',
+    nfl: WA_TX_PRO[pl.proTeamId] || ''
+  };
+}
+
+/**
+ * Read players out of EITHER response shape into `out`, and return how many landed.
+ * The season index returns a BARE ARRAY; the league view returns
+ * { players: [ { player: {...} } ] }. Accepting both is what lets the two sources be
+ * swapped without the caller caring — and is the same "accept both shapes" discipline
+ * waTxLedger_ already applies to the ledger itself.
+ */
+function waTxHarvest_(data, out) {
+  var rows = Array.isArray(data) ? data : ((data && data.players) || []);
+  var n = 0;
+  for (var i = 0; i < rows.length; i++) {
+    var raw = rows[i] && rows[i].player ? rows[i].player : rows[i];
+    var r = waTxPlayerRow_(raw);
+    if (!r) continue;
+    out[r.id] = { name: r.name, pos: r.pos, nfl: r.nfl };
+    n++;
+  }
+  return n;
+}
+
+/** One JSON GET. Returns the code alongside the body so a caller can say WHY it failed. */
+function waTxFetchJson_(url, headers) {
+  try {
+    var res = UrlFetchApp.fetch(url, {
+      muteHttpExceptions: true,
+      followRedirects: true,
+      headers: headers
+    });
+    var code = res.getResponseCode();
+    if (code !== 200) return { code: code, data: null };
+    return { code: 200, data: JSON.parse(res.getContentText()) };
+  } catch (err) {
+    return { code: 0, data: null };
+  }
+}
+
 /**
  * playerId -> { name, pos, nfl } for exactly the ids this ledger mentions.
- * Chunked, because X-Fantasy-Filter is a header and headers have a length ceiling.
- * A failure here is not fatal: the wire still prints, with ids resolved to ''.
+ *
+ * PRIMARY IS THE PUBLIC SEASON PLAYER INDEX. Verified against the live ledger on
+ * 2026-09-03: all 14 ids it mentions resolve there, D/ST included (the negative ids —
+ * -16008 is "Lions D/ST"), over an unauthenticated request. The league-scoped
+ * kona_player_info view it used to call was returning an empty map for every id, which
+ * is what printed "ADD unnamed" across the whole column.
+ *
+ * Dropping the cookie requirement is the real win: ESPN_S2 / ESPN_SWID going stale now
+ * takes out the ledger only, not the ledger AND the names.
+ *
+ * The league view survives as a fallback, because a player can sit in a league's own
+ * universe without being in the public index. It costs a call only on an actual miss.
+ *
+ * Never fatal, and never silent: unresolved ids keep name '' so the wire prints what it
+ * has, and `diag` records what every call did so the next "unnamed" is one log away.
  */
-function waTxPlayers_(c, ids) {
+function waTxPlayers_(c, ids, diag) {
   var out = {};
-  if (!ids.length) return out;
-  var CHUNK = 60;
-  for (var i = 0; i < ids.length; i += CHUNK) {
-    var slice = ids.slice(i, i + CHUNK);
-    var filter = { players: { filterIds: { value: slice.map(Number) }, limit: CHUNK } };
-    var url = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/' + c.season +
-              '/segments/0/leagues/' + c.league + '?view=kona_player_info';
-    try {
-      var res = UrlFetchApp.fetch(url, {
-        muteHttpExceptions: true,
-        followRedirects: true,
-        headers: waTxHeaders_(c, filter)
-      });
-      if (res.getResponseCode() !== 200) continue;
-      var data = JSON.parse(res.getContentText());
-      var rows = (data && data.players) || [];
-      for (var r = 0; r < rows.length; r++) {
-        var pl = rows[r].player || rows[r];
-        if (!pl || pl.id === undefined) continue;
-        out[String(pl.id)] = {
-          name: pl.fullName || '',
-          pos: WA_TX_POS[pl.defaultPositionId] || '',
-          nfl: WA_TX_PRO[pl.proTeamId] || ''
-        };
-      }
-    } catch (err) { /* one bad chunk must not lose the other chunks */ }
+  if (!diag) diag = {};
+  diag.requested = ids.length;
+  diag.sources = [];
+  if (!ids.length) { diag.resolved = 0; return out; }
+
+  /* Header-length ceiling, so the id list is chunked even though this league will
+     never come close. 50 ids is ~400 characters of filter. */
+  var CHUNK = 50;
+  var i, slice, r, got;
+
+  for (i = 0; i < ids.length; i += CHUNK) {
+    slice = ids.slice(i, i + CHUNK).map(Number);
+    r = waTxFetchJson_(
+      'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/' + c.season +
+        '/players?view=players_wl',
+      { 'Accept': 'application/json',
+        'X-Fantasy-Filter': JSON.stringify({ filterIds: { value: slice } }) }
+    );
+    got = r.data ? waTxHarvest_(r.data, out) : 0;
+    diag.sources.push('season(' + slice.length + '): http ' + r.code + ' +' + got);
   }
+
+  var missing = [];
+  for (i = 0; i < ids.length; i++) if (!out[String(ids[i])]) missing.push(ids[i]);
+
+  for (i = 0; i < missing.length; i += CHUNK) {
+    slice = missing.slice(i, i + CHUNK).map(Number);
+    r = waTxFetchJson_(
+      'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/' + c.season +
+        '/segments/0/leagues/' + c.league + '?view=kona_player_info',
+      waTxHeaders_(c, { players: { filterIds: { value: slice }, limit: CHUNK } })
+    );
+    got = r.data ? waTxHarvest_(r.data, out) : 0;
+    diag.sources.push('league(' + slice.length + '): http ' + r.code + ' +' + got);
+  }
+
+  diag.resolved = Object.keys(out).length;
   return out;
 }
 
@@ -194,7 +273,8 @@ function waTxBuild_(limit) {
       if (it && it.playerId !== undefined) idSet[String(it.playerId)] = true;
     });
   });
-  var names = waTxPlayers_(c, Object.keys(idSet));
+  var diag = {};
+  var names = waTxPlayers_(c, Object.keys(idSet), diag);
 
   var rows = [];
   for (var i = 0; i < slice.length && rows.length < limit; i++) {
@@ -202,14 +282,21 @@ function waTxBuild_(limit) {
     if (row) rows.push(row);
   }
 
-  return {
+  var out = {
     ok: true,
     dark: rows.length === 0,
     season: Number(c.season),
     updated: new Date().toISOString(),
     named: Object.keys(names).length > 0,
+    resolved: diag.resolved || 0,
+    requested: diag.requested || 0,
     transactions: rows
   };
+  /* Only when something actually went unresolved, so the happy path stays small. This
+     is the field that would have turned "why does it say unnamed" into a five-second
+     answer instead of a bug report. */
+  if ((diag.resolved || 0) < (diag.requested || 0)) out.diag = diag.sources || [];
+  return out;
 }
 
 /** GET action=transactions[&limit=N][&refresh=1] — public, read-only, like the rest. */
@@ -239,7 +326,9 @@ function previewTransactions() {
   var r = waTxBuild_(WA_TX_DEFAULT_LIMIT);
   if (!r.ok) { Logger.log('DARK (' + r.reason + '): ' + r.error); return; }
   if (!r.transactions.length) { Logger.log('ok, but the wire is empty — no waiver activity yet this season.'); return; }
-  var lines = [r.transactions.length + ' rows, names resolved: ' + r.named];
+  var lines = [r.transactions.length + ' rows, names resolved: ' +
+               r.resolved + '/' + r.requested +
+               (r.diag ? '   MISSES — ' + r.diag.join(' ; ') : '')];
   r.transactions.forEach(function (t) {
     lines.push('  wk' + (t.week || '-') + '  team ' + t.teamId + '  ' + t.type +
                '   ADD ' + (t.add ? t.add.name + ' (' + t.add.pos + ')' : '—') +
