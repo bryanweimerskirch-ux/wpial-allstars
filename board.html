@@ -2538,43 +2538,63 @@ if (tipFab && tipModal) {
 }
 
 // ---- League history table (win%/PPG/points/titles/best pick, live from backend) ----
+// The ?action=history feed's names come from LEAGUE_HISTORY_JSON, a hand-kept Script
+// Property frozen at canon. It does NOT follow an ESPN rename, which is why this table
+// went on saying the old name while Scoreboard and Standings had already moved. Every
+// name printed here is therefore resolved through the registry — the same
+// teamDisplayName() path those two use — and the grade is keyed on fid, never on the
+// display string. Grades are per franchise, not per name, so a rename must not drop one.
+const HISTORY_GRADES = {
+  f01: 'B+', f02: 'B',  f03: 'B',  f04: 'B',  f05: 'B',
+  f06: 'B+', f07: 'B+', f08: 'B',  f09: 'A-', f10: 'A-'
+};
+let historyRows = null;
+
+function renderHistoryTable() {
+  const body = document.getElementById('history-table-body');
+  if (!body || !historyRows) return;
+  body.innerHTML = historyRows.map(f => {
+    const canon = (f.name || '').trim();
+    const fid = (window.WPIAL_FX && WPIAL_FX.resolve(canon)) || null;
+    const name = teamDisplayName(canon);
+    const record = f.wins + '-' + f.losses + (f.ties ? '-' + f.ties : '');
+    const winPct = f.winPct != null ? (f.winPct * 100).toFixed(1) + '%' : '\u2014';
+    const ppg = f.ppg != null ? f.ppg.toFixed(1) : '\u2014';
+    const pts = f.pointsFor != null ? Math.round(f.pointsFor).toLocaleString() : '\u2014';
+    const titles = f.championships || 0;
+    const finish = f.avgFinish != null ? f.avgFinish.toFixed(1) : '\u2014';
+    const pick = f.bestPick ? (f.bestPick.player + ' (Rd ' + f.bestPick.round + ', \'' + String(f.bestPick.year).slice(-2) + ') ' + String.fromCharCode(183) + ' ' + f.bestPick.points.toFixed(1) + ' pts') : '\u2014';
+    const grade = (fid && HISTORY_GRADES[fid]) || '\u2014';
+    return '<tr>' +
+      '<td style="padding:4px 8px 4px 0;">' + escapeHtml(name) + '</td>' +
+      '<td style="padding:4px 8px;">' + escapeHtml(record) + '</td>' +
+      '<td style="padding:4px 8px;">' + escapeHtml(winPct) + '</td>' +
+      '<td style="padding:4px 8px;">' + escapeHtml(ppg) + '</td>' +
+      '<td style="padding:4px 8px;">' + escapeHtml(pts) + '</td>' +
+      '<td style="padding:4px 8px;">' + escapeHtml(String(titles)) + '</td>' +
+      '<td style="padding:4px 8px;">' + escapeHtml(finish) + '</td>' +
+      '<td style="padding:4px 8px;">' + escapeHtml(pick) + '</td>' +
+      '<td style="padding:4px 8px;">' + escapeHtml(grade) + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
 function loadHistoryTable() {
   const body = document.getElementById('history-table-body');
   if (!body) return;
-  const grades = {
-    'Mud Dogs': 'B+', 'G. O. A. T.': 'B', 'Kweef Farts': 'B', 'Bijan Mustard': 'B',
-    'Bindgamer3': 'B+', 'Drake Draaaake?': 'B+', 'Return of The Mac': 'A-',
-    'THE Vagitarians': 'B', "Syd Sweeney's Denim Jeans": 'B', 'Mean Machine': 'A-'
-  };
   waJSON(WEB_APP_URL + '?action=history').then(data => {
     if (!data || !data.ok || !data.franchises || !data.franchises.length) throw new Error('no data');
-    body.innerHTML = data.franchises.map(f => {
-      const name = (f.name || '').trim();
-      const record = f.wins + '-' + f.losses + (f.ties ? '-' + f.ties : '');
-      const winPct = f.winPct != null ? (f.winPct * 100).toFixed(1) + '%' : '\u2014';
-      const ppg = f.ppg != null ? f.ppg.toFixed(1) : '\u2014';
-      const pts = f.pointsFor != null ? Math.round(f.pointsFor).toLocaleString() : '\u2014';
-      const titles = f.championships || 0;
-      const finish = f.avgFinish != null ? f.avgFinish.toFixed(1) : '\u2014';
-      const pick = f.bestPick ? (f.bestPick.player + ' (Rd ' + f.bestPick.round + ', \'' + String(f.bestPick.year).slice(-2) + ') ' + String.fromCharCode(183) + ' ' + f.bestPick.points.toFixed(1) + ' pts') : '\u2014';
-      const grade = grades[name] || '\u2014';
-      return '<tr>' +
-        '<td style="padding:4px 8px 4px 0;">' + escapeHtml(name) + '</td>' +
-        '<td style="padding:4px 8px;">' + escapeHtml(record) + '</td>' +
-        '<td style="padding:4px 8px;">' + escapeHtml(winPct) + '</td>' +
-        '<td style="padding:4px 8px;">' + escapeHtml(ppg) + '</td>' +
-        '<td style="padding:4px 8px;">' + escapeHtml(pts) + '</td>' +
-        '<td style="padding:4px 8px;">' + escapeHtml(String(titles)) + '</td>' +
-        '<td style="padding:4px 8px;">' + escapeHtml(finish) + '</td>' +
-        '<td style="padding:4px 8px;">' + escapeHtml(pick) + '</td>' +
-        '<td style="padding:4px 8px;">' + escapeHtml(grade) + '</td>' +
-      '</tr>';
-    }).join('');
+    historyRows = data.franchises;
+    renderHistoryTable();
   }).catch(() => {
     body.innerHTML = '<tr><td colspan="9" style="padding:8px 0;color:var(--muted);">History data unavailable.</td></tr>';
   });
 }
 loadHistoryTable();
+/* The registry hydrates after login, asynchronously and possibly after this table has
+   already painted. Re-render on every 'wpial-profiles' so a rename lands without a
+   reload — same listener pattern as refreshTeamCardIdentity(). Cheap: no refetch. */
+document.addEventListener('wpial-profiles', renderHistoryTable);
 
 // ---- Colorblind mode (the Wadi Accessibility Initiative) ----
 // The mode itself now lives in cbmode.js and applies to every page. All this
