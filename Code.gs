@@ -768,11 +768,38 @@ var GELLY_REJECT_ = [
   /^[\s,.;:)\-]/,                 // starts mid-sentence -> truncated tail
   /[A-Za-z0-9_-]{40,}/            // long opaque token / base64 run
 ];
+
+/**
+ * Real names of league members. Clubs are referred to by their ESPN team name and
+ * nothing else — that rule lives in the persona prompt, but a prompt is a request,
+ * and this is the part that enforces it.
+ *
+ * It was added after a headline addressing an owner by first name shipped, and then
+ * kept reappearing for weeks: the column slot falls back to a previous lead when no
+ * column row exists, so a single bad edition does not scroll away on its own. One
+ * miss becomes a standing fixture.
+ *
+ * Add every member's first AND last name. Matching is case-insensitive and
+ * whole-word, so a name that doubles as a common word ("Mark") will also reject
+ * innocent copy — that trade is deliberate. Losing an edition costs a rerun;
+ * printing a member's name is the thing this league asked us never to do.
+ * NFL player names are unaffected: they are checked nowhere near this list.
+ */
+var GELLY_OWNER_NAMES_ = ['Justin'];
+
 function gellySane_(t) {
   if (!t || t.length < 20) return false;
   for (var i = 0; i < GELLY_REJECT_.length; i++) {
     if (GELLY_REJECT_[i].test(t)) {
       console.error('gellySane_: rejecting text on rule ' + i + ': ' + String(t).slice(0, 120));
+      return false;
+    }
+  }
+  for (var j = 0; j < GELLY_OWNER_NAMES_.length; j++) {
+    var nm = String(GELLY_OWNER_NAMES_[j] || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (!nm) continue;
+    if (new RegExp('\\b' + nm + '\\b', 'i').test(t)) {
+      console.error('gellySane_: rejecting text naming a league member: ' + String(t).slice(0, 120));
       return false;
     }
   }
@@ -1454,8 +1481,12 @@ function generateGellyPicksPost_() {
     week: week,
     matchupOfWeek: { away: motw.away, home: motw.home },
     intro: '',
+    /* Straight pick-em. The spread is still computed internally to decide who the
+       favorite is, but it is not published: it comes off projections cached midweek,
+       and rosters keep changing until kickoff. computeGellySeasonRecord_ has always
+       scored these straight up, so the number was never load-bearing. */
     picks: plan.map(function (p) {
-      return { away: p.away, home: p.home, pick: p.pick, spread: p.spread, blurb: p.pick + ' by ' + p.spread };
+      return { away: p.away, home: p.home, pick: p.pick, blurb: p.pick + ' takes it' };
     })
   };
 
@@ -1464,15 +1495,18 @@ function generateGellyPicksPost_() {
     if (!apiKey) { recordGellyPicksIfNeeded_(week, result.picks); cache.put(cacheKey, JSON.stringify(result), 21600); result.seasonRecord = computeGellySeasonRecord_(); return result; }
 
     var lines = plan.map(function (p) {
-      return '- ' + p.away + ' (' + p.awayRecord + ') at ' + p.home + ' (' + p.homeRecord + '). Real computed line: ' +
-        p.pick + ' favored by ' + p.spread + ' (based on career wins + titles, not made up).';
+      return '- ' + p.away + ' (' + p.awayRecord + ') at ' + p.home + ' (' + p.homeRecord + '). Real computed winner: ' +
+        p.pick + ' (based on career wins + titles, not made up).';
     });
-    var userMessage = 'Week ' + week + ' matchups, with the REAL computed favorite and spread already given for ' +
-      'each game (do not change these numbers or picks, just write them up in your voice):\n' + lines.join('\n') +
+    var userMessage = 'Week ' + week + ' matchups, with the REAL computed winner already given for ' +
+      'each game (do not change these picks, just write them up in your voice):\n' + lines.join('\n') +
       '\n\nThe closest game, and this week\'s Matchup of the Week, is ' + motw.away + ' vs ' + motw.home + '.\n\n' +
+      'This is a STRAIGHT PICK-EM. There is no spread and no point line. Never write a number of ' +
+      'points, a margin, a spread, a total, or phrasing like "by 13", "gets the 7", "covers", "-3.5" ' +
+      'or "lays the points". Pick the winner and say why, nothing more.\n\n' +
       'Write JSON only, no markdown fences, matching exactly this shape: {"intro": "one hype sentence naming the ' +
-      'Matchup of the Week", "picks": [{"away": "...", "home": "...", "blurb": "one punchy sentence with your pick ' +
-      'and the given spread, in your voice"}]} - one picks entry per matchup listed above, same order, same team names.';
+      'Matchup of the Week", "picks": [{"away": "...", "home": "...", "blurb": "one punchy sentence naming your ' +
+      'winner, in your voice, with no point spread"}]} - one picks entry per matchup listed above, same order, same team names.';
 
     var payload = {
       contents: [{ parts: [{ text: userMessage }] }],
@@ -1493,7 +1527,7 @@ function generateGellyPicksPost_() {
           result.intro = parsed.intro || '';
           result.picks = plan.map(function (p, idx) {
             var b = parsed.picks[idx] && parsed.picks[idx].blurb;
-            return { away: p.away, home: p.home, pick: p.pick, spread: p.spread, blurb: b || (p.pick + ' by ' + p.spread) };
+            return { away: p.away, home: p.home, pick: p.pick, blurb: b || (p.pick + ' takes it') };
           });
         }
       }

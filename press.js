@@ -693,6 +693,15 @@
   function renderNumbers() {
     if (!S.playedWeek) return renderPreseasonNumbers();
     var players = allPlayers();
+    /* The pre-season pass stamps its own headings, and on a cold load it runs first —
+       S.playedWeek is null until the feed answers. Whatever it wrote is still sitting
+       there when the real data arrives, so the in-season pass has to put every heading
+       back itself rather than trusting the markup defaults to have survived. */
+    $('numHed').textContent = 'Honor Roll & Boneyard';
+    $('numByline').textContent = 'Weekly scoring, both ends of it · Compiled by the Dispatch desk';
+    $('honorH').textContent = '🏅 Top Fantasy Players';
+    $('losersH').textContent = '💀 The Biggest Losers';
+    if ($('benchH') && $('benchH').firstChild) $('benchH').firstChild.nodeValue = 'Bench Ledger ';
     $('numKicker').textContent = S.playedWeek ? ('Week ' + S.playedWeek + ' · The Numbers') : 'The Numbers';
     $('folioWk').textContent = S.playedWeek ? ('Week ' + S.playedWeek) : 'Preseason';
     $('finalsH').textContent = S.playedWeek ? ('Week ' + S.playedWeek + ' Finals') : 'Week Finals';
@@ -820,6 +829,13 @@
         ? dec + ' of ' + total + ' clubs have declared' +
           (dec < total ? ' · ' + (total - dec) + ' outstanding' : ' · all in') + lockTxt
         : 'Keeper wire not answering — declarations cannot be read right now';
+    } else {
+      /* Same trap as renderNumbers: the pre-season branch above runs on a cold load,
+         before the feed answers, and leaves "Ten Rosters, Frozen" sitting over a card
+         that is now printing real results. Once a down has been played, the keeper
+         framing is retired explicitly. */
+      $('atlHed').textContent = 'Ten Franchises, One Worm';
+      $('atlByline').textContent = "Every club, every week · Kit cuts drawn from each owner's own builder";
     }
     if (!f) { box.innerHTML = '<div class="empty">Franchise registry unavailable.</div>'; return; }
     var order = S.standings.length ? S.standings : f.all().map(function (r) {
@@ -965,8 +981,12 @@
          line reads when nobody edited it. */
       var pickName = fname(p.pick);
       var other = (fname(p.away) === pickName) ? fname(p.home) : fname(p.away);
-      h += '<p style="margin:0 0 7px"><b>' + esc(pickName) + '</b> ' +
-        (p.spread != null ? '−' + fmt(p.spread) : '') +
+      /* Straight pick-em. The Line used to print a spread, but it is computed from
+         projections and cached on Wednesday, and rosters keep moving until kickoff —
+         by Sunday the number was routinely wrong in a way the pick itself was not.
+         The season record has always been scored straight up, so the spread was
+         decoration that could only ever embarrass us. */
+      h += '<p style="margin:0 0 7px"><b>' + esc(pickName) + '</b>' +
         ' <span style="color:var(--pt-tan)">over ' + esc(other) + '</span>' +
         (p.blurb ? '<br>' + linkify(p.blurb) : '') + '</p>';
     });

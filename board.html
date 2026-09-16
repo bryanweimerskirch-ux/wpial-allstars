@@ -2456,7 +2456,7 @@ loadSchedule();
               const isMotw = data.matchupOfWeek && data.matchupOfWeek.away === p.away && data.matchupOfWeek.home === p.home;
               html += '<div class="row"><div class="players">';
               if (isMotw) html += '<span class="badge">Matchup of the Week</span> ';
-              html += '<strong>' + p.away + '</strong> @ <strong>' + p.home + '</strong> — Pick: <strong>' + p.pick + ' -' + p.spread + '</strong><br><span style="color:var(--muted);font-size:13px;">' + p.blurb + '</span>';
+              html += '<strong>' + p.away + '</strong> @ <strong>' + p.home + '</strong> — Pick: <strong>' + p.pick + '</strong><br><span style="color:var(--muted);font-size:13px;">' + p.blurb + '</span>';
               html += '</div></div>';
             });
             wrap.innerHTML = html;
