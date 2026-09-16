@@ -708,8 +708,11 @@
 
     var starters = players.filter(function (p) { return p.starter && p.pts != null; });
 
+    /* Top ten scorers of the week, straight up. No per-franchise cap: if one club
+       started three of the ten best players, that is the story, not a formatting
+       problem to smooth over. */
     $('honor').innerHTML = rollTable(
-      starters.slice().sort(function (a, b) { return b.pts - a.pts; }).slice(0, 8),
+      starters.slice().sort(function (a, b) { return b.pts - a.pts; }).slice(0, 10),
       { col: 'Pts', slot: true, val: function (r) { return fmt(r.pts); },
         empty: 'No box scores yet. The honor roll opens the first Sunday of the season.' });
 
@@ -722,8 +725,16 @@
 
     var h = '';
     h += '<div class="sect-h" style="font-size:10px;letter-spacing:1.5px;color:var(--pt-tan)">Started, and regretted it</div>';
-    h += rollTable(busts, { col: 'vs Proj', slot: true,
-      val: function (r) { var d = r.pts - r.proj; return (d >= 0 ? '+' : '') + fmt(d); },
+    /* This list is the five biggest shortfalls by construction, so a signed column
+       could only ever print minus signs — a wall of them reads as a broken feed
+       rather than as bad afternoons. Print what he scored against what he was
+       projected and let the reader do the subtraction; 2.2 next to 16.4 says more
+       than -14.2 does. */
+    h += rollTable(busts, { col: 'Act · Proj', slot: true,
+      val: function (r) {
+        return fmt(r.pts) + '<span style="color:var(--pt-tan);font-weight:400"> · ' +
+               fmt(r.proj) + '</span>';
+      },
       empty: 'Nobody has underperformed yet, because nobody has performed yet.' });
     h += '<div class="sect-h" style="font-size:10px;letter-spacing:1.5px;color:var(--pt-tan);margin-top:10px">' +
          'Left on the bench</div>';
