@@ -94,9 +94,14 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 /* the two kits stand on the turf */
 /* padding-top clears the ball band, padding-bottom clears the yard numbers painted at
    the foot of the turf — the meta line was landing 4px on top of them. */
-.kits{position:relative;z-index:2;display:flex;align-items:flex-end;justify-content:space-around;
-      gap:8px;height:100%;padding:46px 8px 28px;}
-.side{display:flex;flex-direction:column;align-items:center;gap:4px;max-width:46%;min-width:0;}
+.kits{position:absolute;inset:0;z-index:2;}
+/* Each kit is placed on a yard line, not parked in the middle of its half: paintHeader sets
+   `left` so the pair flanks the ball and travels with it. The clamps there keep them at least
+   46 points apart, so a long team name can never cross into the other side's half. */
+.side{position:absolute;bottom:26px;transform:translateX(-50%);
+      display:flex;flex-direction:column;align-items:center;gap:4px;
+      width:32%;max-width:150px;min-width:0;transition:left .45s ease;}
+@media (prefers-reduced-motion:reduce){.side{transition:none;}}
 .side .kit{display:block;width:76px;}
 .side .kit svg{display:block;width:100%;height:auto;}
 .side .tn{font-family:'Oswald';font-size:13px;line-height:1.1;text-align:center;max-width:100%;
@@ -135,7 +140,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 
 @media (min-width:760px){
   .field{min-height:250px;}
-  .kits{padding:56px 16px 34px;}
+  .side{bottom:32px;max-width:190px;}
   .side .kit{width:104px;}
   .side .tn{font-size:17px;}
   .side .rec{font-size:12px;}
@@ -396,6 +401,16 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     $('ball').innerHTML = BALL_SVG;
     $('ball').setAttribute('aria-label',
       pct + ' percent ' + nameOf(state.fidA) + ', ' + (100 - pct) + ' percent ' + nameOf(state.fidB));
+
+    /* The kits line up ON the ball and travel with it — "the jersey moves with the
+       predictability line". They used to sit at fixed thirds, so the field said one thing and
+       the shirts said nothing. Each flanks the line by 24 yards where there is room, and is
+       clamped into its own half (14-40 / 60-86) so the pair is never closer than 46 points:
+       at any probability a team name still sits over its own side of midfield. */
+    var kitL = Math.max(14, Math.min(40, ballPct - 24));
+    var kitR = Math.max(60, Math.min(86, ballPct + 24));
+    $('sideL').style.left = kitL.toFixed(1) + '%';
+    $('sideR').style.left = kitR.toFixed(1) + '%';
 
     var metaFor = function (rec, pj) {
       return R.esc(rec) + (pj != null ? ' · ' + R.pts(pj) + ' proj' : '');

@@ -96,9 +96,15 @@
      The jersey is the projection: the bigger one is the favorite. Size is a real visual
      channel, but it is never the ONLY channel — the percentage is always printed next to
      it, so the call is readable at a glance and unambiguous when you look. */
-  .spot-kits{display:flex;align-items:flex-end;justify-content:center;gap:26px;
-             margin:2px 0 8px;min-height:86px;}
-  .spot-kit{display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;}
+  /* The kits stand on the same yard lines as the ball below them and move with it — the
+     card and the matchup header tell the identical story. renderWeek() sets `left` in the
+     mini field's own coordinates (its end zones eat 12% a side), clamped so the two can
+     never touch. */
+  .spot-kits{position:relative;margin:2px 0 8px;min-height:86px;}
+  .spot-kit{position:absolute;bottom:0;transform:translateX(-50%);
+            display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;
+            transition:left .45s ease;}
+  @media (prefers-reduced-motion:reduce){.spot-kit{transition:none;}}
   .spot-kit .kit{display:block;}
   .spot-kit.lost{opacity:.4;filter:saturate(.3);}
   /* Compact field — the same object as the matchup header, at card scale. End zones are the
@@ -1956,16 +1962,24 @@ function loadSchedule() {
              the second one, the way field position says it in the actual sport. */
           const kitA = jerseyFor(mu.away), kitH = jerseyFor(mu.home);
           if (kitA || kitH) {
-            sh += '<div class="spot-kits">' +
-              '<span class="spot-kit' + (scored && !awayWon ? ' lost' : '') + '" title="' + escapeAttr(teamDisplayName(mu.away)) + '">' +
-                '<span class="kit">' + kitA + '</span></span>' +
-              '<span class="spot-kit' + (scored && !homeWon ? ' lost' : '') + '" title="' + escapeAttr(teamDisplayName(mu.home)) + '">' +
-                '<span class="kit">' + kitH + '</span></span>' +
-              '</div>';
             /* Ball at the away side's win probability: the favorite is the one in the other
                team's half. At a final it is driven to the winner's end. Clamped off the goal
-               lines so it never sits inside an end zone. */
+               lines so it never sits inside an end zone. Computed BEFORE the kits now,
+               because the kits are placed off it. */
             const ballPct = Math.max(5, Math.min(95, scored ? (awayWon ? 95 : 5) : Math.round(pA * 100)));
+            /* Same rule as matchup.html: flank the line by 24, clamped into each half. The
+               kits row spans the whole card while the field's turf starts 12% in, so a field
+               percentage is remapped into card percentages here or the shirts would sit off
+               the yard line they are meant to be standing on. */
+            const onCard = x => (12 + x * 0.76).toFixed(1) + '%';
+            const kitLeft = onCard(Math.max(14, Math.min(40, ballPct - 24)));
+            const kitRight = onCard(Math.max(60, Math.min(86, ballPct + 24)));
+            sh += '<div class="spot-kits">' +
+              '<span class="spot-kit' + (scored && !awayWon ? ' lost' : '') + '" style="left:' + kitLeft + '" title="' + escapeAttr(teamDisplayName(mu.away)) + '">' +
+                '<span class="kit">' + kitA + '</span></span>' +
+              '<span class="spot-kit' + (scored && !homeWon ? ' lost' : '') + '" style="left:' + kitRight + '" title="' + escapeAttr(teamDisplayName(mu.home)) + '">' +
+                '<span class="kit">' + kitH + '</span></span>' +
+              '</div>';
             const czA = (window.WPIAL_FX && fidA && WPIAL_FX.colors(fidA).primary) || '#2a3140';
             const czH = (window.WPIAL_FX && fidB && WPIAL_FX.colors(fidB).primary) || '#2a3140';
             sh += '<div class="spot-field" role="img" aria-label="' +
