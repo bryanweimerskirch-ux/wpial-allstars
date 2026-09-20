@@ -272,7 +272,14 @@
   /* Points block: actual over "X.X proj". Pre-game the projection is the number that
      matters, so it is promoted rather than shown as a footnote to an em-dash. */
   function ptsBlock(p, state) {
-    if (state === 'pre' || !has(p.actual)) {
+    /* A live page now exists mid-slate (see matchup.html gameState), and on it a starter
+       whose own game has not kicked off held an actual of 0 — printing "0.0 ▼ 16.9 proj",
+       which reads as a bust rather than as "not yet". Until the matchup is FINAL, a zero
+       against a real projection is treated as not-yet-played and keeps showing the
+       projection; at final, 0.0 is the honest number and is printed. */
+    var notYet = state !== 'final' && has(p.actual) && Number(p.actual) === 0 &&
+                 has(p.proj) && Number(p.proj) > 0;
+    if (state === 'pre' || !has(p.actual) || notYet) {
       return '<span class="mr-pts"><b class="mr-proj-big">' + pts(p.proj) + '</b>' +
              '<i>proj</i></span>';
     }

@@ -80,6 +80,7 @@
 .spotlight-row .sc{color:var(--muted);font-variant-numeric:tabular-nums;}
 .spotlight-row.final .sc{color:var(--text);font-weight:600;}
 .spotlight-vs{text-align:center;color:var(--muted);font-size:11px;margin:2px 0;}
+.spotlight-live{text-align:center;color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.06em;margin:2px 0;}
 .spotlight-top{font-size:11px;color:var(--muted);margin-top:2px;}
   .spotlight-h2h{font-size:11px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);text-align:center;}
   /* GOTCHA 32: an <a class="spotlight"> inherits `a{color:var(--accent2)}` and repaints
@@ -1861,24 +1862,35 @@ function loadSchedule() {
          week viewed — affordable only because the navigator means one week is rendered at a
          time. `null` means asked and unavailable (backend not deployed, or pre-draft). */
       const projByWeek = {};
+      /* Live starter totals, same shape. ESPN keeps the MATCHUP's totalPoints at 0 until it
+         closes the week out — verified 2026-09-20 mid-slate: every week 2 score 0 and
+         UNDECIDED while the players' own points were live — so the schedule feed alone makes
+         a Sunday afternoon look identical to an unplayed week and every card reads "—".
+         matchup_detail carries the real player points throughout, so the starters are totaled
+         here and used until ESPN publishes a score of its own. */
+      const liveByWeek = {};
       let shownWeek = null;
 
-      function fetchProj(w) {
-        if (projByWeek[w] !== undefined) return;
-        projByWeek[w] = null;                         // in flight; do not ask twice
-        waJSONOnce(WEB_APP_URL + '?action=matchup_detail&week=' + w)
+      function fetchProj(w, force) {
+        if (!force && projByWeek[w] !== undefined) return;
+        if (projByWeek[w] === undefined) projByWeek[w] = null;   // in flight; do not ask twice
+        const url = WEB_APP_URL + '?action=matchup_detail&week=' + w;
+        (force ? waJSON(url) : waJSONOnce(url))
           .then(d => {
             const norm = WPIAL_ROW.normalizeWeek(d);
             if (!norm.ok || !norm.hasRosters) return;
-            const map = {};
+            const map = {}, liveMap = {};
             norm.matchups.forEach(m => {
               [m.away, m.home].forEach(side => {
                 const fid = fidFor(side.name);
                 if (!fid) return;
-                map[fid] = WPIAL_ROW.sum(side.players.filter(p => p.starter), 'proj');
+                const st = side.players.filter(p => p.starter);
+                map[fid] = WPIAL_ROW.sum(st, 'proj');
+                liveMap[fid] = WPIAL_ROW.sum(st, 'actual') || 0;
               });
             });
             projByWeek[w] = map;
+            liveByWeek[w] = liveMap;
             if (shownWeek === w) renderWeek(w);       // repaint with real odds
           })
           .catch(() => {});
@@ -1920,8 +1932,15 @@ function loadSchedule() {
             spot.setAttribute('aria-label',
               'Box score and head-to-head: ' + teamDisplayName(mu.away) + ' vs ' + teamDisplayName(mu.home));
           }
-          const awayScore = scored ? Number(mu.awayScore).toFixed(1) : '—';
-          const homeScore = scored ? Number(mu.homeScore).toFixed(1) : '—';
+          /* Live totals stand in until ESPN publishes the matchup score. `liveOn` is what
+             separates "kickoff has happened" from "nobody has played yet" — both of which
+             the schedule feed reports identically. */
+          const lv = liveByWeek[w] || null;
+          const lvA = lv && fidA ? Number(lv[fidA] || 0) : 0;
+          const lvB = lv && fidB ? Number(lv[fidB] || 0) : 0;
+          const liveOn = !scored && (lvA > 0 || lvB > 0);
+          const awayScore = scored ? Number(mu.awayScore).toFixed(1) : (liveOn ? lvA.toFixed(1) : '—');
+          const homeScore = scored ? Number(mu.homeScore).toFixed(1) : (liveOn ? lvB.toFixed(1) : '—');
           const awayWon = scored && mu.winner === 'AWAY';
           const homeWon = scored && mu.winner === 'HOME';
           const h2hKeyEarly = [teamKey(mu.away), teamKey(mu.home)].sort().join('|');
@@ -1969,7 +1988,8 @@ function loadSchedule() {
           }
           sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.away) + teamDisplayName(mu.away) + (awayWon ? ' ✓' : '') + '</span><span class="sc">' + awayScore + '</span></div>';
           if (mu.awayTopScorer) sh += '<div class="spotlight-top">Top: ' + mu.awayTopScorer.name + ' — ' + mu.awayTopScorer.points + '</div>';
-          sh += '<div class="spotlight-vs">vs</div>';
+          sh += liveOn ? '<div class="spotlight-live">&#9679; LIVE</div>'
+                       : '<div class="spotlight-vs">vs</div>';
           sh += '<div class="spotlight-row' + (scored ? ' final' : '') + '"><span class="nm">' + teamLogoHTML(mu.home) + teamDisplayName(mu.home) + (homeWon ? ' ✓' : '') + '</span><span class="sc">' + homeScore + '</span></div>';
           if (mu.homeTopScorer) sh += '<div class="spotlight-top">Top: ' + mu.homeTopScorer.name + ' — ' + mu.homeTopScorer.points + '</div>';
           const h2hRec = h2hMap[h2hKeyEarly];
@@ -2002,6 +2022,29 @@ function loadSchedule() {
 
       /* `?week=N` is honoured once, clamped, so a week can be pasted into the group text.
          It is not persisted after that — a manual pick lasts as long as the visit. */
+      /* ---------- near-live refresh ----------
+         The scoreboard loaded its feeds once and never moved again; scores only changed on a
+         page reload. Backend caches are 120s (schedule) and 5 min (matchup_detail) while a
+         week is live, so a 60s poll is at most one cache generation behind and cannot hit
+         ESPN harder than the cache already allows. It stops itself when the tab is hidden and
+         when every matchup in the shown week is decided. */
+      function pollLive() {
+        if (document.hidden || shownWeek == null) return;
+        const w = shownWeek;
+        const sched = data.weeks[w] || [];
+        if (!sched.length || sched.every(mu => mu.winner && mu.winner !== 'UNDECIDED')) return;
+        fetchProj(w, true);
+        waJSON(WEB_APP_URL + '?action=espn_schedule')
+          .then(d => {
+            if (!d || !d.ok || !d.weeks || !d.weeks[w]) return;
+            data.weeks[w] = d.weeks[w];
+            if (shownWeek === w) renderWeek(w);
+          })
+          .catch(() => {});
+      }
+      setInterval(pollLive, 60000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) pollLive(); });
+
       const asked = parseInt(qsWeek(), 10);
       const start = weekNums.indexOf(asked) !== -1 ? asked : live;
       buildWeekNav(document.getElementById('sb-nav'), weekNums, live, start, renderWeek);

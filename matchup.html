@@ -322,7 +322,22 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
        and never reaching 'final' left the ball frozen at the pregame win probability. */
     if (mu.winner && mu.winner !== 'UNDECIDED') return 'final';
     if (Number(mu.awayScore) > 0 || Number(mu.homeScore) > 0) return 'live';
+    /* ESPN leaves the MATCHUP's totalPoints at 0 until it closes the week out, so mid-slate
+       the schedule feed looks exactly like an unplayed week (verified 2026-09-20, 3:49pm MT:
+       every week 2 score 0 and UNDECIDED while Josh Allen already had 40.8). The PLAYERS'
+       points in matchup_detail are live throughout, so any starter with points on the board
+       means kickoff has happened. Without this the page reads 'Pregame' all Sunday and
+       ptsBlock() hides every actual behind its projection. */
+    var d = currentDetail();
+    if (d && ((liveTotal(d.away) || 0) > 0 || (liveTotal(d.home) || 0) > 0)) return 'live';
     return 'pre';
+  }
+
+  /* Starter points as they stand right now. The honest live team score until ESPN publishes
+     one, and identical to it once the week is final. */
+  function liveTotal(side) {
+    if (!side || !side.players) return null;
+    return R.sum(side.players.filter(function (p) { return p.starter; }), 'actual');
   }
 
   function seriesLine() {
@@ -395,7 +410,13 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 
     var bigA, bigB;
     if (st === 'pre') { bigA = projA != null ? R.pts(projA) : '—'; bigB = projB != null ? R.pts(projB) : '—'; }
-    else { bigA = R.pts(mu.awayScore); bigB = R.pts(mu.homeScore); }
+    else {
+      /* Same reason as gameState: mu.awayScore is 0 all Sunday, so prefer it only once ESPN
+         has actually published it, and total the starters ourselves until then. */
+      var sA = Number(mu.awayScore) > 0 ? mu.awayScore : (detail ? liveTotal(detail.away) : null);
+      var sB = Number(mu.homeScore) > 0 ? mu.homeScore : (detail ? liveTotal(detail.home) : null);
+      bigA = R.pts(sA); bigB = R.pts(sB);
+    }
 
     var badge = st === 'live' ? '<span class="badge live">Live</span>'
               : st === 'final' ? '<span class="badge final">Final</span>'
@@ -651,6 +672,36 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     });
 
     loadSeries();
+    setInterval(pollLive, POLL_MS);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) pollLive(); });
+  }
+
+  /* ---------- near-live refresh ----------
+     The page used to load its feeds once and sit there, so a score only moved if you
+     reloaded. Backend caches are 120s (schedule) and 5 min (matchup_detail) while a week is
+     live, so a 60s poll is at most one cache generation behind and never hits ESPN harder
+     than the cache allows. Stops itself when the tab is hidden and when the matchup on
+     screen is final — a decided game cannot change. */
+  var POLL_MS = 60000;
+
+  function pollLive() {
+    if (document.hidden || !state.list.length) return;
+    var mu = state.list[state.idx];
+    if (mu && mu.winner && mu.winner !== 'UNDECIDED') return;
+    var w = state.week;
+    loadDetail(w);
+    /* The schedule is what turns a game final, so it has to move too — but never through
+       setWeek(), which would reset the reader's selection mid-poll. */
+    json(WEB_APP_URL + '?action=espn_schedule').then(function (data) {
+      if (!data || !data.ok || !data.weeks || state.week !== w) return;
+      state.weeks = data.weeks;
+      state.form = R.seasonForm(data.weeks);
+      state.list = matchupsForWeek(w);
+      if (!state.list.length) return;
+      state.idx = Math.min(state.idx, state.list.length - 1);
+      paintHeader(state.list[state.idx]);
+      paintBox(state.list[state.idx]);
+    }).catch(function () {});
   }
 
   $('prev').addEventListener('click', function () { selectIndex(state.idx - 1); });
