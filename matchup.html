@@ -94,7 +94,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 /* Inside either 20 the drive is in the red zone, and the red zone gets a ketchup bottle —
    a 57 on the label, this being a WPIAL league. It rides the line of scrimmage with the
    ball. Generic bottle, no brand mark on it. */
-.ketchup{position:absolute;top:34px;transform:translateX(-50%);width:22px;z-index:3;
+.ketchup{position:absolute;top:2px;width:20px;z-index:3;
          transition:left .45s ease;filter:drop-shadow(0 1px 3px rgba(0,0,0,.65));}
 .ketchup svg{display:block;width:100%;height:auto;}
 @media (prefers-reduced-motion:reduce){.ketchup{transition:none;}}
@@ -107,7 +107,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
    46 points apart, so a long team name can never cross into the other side's half. */
 .side{position:absolute;bottom:26px;transform:translateX(-50%);
       display:flex;flex-direction:column;align-items:center;gap:4px;
-      width:28%;max-width:150px;min-width:0;transition:left .45s ease;}
+      width:92px;min-width:0;transition:left .45s ease;}
 @media (prefers-reduced-motion:reduce){.side{transition:none;}}
 .side .kit{display:block;width:76px;}
 .side .kit svg{display:block;width:100%;height:auto;}
@@ -147,14 +147,14 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 
 @media (min-width:760px){
   .field{min-height:250px;}
-  .side{bottom:32px;max-width:190px;}
+  .side{bottom:32px;}
   .side .kit{width:104px;}
   .side .tn{font-size:17px;}
   .side .rec{font-size:12px;}
   .ez b{font-size:14px;}
   .ynum{font-size:12px;}
   .ball svg{width:34px;}
-  .ketchup{width:30px;top:42px;}
+  .ketchup{width:26px;top:2px;}
 }
 </style>
 </head>
@@ -387,7 +387,20 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     var projA = detail ? R.sum(detail.away.players.filter(function (p) { return p.starter; }), 'proj') : null;
     var projB = detail ? R.sum(detail.home.players.filter(function (p) { return p.starter; }), 'proj') : null;
 
-    var proj = R.projectWin(mu.away, mu.home, state.form, h2hRec, projA, projB);
+    /* Once the ball is in the air the odds price off the SCORE, not off a projection made
+       before kickoff. Bryan, 2026-09-20, looking at 76.8-109.6 with the field still reading
+       70%: "the predictability is wrong from ESPN data?" — it was, because projectWin was
+       still being handed the pregame projections.
+       Each side's outlook = what is on the board + the projection of the starters who have
+       not scored yet, and the logistic scale shrinks as the slate empties, so a lead means
+       more in the fourth quarter than it does at 1pm. */
+    var outA = detail ? R.liveOutlook(detail.away.players, st === 'final') : null;
+    var outB = detail ? R.liveOutlook(detail.home.players, st === 'final') : null;
+    var liveOdds = st !== 'pre' && outA && outB && (outA.projTotal > 0 || outB.projTotal > 0);
+    var proj = liveOdds
+      ? R.projectWin(mu.away, mu.home, state.form, h2hRec, outA.outlook, outB.outlook,
+                     { live: true, scale: R.liveScale(outA, outB) })
+      : R.projectWin(mu.away, mu.home, state.form, h2hRec, projA, projB);
     var pA = proj.p;
     if (st === 'final' && !FREEZE_CLOSING_ODDS_AT_FINAL) pA = (mu.winner === 'AWAY') ? 1 : 0;
     var pct = Math.round(pA * 100);
@@ -422,13 +435,21 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     $('ball').setAttribute('aria-label',
       pct + ' percent ' + nameOf(state.fidA) + ', ' + (100 - pct) + ' percent ' + nameOf(state.fidB));
 
-    /* The kits line up ON the ball and travel with it — "the jersey moves with the
-       predictability line". They used to sit at fixed thirds, so the field said one thing and
-       the shirts said nothing. Each flanks the line by 24 yards where there is room, and is
-       clamped into its own half (10-42 / 58-90) so the pair is never closer than 32 points:
-       at any probability a team name still sits over its own side of midfield. */
-    var kitL = Math.max(10, Math.min(42, ballPct - 16));
-    var kitR = Math.max(58, Math.min(90, ballPct + 16));
+    /* The kits line up ON the ball and travel with it. The first pass kept each shirt inside
+       its own half, which at 70% still parked the leader's kit on midfield — "I expect the
+       jersey to be here", with the box drawn just behind the line. So they flank the ball
+       directly and move as a pair. The gap is measured rather than guessed: half of (kit
+       width + breathing room), as a percentage of THIS turf, so the shirts clear each other
+       at 390px and at 1400px with no media query. Run the pair off an end line and both
+       slide back together rather than closing up on each other. */
+    var turfW = $('turf').getBoundingClientRect().width || 600;
+    var kitW = turfW >= 700 ? 104 : 76;
+    var half = Math.max(7, (kitW + 18) / 2 / turfW * 100);
+    var kitL = ballPct - half, kitR = ballPct + half;
+    var edge = half + 1;
+    if (kitL < edge) { kitR += edge - kitL; kitL = edge; }
+    if (kitR > 100 - edge) { kitL -= kitR - (100 - edge); kitR = 100 - edge; }
+    $('sideL').style.width = $('sideR').style.width = (kitW + 16) + 'px';
     $('sideL').style.left = kitL.toFixed(1) + '%';
     $('sideR').style.left = kitR.toFixed(1) + '%';
 
@@ -442,6 +463,9 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     if (redzone) {
       if (!ket.innerHTML) ket.innerHTML = KETCHUP_SVG;
       ket.style.left = ballPct + '%';
+      /* It stands beside the ball in the band above the kits, on the side the drive came
+         from, so it never lands on top of a shirt at either end of the field. */
+      ket.style.transform = 'translateX(calc(-50% ' + (ballPct >= 50 ? '- ' : '+ ') + '24px))';
       ket.setAttribute('role', 'img');
       ket.setAttribute('aria-label', 'Red zone — ' +
         nameOf(pct >= 50 ? state.fidA : state.fidB) + ' inside the 20');
@@ -488,15 +512,16 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
   function paintStrip(detail) {
     var el = $('strip');
     if (!detail) { el.hidden = true; return; }
+    /* This read "10 TO PLAY" on both sides in the middle of the afternoon, because it keyed
+       off p.state and matchup_detail has never sent one. Same heuristic as everywhere else on
+       this page: a starter with points on the board has played. */
+    var mu = state.list.length ? state.list[state.idx] : null;
+    var isFinal = !!(mu && mu.winner && mu.winner !== 'UNDECIDED');
     var count = function (side) {
-      var st = side.players.filter(function (p) { return p.starter; });
-      var liveN = st.filter(function (p) { return p.state === 'live'; }).length;
-      var toPlay = st.filter(function (p) { return p.state !== 'live' && p.state !== 'final'; }).length;
-      var bits = [];
-      if (liveN) bits.push(liveN + ' live');
-      if (toPlay) bits.push(toPlay + ' to play');
-      if (!bits.length) bits.push('all final');
-      return bits.join(' · ');
+      var o = R.liveOutlook(side.players, isFinal);
+      if (!o.toPlay) return 'all in';
+      if (!o.played) return o.toPlay + ' to play';
+      return o.played + ' in · ' + o.toPlay + ' to play';
     };
     $('stripL').textContent = count(detail.away);
     $('stripR').textContent = count(detail.home);

@@ -83,16 +83,52 @@
      edge as a 73% lock when it is closer to 62%. 19 is used for both point-margin paths. */
   var MARGIN_SCALE = 19;
 
-  function logistic(margin) { return 1 / (1 + Math.exp(-margin / MARGIN_SCALE)); }
+  function logistic(margin, scale) {
+    return 1 / (1 + Math.exp(-margin / (scale > 0 ? scale : MARGIN_SCALE)));
+  }
 
-  function projectWin(awayName, homeName, form, h2hRec, projAway, projHome) {
+  /* What a side is on course to finish with, read off its own box score.
+     `now` is what is already on the board; `remaining` is the projection of the starters who
+     have not scored yet. A player with points is treated as played — the same heuristic
+     ptsBlock() uses to decide whether to print an actual — because matchup_detail carries no
+     per-player game state. Not perfect (a finished player who missed his projection looks
+     like one who has not kicked off until he scores), but it is the honest read of the data
+     that exists, and it converges as the slate finishes. */
+  function liveOutlook(players, isFinal) {
+    var o = { now: 0, remaining: 0, projTotal: 0, toPlay: 0, played: 0 };
+    (players || []).forEach(function (p) {
+      if (!p || !p.starter) return;
+      var pts = has(p.actual) ? num(p.actual) : 0;
+      var proj = has(p.proj) ? num(p.proj) : 0;
+      o.now += pts;
+      o.projTotal += proj;
+      if (isFinal || pts > 0) { o.played++; }
+      else { o.remaining += proj; o.toPlay++; }
+    });
+    o.outlook = o.now + o.remaining;
+    return o;
+  }
+
+  /* How much of the game is still unwritten, 0..1, from both outlooks. The logistic scale
+     shrinks with its square root: a 20-point lead with the whole slate to come is nearly a
+     coin flip next to the same lead with one flex left. */
+  function liveScale(outA, outB) {
+    if (!outA || !outB) return MARGIN_SCALE;
+    var total = outA.projTotal + outB.projTotal;
+    if (!(total > 0)) return MARGIN_SCALE;
+    var left = Math.max(0.01, Math.min(1, (outA.remaining + outB.remaining) / total));
+    return Math.max(2, MARGIN_SCALE * Math.sqrt(left));
+  }
+
+  function projectWin(awayName, homeName, form, h2hRec, projAway, projHome, opts) {
+    opts = opts || {};
     var p = 0.5, basis = 'even money — no projections yet', real = false;
 
     /* 1. What the two lineups are actually projected to score. This is the number the page
           prints six inches away, so it had better be the number the ball agrees with. */
     if (has(projAway) && has(projHome) && (num(projAway) > 0 || num(projHome) > 0)) {
-      p = logistic(num(projAway) - num(projHome));
-      basis = 'on projected points';
+      p = logistic(num(projAway) - num(projHome), opts.scale);
+      basis = opts.live ? 'on the score plus what is left to play' : 'on projected points';
       real = true;
     } else {
       /* 2. Scoring form: what each side usually scores, blended with what the other usually
@@ -108,7 +144,8 @@
 
     /* 3. History is lore, not signal. It may lean a real number by a few points; it may
           never BE the number. With nothing real to lean on, the honest answer is even. */
-    if (real && h2hRec && (h2hRec.winsA || h2hRec.winsB)) {
+    /* Lore does not get to lean a number that is being decided on the field right now. */
+    if (real && !opts.live && h2hRec && (h2hRec.winsA || h2hRec.winsB)) {
       var awayIsA = teamKey(h2hRec.teamA) === teamKey(awayName);
       var wAway = awayIsA ? h2hRec.winsA : h2hRec.winsB;
       var wHome = awayIsA ? h2hRec.winsB : h2hRec.winsA;
@@ -119,7 +156,10 @@
         basis += ' + head-to-head';
       }
     }
-    return { p: Math.max(0.05, Math.min(0.95, p)), basis: basis };
+    /* A live game is allowed to be more decided than a preview ever is: with two starters
+       left and a 40-point hole, 95% is a lie in the other direction. */
+    var floor = opts.live ? 0.01 : 0.05;
+    return { p: Math.max(floor, Math.min(1 - floor, p)), basis: basis };
   }
 
   function kitWidth(p) { return Math.round(28 + 48 * Math.max(0, Math.min(1, p))); }
@@ -541,6 +581,7 @@
   window.WPIAL_ROW = {
     esc: esc, pts: pts, has: has,
     teamKey: teamKey, seasonForm: seasonForm, projectWin: projectWin, kitWidth: kitWidth,
+    liveOutlook: liveOutlook, liveScale: liveScale,
     normalizeWeek: normalizeWeek, normalizePlayer: normalizePlayer,
     posTag: posTag, statusDot: statusDot, injuryChip: injuryChip, metaText: metaText,
     faceoffRow: faceoffRow, soloRow: soloRow, totalsBar: totalsBar, totalsBarOne: totalsBarOne,

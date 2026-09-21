@@ -1134,8 +1134,12 @@ function seasonForm(weeks) { return WPIAL_ROW.seasonForm(weeks); }
    game on projections, so the two surfaces printed different percentages for one game and
    could name opposite favorites. It also made fetchProj()'s extra matchup_detail request
    per week pure waste: the data arrived, triggered a repaint, and changed nothing. */
-function projectWin(awayName, homeName, form, h2hRec, projAway, projHome) {
-  return WPIAL_ROW.projectWin(awayName, homeName, form, h2hRec, projAway, projHome);
+/* Every parameter, every time. This wrapper once declared four while the call site passed
+   six, and the two it dropped were the projections — so the cards priced games one way and
+   matchup.html priced them another. `opts` carries the live scale now; losing it would put
+   the cards back on pregame odds in the middle of a game. */
+function projectWin(awayName, homeName, form, h2hRec, projAway, projHome, opts) {
+  return WPIAL_ROW.projectWin(awayName, homeName, form, h2hRec, projAway, projHome, opts);
 }
 function kitWidth(p) { return WPIAL_ROW.kitWidth(p); }
 /* Stable franchise id for a name, or null. Every cross-page link on this site travels as a
@@ -1901,7 +1905,9 @@ function loadSchedule() {
                 if (!fid) return;
                 const st = side.players.filter(p => p.starter);
                 map[fid] = WPIAL_ROW.sum(st, 'proj');
-                liveMap[fid] = WPIAL_ROW.sum(st, 'actual') || 0;
+                /* The whole outlook, not just the total: renderWeek needs `remaining` and
+                   `projTotal` to price a game that is already being played. */
+                liveMap[fid] = WPIAL_ROW.liveOutlook(st, false);
               });
             });
             projByWeek[w] = map;
@@ -1951,8 +1957,10 @@ function loadSchedule() {
              separates "kickoff has happened" from "nobody has played yet" — both of which
              the schedule feed reports identically. */
           const lv = liveByWeek[w] || null;
-          const lvA = lv && fidA ? Number(lv[fidA] || 0) : 0;
-          const lvB = lv && fidB ? Number(lv[fidB] || 0) : 0;
+          const outA = lv && fidA ? lv[fidA] : null;
+          const outB = lv && fidB ? lv[fidB] : null;
+          const lvA = outA ? outA.now : 0;
+          const lvB = outB ? outB.now : 0;
           const liveOn = !scored && (lvA > 0 || lvB > 0);
           const awayScore = scored ? Number(mu.awayScore).toFixed(1) : (liveOn ? lvA.toFixed(1) : '—');
           const homeScore = scored ? Number(mu.homeScore).toFixed(1) : (liveOn ? lvB.toFixed(1) : '—');
@@ -1960,8 +1968,15 @@ function loadSchedule() {
           const homeWon = scored && mu.winner === 'HOME';
           const h2hKeyEarly = [teamKey(mu.away), teamKey(mu.home)].sort().join('|');
           const pj = projByWeek[w] || null;
-          const proj = projectWin(mu.away, mu.home, form, h2hMap[h2hKeyEarly],
-            pj && fidA ? pj[fidA] : null, pj && fidB ? pj[fidB] : null);
+          /* A card that is live prices off the score plus what is left to play, exactly like
+             the matchup page it links to — the two surfaces have to agree, and a card reading
+             "70%" over a 33-point deficit is the disagreement that started this. */
+          const proj = liveOn
+            ? projectWin(mu.away, mu.home, form, h2hMap[h2hKeyEarly],
+                         outA ? outA.outlook : null, outB ? outB.outlook : null,
+                         { live: true, scale: WPIAL_ROW.liveScale(outA, outB) })
+            : projectWin(mu.away, mu.home, form, h2hMap[h2hKeyEarly],
+                         pj && fidA ? pj[fidA] : null, pj && fidB ? pj[fidB] : null);
           const pA = proj.p, pH = 1 - proj.p;
 
           let sh = '';
