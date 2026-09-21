@@ -147,7 +147,13 @@ footer{max-width:760px;margin:0 auto;padding:0 12px 40px;color:var(--muted);font
 <script src="env.js"></script>
 <script src="franchise.js"></script>
 <script src="auth.js"></script>
-<script src="matchrow.js"></script>
+<!-- ?v= is a cache buster, not decoration. Pages serves every asset with
+     cache-control: max-age=600, so a browser can load a NEW page against a TEN-MINUTE-OLD
+     matchrow.js — which is where projectWin lives, so the field keeps printing the previous
+     build's odds and nothing looks wrong except the number (2026-09-21).
+     BUMP THIS STRING whenever matchrow.js changes. It is the whole deploy story for a site
+     with no build step. -->
+<script src="matchrow.js?v=20260921a"></script>
 <script src="sitenav.js"></script>
 <script>
 /**

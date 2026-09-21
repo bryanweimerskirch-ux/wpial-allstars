@@ -117,6 +117,11 @@
          background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),
                     rgba(255,255,255,.18) calc(10% - 1px) 10%),
                     linear-gradient(180deg,#1b3a27,#142c1e);}
+  /* Same red zone as the matchup field, at card scale: a tint over the last 20 yards, never
+     a fill, so the yard lines still read through it. */
+  .srz{position:absolute;top:0;bottom:0;width:20%;}
+  .srz.l{left:0;background:linear-gradient(90deg,rgba(192,40,31,.55),rgba(192,40,31,.05));}
+  .srz.r{right:0;background:linear-gradient(270deg,rgba(192,40,31,.55),rgba(192,40,31,.05));}
   .slos{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);transform:translateX(-1px);}
   .sball{position:absolute;top:50%;transform:translate(-50%,-50%);width:17px;line-height:0;}
   .sball svg{display:block;width:100%;height:auto;}
@@ -362,7 +367,13 @@
 <!-- End Cloudflare Web Analytics -->
 <script src="env.js"></script>
 <script src="franchise.js"></script>
-<script src="matchrow.js"></script>
+<!-- ?v= is a cache buster, not decoration. Pages serves every asset with
+     cache-control: max-age=600, so a browser can load a NEW page against a TEN-MINUTE-OLD
+     matchrow.js — which is where projectWin lives, so the field keeps printing the previous
+     build's odds and nothing looks wrong except the number (2026-09-21).
+     BUMP THIS STRING whenever matchrow.js changes. It is the whole deploy story for a site
+     with no build step. -->
+<script src="matchrow.js?v=20260921a"></script>
 <script src="auth.js"></script>
 <script src="keepers.js"></script>
 <script src="sitenav.js"></script>
@@ -1998,11 +2009,20 @@ function loadSchedule() {
             const onCard = x => (12 + x * 0.76).toFixed(1) + '%';
             const kitLeft = onCard(Math.max(14, Math.min(40, ballPct - 24)));
             const kitRight = onCard(Math.max(60, Math.min(86, ballPct + 24)));
+            /* Domination, same rule as the matchup field: past 80% the trailing shirt leaves
+               and the end it is backed into goes red. Only while the game is undecided — a
+               final already says who won, in words, two rows down. */
+            const leadPct = Math.round(Math.max(pA, pH) * 100);
+            const dominated = !scored && leadPct >= 80;
+            const awayOut = dominated && pA < pH;
+            const homeOut = dominated && pH < pA;
             sh += '<div class="spot-kits">' +
+              (awayOut ? '' :
               '<span class="spot-kit' + (scored && !awayWon ? ' lost' : '') + '" style="left:' + kitLeft + '" title="' + escapeAttr(teamDisplayName(mu.away)) + '">' +
-                '<span class="kit">' + kitA + '</span></span>' +
+                '<span class="kit">' + kitA + '</span></span>') +
+              (homeOut ? '' :
               '<span class="spot-kit' + (scored && !homeWon ? ' lost' : '') + '" style="left:' + kitRight + '" title="' + escapeAttr(teamDisplayName(mu.home)) + '">' +
-                '<span class="kit">' + kitH + '</span></span>' +
+                '<span class="kit">' + kitH + '</span></span>') +
               '</div>';
             const czA = (window.WPIAL_FX && fidA && WPIAL_FX.colors(fidA).primary) || '#2a3140';
             const czH = (window.WPIAL_FX && fidB && WPIAL_FX.colors(fidB).primary) || '#2a3140';
@@ -2012,7 +2032,9 @@ function loadSchedule() {
                   : Math.round(pA * 100) + ' percent ' + teamDisplayName(mu.away) + ', ' +
                     Math.round(pH * 100) + ' percent ' + teamDisplayName(mu.home)) + '">' +
               '<span class="sez" style="--sc:' + escapeAttr(czA) + '"></span>' +
-              '<span class="sturf"><span class="slos" style="left:' + ballPct + '%"></span>' +
+              '<span class="sturf">' +
+                (dominated ? '<span class="srz ' + (ballPct <= 50 ? 'l' : 'r') + '"></span>' : '') +
+                '<span class="slos" style="left:' + ballPct + '%"></span>' +
                 '<span class="sball" style="left:' + ballPct + '%">' + SPOT_BALL + '</span></span>' +
               '<span class="sez" style="--sc:' + escapeAttr(czH) + '"></span>' +
             '</div>';

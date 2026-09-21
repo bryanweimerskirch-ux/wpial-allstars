@@ -91,6 +91,15 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 .ball{position:absolute;top:6px;transform:translateX(-50%);display:flex;flex-direction:column;
       align-items:center;gap:2px;z-index:3;white-space:nowrap;}
 .ball svg{display:block;width:26px;height:auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));}
+/* The red zone itself, painted only when somebody is actually in it: a tint, never a fill,
+   so the yard lines, the mowing stripes and the ball all still read through it. It darkens
+   toward the goal line, which is the direction the pressure is coming from. */
+.rz{position:absolute;top:0;bottom:0;width:20%;z-index:1;pointer-events:none;
+    opacity:0;transition:opacity .45s ease;}
+.rz.l{left:0;background:linear-gradient(90deg,rgba(192,40,31,.50),rgba(192,40,31,.04));}
+.rz.r{right:0;background:linear-gradient(270deg,rgba(192,40,31,.50),rgba(192,40,31,.04));}
+.rz.on{opacity:1;}
+@media (prefers-reduced-motion:reduce){.rz{transition:none;}}
 /* Inside either 20 the drive is in the red zone, and the red zone gets a ketchup bottle —
    a 57 on the label, this being a WPIAL league. It rides the line of scrimmage with the
    ball. Generic bottle, no brand mark on it. */
@@ -108,6 +117,9 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 .side{position:absolute;bottom:26px;transform:translateX(-50%);
       display:flex;flex-direction:column;align-items:center;gap:4px;
       width:92px;min-width:0;transition:left .45s ease;}
+/* .side sets display:flex, which beats the browser's own [hidden]{display:none} — so the
+   kit that is supposed to leave the field at 80% stayed on it, standing inside the winner. */
+.side[hidden]{display:none;}
 @media (prefers-reduced-motion:reduce){.side{transition:none;}}
 .side .kit{display:block;width:76px;}
 .side .kit svg{display:block;width:100%;height:auto;}
@@ -181,6 +193,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     <div class="ez l" id="ezL"></div>
     <div class="turf" id="turf">
       <div class="lines"></div>
+      <div class="rz l" id="rzL"></div><div class="rz r" id="rzR"></div>
       <div class="hash a"></div><div class="hash b"></div>
       <div id="yards"></div>
       <div class="kits">
@@ -217,7 +230,13 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 <script src="env.js"></script>
 <script src="franchise.js"></script>
 <script src="auth.js"></script>
-<script src="matchrow.js"></script>
+<!-- ?v= is a cache buster, not decoration. Pages serves every asset with
+     cache-control: max-age=600, so a browser can load a NEW page against a TEN-MINUTE-OLD
+     matchrow.js — which is where projectWin lives, so the field keeps printing the previous
+     build's odds and nothing looks wrong except the number (2026-09-21).
+     BUMP THIS STRING whenever matchrow.js changes. It is the whole deploy story for a site
+     with no build step. -->
+<script src="matchrow.js?v=20260921a"></script>
 <script src="rivalry.js"></script>
 <script src="sitenav.js"></script>
 <script>
@@ -457,7 +476,27 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
        one side. Tested on the leader's number so it fires for whichever team is driving, and
        capped at 99 — a probability that has run out of field is not a drive any more. */
     var lead = Math.max(pct, 100 - pct);
-    var redzone = lead >= 80 && lead <= 99;
+    var redzone = lead >= 80;
+
+    /* Domination, Bryan's rule: at 80% the game stops being a contest on this field. The
+       trailing kit leaves — it is not defending anything — the end zone it is backed into
+       goes red, and the bottle stays. One team, one shirt, standing on the other's goal line.
+       Everything comes back on its own the moment the number drops under 80. */
+    var leaderIsLeft = pct >= 50;
+    var loser = leaderIsLeft ? $('sideR') : $('sideL');
+    var winner = leaderIsLeft ? $('sideL') : $('sideR');
+    $('sideL').hidden = false; $('sideR').hidden = false;
+    if (redzone) {
+      loser.hidden = true;
+      /* With the other shirt gone there is nothing to clear, so the survivor stands right
+         off the ball instead of holding the pair's spacing. */
+      var solo = leaderIsLeft ? ballPct - half : ballPct + half;
+      winner.style.left = Math.max(edge, Math.min(100 - edge, solo)).toFixed(1) + '%';
+    }
+    /* The tint goes on the end the ball is at — which, at 80%, is the trailing team's. */
+    $('rzL').className = 'rz l' + (redzone && ballPct <= 50 ? ' on' : '');
+    $('rzR').className = 'rz r' + (redzone && ballPct > 50 ? ' on' : '');
+
     var ket = $('ketchup');
     ket.hidden = !redzone;
     if (redzone) {
