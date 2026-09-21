@@ -1886,9 +1886,18 @@ function loadSchedule() {
             const norm = WPIAL_ROW.normalizeWeek(d);
             if (!norm.ok || !norm.hasRosters) return;
             const map = {}, liveMap = {};
-            norm.matchups.forEach(m => {
-              [m.away, m.home].forEach(side => {
-                const fid = fidFor(side.name);
+            /* The detail feed's team NAMES come from a second ESPN call that can come back
+               empty (seen 2026-09-20: perfect rosters, blank names), and a nameless side
+               resolves to no fid, which silently emptied both maps and put every card back
+               to em-dashes. The schedule feed is built from the same ESPN schedule array in
+               the same order, so it names the same pairing at the same index — consulted
+               only to fill a name the detail feed did not supply. */
+            const sched = data.weeks[w] || [];
+            const alignable = sched.length === norm.matchups.length;
+            norm.matchups.forEach((m, i) => {
+              [['away', m.away], ['home', m.home]].forEach(([which, side]) => {
+                const fid = fidFor(side.name) ||
+                            (alignable && sched[i] ? fidFor(sched[i][which]) : null);
                 if (!fid) return;
                 const st = side.players.filter(p => p.starter);
                 map[fid] = WPIAL_ROW.sum(st, 'proj');

@@ -508,8 +508,22 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
   function currentDetail() {
     if (!state.detail || !state.detail.ok || !state.detail.hasRosters) return null;
     var want = [state.fidA, state.fidB].sort().join('|'), found = null;
-    state.detail.matchups.forEach(function (m) {
+    /* matchup_detail takes its team NAMES from a second ESPN call (waEspnTeams_ in
+       profile.gs, its own fetch and its own cache). On 2026-09-20 that call started coming
+       back empty while the box score itself was perfect — every roster, every point — and
+       the page answered "No box score for this pairing", because a nameless side resolves to
+       no fid. matchup.gs already treats the name lookup as optional; the client must too.
+       The week's schedule feed is built from the same ESPN schedule array in the same order,
+       so its entry at this index names the same two teams — used only to fill a name the
+       detail feed failed to supply, and only when the two weeks are the same length. */
+    var sched = (state.weeks && state.weeks[state.week]) || [];
+    var alignable = sched.length === state.detail.matchups.length;
+    state.detail.matchups.forEach(function (m, i) {
       var a = fidOf(m.away.name), b = fidOf(m.home.name);
+      if ((!a || !b) && alignable && sched[i]) {
+        a = a || fidOf(sched[i].away);
+        b = b || fidOf(sched[i].home);
+      }
       if (a && b && [a, b].sort().join('|') === want) {
         /* Orient to the page, not to ESPN's home/away, so the left column is always the
            team in the `a` parameter no matter which side ESPN calls home. */
