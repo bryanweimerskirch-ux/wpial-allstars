@@ -91,6 +91,13 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
 .ball{position:absolute;top:6px;transform:translateX(-50%);display:flex;flex-direction:column;
       align-items:center;gap:2px;z-index:3;white-space:nowrap;}
 .ball svg{display:block;width:26px;height:auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));}
+/* Inside either 20 the drive is in the red zone, and the red zone gets a ketchup bottle —
+   a 57 on the label, this being a WPIAL league. It rides the line of scrimmage with the
+   ball. Generic bottle, no brand mark on it. */
+.ketchup{position:absolute;top:34px;transform:translateX(-50%);width:22px;z-index:3;
+         transition:left .45s ease;filter:drop-shadow(0 1px 3px rgba(0,0,0,.65));}
+.ketchup svg{display:block;width:100%;height:auto;}
+@media (prefers-reduced-motion:reduce){.ketchup{transition:none;}}
 /* the two kits stand on the turf */
 /* padding-top clears the ball band, padding-bottom clears the yard numbers painted at
    the foot of the turf — the meta line was landing 4px on top of them. */
@@ -100,7 +107,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
    46 points apart, so a long team name can never cross into the other side's half. */
 .side{position:absolute;bottom:26px;transform:translateX(-50%);
       display:flex;flex-direction:column;align-items:center;gap:4px;
-      width:32%;max-width:150px;min-width:0;transition:left .45s ease;}
+      width:28%;max-width:150px;min-width:0;transition:left .45s ease;}
 @media (prefers-reduced-motion:reduce){.side{transition:none;}}
 .side .kit{display:block;width:76px;}
 .side .kit svg{display:block;width:100%;height:auto;}
@@ -147,6 +154,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
   .ez b{font-size:14px;}
   .ynum{font-size:12px;}
   .ball svg{width:34px;}
+  .ketchup{width:30px;top:42px;}
 }
 </style>
 </head>
@@ -181,6 +189,7 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
       </div>
       <div class="los" id="los"></div>
       <div class="ball" id="ball"></div>
+      <div class="ketchup" id="ketchup" hidden></div>
     </div>
     <div class="ez r" id="ezR"></div>
   </div>
@@ -310,6 +319,17 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     '<path d="M7 8.5h12" stroke="#f2efe6" stroke-width="1.3"/>' +
     '<path d="M10 6.4v4.2M13 6.4v4.2M16 6.4v4.2" stroke="#f2efe6" stroke-width="1"/></svg>';
 
+  /* Hand-rolled, like everything else here: glass bottle, cap, plain label, 57. It carries
+     no brand name or brand shape — the number is the whole joke. */
+  var KETCHUP_SVG = '<svg viewBox="0 0 24 46" aria-hidden="true">' +
+    '<rect x="8.5" y="0.5" width="7" height="5" rx="1.4" fill="#d8b45c" stroke="#8a6f2e" stroke-width="0.8"/>' +
+    '<path d="M10 5.5h4v3.6c0 1.6 4 3.4 4 7.4V41a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V16.5c0-4 4-5.8 4-7.4V5.5z" ' +
+      'fill="#c0281f" stroke="#7d1a14" stroke-width="1"/>' +
+    '<path d="M8.6 18c1.2-.8 2-1 3.4-1" stroke="rgba(255,255,255,.35)" stroke-width="1.2" fill="none" stroke-linecap="round"/>' +
+    '<rect x="6.6" y="23" width="10.8" height="12" rx="1.6" fill="#f2efe6"/>' +
+    '<text x="12" y="32.4" text-anchor="middle" font-family="Oswald, Arial, sans-serif" ' +
+      'font-size="9.5" font-weight="700" fill="#c0281f">57</text></svg>';
+
   function recordOf(fid) {
     var f = state.form[R.teamKey(nameOf(fid))];
     if (!f || !f.g) return 'no games yet';
@@ -405,12 +425,27 @@ footer{max-width:1080px;margin:0 auto;padding:0 12px 40px;color:var(--muted);fon
     /* The kits line up ON the ball and travel with it — "the jersey moves with the
        predictability line". They used to sit at fixed thirds, so the field said one thing and
        the shirts said nothing. Each flanks the line by 24 yards where there is room, and is
-       clamped into its own half (14-40 / 60-86) so the pair is never closer than 46 points:
+       clamped into its own half (10-42 / 58-90) so the pair is never closer than 32 points:
        at any probability a team name still sits over its own side of midfield. */
-    var kitL = Math.max(14, Math.min(40, ballPct - 24));
-    var kitR = Math.max(60, Math.min(86, ballPct + 24));
+    var kitL = Math.max(10, Math.min(42, ballPct - 16));
+    var kitR = Math.max(58, Math.min(90, ballPct + 16));
     $('sideL').style.left = kitL.toFixed(1) + '%';
     $('sideR').style.left = kitR.toFixed(1) + '%';
+
+    /* Red zone: inside either 20, which on this field is a probability of 80 or better for
+       one side. Tested on the leader's number so it fires for whichever team is driving, and
+       capped at 99 — a probability that has run out of field is not a drive any more. */
+    var lead = Math.max(pct, 100 - pct);
+    var redzone = lead >= 80 && lead <= 99;
+    var ket = $('ketchup');
+    ket.hidden = !redzone;
+    if (redzone) {
+      if (!ket.innerHTML) ket.innerHTML = KETCHUP_SVG;
+      ket.style.left = ballPct + '%';
+      ket.setAttribute('role', 'img');
+      ket.setAttribute('aria-label', 'Red zone — ' +
+        nameOf(pct >= 50 ? state.fidA : state.fidB) + ' inside the 20');
+    }
 
     var metaFor = function (rec, pj) {
       return R.esc(rec) + (pj != null ? ' · ' + R.pts(pj) + ' proj' : '');
